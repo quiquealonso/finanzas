@@ -34,7 +34,7 @@ jobs:
         dir: [back, front, mobile]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       # Falla si hay vulnerabilidades altas o críticas en lo que se ejecuta en producción. --omit=peer deja fuera la CLI
