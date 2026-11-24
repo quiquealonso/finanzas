@@ -37,10 +37,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      # Falla si hay vulnerabilidades altas o críticas en lo que se ejecuta en producción. --omit=peer deja fuera la CLI
-      # de Prisma (peer de @prisma/client, solo se usa en local para generar el cliente): sus avisos se quitan al pasar a
-      # Prisma 7 (ver docs/backlog.md).
-      - run: npm audit --omit=dev --omit=peer --audit-level=high
+      # Falla si hay vulnerabilidades altas o críticas en lo que se ejecuta en producción.
+      # (back/package.json fuerza con "overrides" versiones corregidas de dependencias de la CLI de Prisma 6.)
+      - run: npm audit --omit=dev --audit-level=high
         working-directory: ${{ matrix.dir }}
 
   osv:
