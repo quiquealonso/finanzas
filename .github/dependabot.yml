@@ -1,22 +1,42 @@
-# Actualizaciones automáticas de dependencias (un PR semanal, sobre todo por avisos de seguridad)
+# Actualizaciones automáticas de dependencias: un PR semanal por carpeta con todo agrupado.
+# Las versiones mayores (Angular 22, TypeScript 7…) se hacen a mano: suelen romper y hay que probar la app entera.
+# Los avisos de seguridad llegan igualmente aunque pidan una versión mayor.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /back
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    groups:
+      back:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: /front
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    groups:
+      front:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: /mobile
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    groups:
+      mobile:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
