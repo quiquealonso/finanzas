@@ -1,0 +1,41 @@
+# ---- Secretos y datos personales: NUNCA se suben (el repositorio es público) ----
+# Claves de la base de datos, Gemini, AUTH_SECRET…
+.env
+.env.*
+!.env.example
+# Copias de la base de datos (node back/scripts/db-backup.js)
+backups/
+# Correos reales para la demo de la importación (solo el README de ejemplo se sube)
+back/data/mail-demo/*.json
+# Proyecto de Supabase de la app móvil (se sube supabase.config.example.ts)
+mobile/src/app/supabase.config.ts
+# Base de datos SQLite antigua y zips para compartir
+back/prisma/dev.db
+*.db
+*.zip
+*.lnk
+# Credenciales de Google y tokens: viven fuera del proyecto, en %USERPROFILE%\.finanzas
+.finanzas/
+
+# ---- Compilados y dependencias ----
+node_modules/
+dist/
+out-tsc/
+.angular/
+coverage/
+*.tsbuildinfo
+
+# ---- Herramientas locales y del sistema ----
+.claude/
+.cursor/
+.windsurf/
+.opencode/
+.clinerules/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+.github/copilot-instructions.md

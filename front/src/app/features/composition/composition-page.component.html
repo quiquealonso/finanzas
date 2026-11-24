@@ -1,0 +1,209 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Composición</h1>
+      <p>
+        @if (view() === 'real') {
+          Cómo se reparte tu cartera: por tipo de activo y, dentro de cada tipo, por producto.
+        } @else {
+          Tu reparto ideal. Pon el % de cada tipo y, dentro de cada uno, el % de cada producto.
+        }
+      </p>
+    </div>
+    <div class="seg">
+      <button type="button" [class.on]="view() === 'real'" (click)="view.set('real')">Mi cartera</button>
+      <button type="button" [class.on]="view() === 'target'" (click)="view.set('target')">Cartera objetivo</button>
+    </div>
+  </div>
+
+  @if (view() === 'real') {
+    <div class="duo">
+      <section class="card chart-card">
+        @if (selectedProducts(); as sp) {
+          <app-sunburst [groups]="sp.chart" [single]="true" [selected]="hoverProduct()" (selectedChange)="hoverProduct.set($event)" [totalLabel]="selectedGroup()!.name" [totalValue]="money(selectedGroup()!.value)" />
+          <p class="small faint center-note">Productos de {{ selectedGroup()!.name }}. <button type="button" class="btn sm link" (click)="selected.set(null)">Volver a todos los tipos</button></p>
+        } @else {
+          <app-sunburst [groups]="realChart()" [selected]="selected()" (selectedChange)="selected.set($event)" totalLabel="Total" [totalValue]="money(total())" />
+          <p class="small faint center-note">Dentro, los tipos. Fuera, los productos de cada tipo. Pulsa un tipo para ver su detalle.</p>
+        }
+      </section>
+
+      <section class="card">
+        @if (selectedGroup(); as g) {
+          <div class="detail-head">
+            <button type="button" class="btn sm link" (click)="selected.set(null)">← Todos</button>
+            <div class="detail-title">
+              <span class="dot" [style.background]="g.color"></span>
+              <strong>{{ g.name }}</strong>
+            </div>
+            <div class="num"><strong>{{ money(g.value) }}</strong> <span class="faint">· {{ pct(g.value / total()) }} del total</span></div>
+          </div>
+          @if (viaSplit(g).length) {
+            <div class="via-split small num">
+              @for (v of viaSplit(g); track v.via) {
+                <span><span class="via">{{ v.via }}</span> {{ money(v.value) }} <span class="faint">· {{ pct(v.value / g.value) }}</span></span>
+              }
+            </div>
+          }
+          @if (selectedProducts(); as sp) {
+            <ul class="tiles">
+              @for (c of sp.items; track c.key) {
+                <li [class.lit]="hoverProduct() === c.key" (mouseenter)="hoverProduct.set(c.key)" (mouseleave)="hoverProduct.set(null)" [title]="c.name">
+                  <div class="tile-name"><span class="dot" [style.background]="c.color"></span><span>{{ c.name }}</span>@if (c.via) { <span class="via">{{ c.via }}</span> }</div>
+                  <div class="tile-pct num"><strong>{{ pct(c.value / g.value) }}</strong></div>
+                  <div class="meter"><div [style.width.%]="(c.value / g.value) * 100" [style.background]="c.color"></div></div>
+                  <div class="row-foot small faint num">
+                    <span>{{ money(c.value) }}</span>
+                    <span>{{ pct(c.value / total()) }} total</span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        } @else {
+          <div class="card-head"><strong>Por tipo de activo</strong><span class="small faint num">{{ money(total()) }}</span></div>
+          <ul class="tiles">
+            @for (g of display(); track g.key) {
+              <li class="clickable" (click)="selected.set(g.key)" [title]="'Ver los productos de ' + g.name">
+                <div class="tile-name"><span class="dot" [style.background]="g.color"></span><span>{{ g.name }}</span></div>
+                <div class="tile-pct num"><strong>{{ pct(g.value / total()) }}</strong></div>
+                <!-- The type split in its products, so both levels read at a glance. -->
+                <div class="meter stacked">
+                  @for (c of g.children; track c.key; let i = $index) {
+                    <div [style.width.%]="(c.value / g.value) * 100" [style.background]="g.color" [style.opacity]="g.children.length > 1 ? 0.95 - (i / (g.children.length - 1)) * 0.55 : 0.9" [title]="c.name + ' · ' + pct(c.value / g.value)"></div>
+                  }
+                </div>
+                <div class="row-foot small faint num">
+                  <span>{{ money(g.value) }}</span>
+                  <span [title]="g.children.length + (g.children.length === 1 ? ' producto' : ' productos')">{{ g.children.length }} prod.</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+
+    <div class="type-grid">
+      @for (g of display(); track g.key) {
+        <section class="card type-card" [class.on]="selected() === g.key" (click)="selected.set(g.key)">
+          <div class="type-head">
+            <span class="dot" [style.background]="g.color"></span>
+            <strong>{{ g.name }}</strong>
+            <span class="spacer"></span>
+            <span class="num">{{ pct(g.value / total()) }}</span>
+          </div>
+          <ul class="mini">
+            @for (c of g.children; track c.key) {
+              <li>
+                <span class="name">{{ c.name }}@if (c.via) { <span class="via">{{ c.via }}</span> }</span>
+                <span class="num faint">{{ money(c.value) }}</span>
+                <span class="num"><strong>{{ pct(c.value / g.value) }}</strong></span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+  } @else {
+    <div class="toolbar">
+      <span class="sum" [class.ok]="typesSum() === 100" [class.bad]="typesSum() !== 100">Tipos: {{ typesSum().toLocaleString('es-ES') }} %</span>
+      @if (typesSum() !== 100 && typesSum() > 0) {
+        <button type="button" class="btn sm" (click)="balanceTypes()">Ajustar a 100 %</button>
+      }
+      <span class="spacer"></span>
+      <button type="button" class="btn" (click)="copyCurrent()">Copiar mi cartera actual</button>
+      <button type="button" class="btn primary" [disabled]="!dirty() || saving()" (click)="save()">{{ saving() ? 'Guardando…' : dirty() ? 'Guardar' : 'Guardado' }}</button>
+    </div>
+
+    <div class="duo">
+      <section class="card">
+        <div class="card-head"><strong>Reparto objetivo</strong><span class="small faint">Real → objetivo</span></div>
+        <ul class="plan">
+          @for (row of comparison(); track row.type.typeCode) {
+            <li class="plan-type" [class.open]="open() === row.type.typeCode">
+              <div class="plan-line">
+                <button type="button" class="expand" (click)="open.set(open() === row.type.typeCode ? null : row.type.typeCode)" [attr.aria-expanded]="open() === row.type.typeCode">
+                  <span class="chev">›</span>
+                  <span class="dot" [style.background]="row.type.color"></span>
+                  <span class="name">{{ row.type.name }}</span>
+                </button>
+                <span class="small faint num real">{{ pct(row.realPct) }}</span>
+                <span class="pct-input">
+                  <input type="number" min="0" max="100" step="0.5" [value]="row.type.pct" (input)="setTypePct(row.type.typeCode, $any($event.target).value)" />
+                  <span class="faint">%</span>
+                </span>
+                <span class="small num diff" [class.up]="row.move >= minMove()" [class.down]="row.move <= -minMove()">
+                  @if (row.move >= minMove()) { +{{ money(row.move) }} } @else if (row.move <= -minMove()) { −{{ money(-row.move) }} } @else { ✓ }
+                </span>
+              </div>
+              <div class="meter dual">
+                <div class="m-real" [style.width.%]="row.realPct * 100" [style.background]="row.type.color"></div>
+                <div class="m-target" [style.left.%]="row.targetPct * 100"></div>
+              </div>
+
+              @if (open() === row.type.typeCode) {
+                <div class="products">
+                  <div class="products-head small faint">
+                    <span>Dentro de {{ row.type.name }}</span>
+                    <span class="sum" [class.ok]="productsSum(row.type) === 100" [class.bad]="row.type.products.length && productsSum(row.type) !== 100">{{ productsSum(row.type).toLocaleString('es-ES') }} %</span>
+                    @if (row.type.products.length && productsSum(row.type) !== 100 && productsSum(row.type) > 0) {
+                      <button type="button" class="btn sm link" (click)="balanceProducts(row.type.typeCode)">Ajustar a 100 %</button>
+                    }
+                  </div>
+                  @for (p of row.products; track p.product.key) {
+                    <div class="product-line">
+                      <span class="name">{{ p.product.name }}@if (!p.product.assetId) { <span class="badge">nuevo</span> }</span>
+                      <span class="small faint num real">{{ pct(p.realPct) }}</span>
+                      <span class="pct-input">
+                        <input type="number" min="0" max="100" step="1" [value]="p.product.pct" (input)="setProductPct(row.type.typeCode, p.product.key, $any($event.target).value)" />
+                        <span class="faint">%</span>
+                      </span>
+                      <span class="small num diff" [class.up]="p.move >= minMove()" [class.down]="p.move <= -minMove()">
+                        @if (p.move >= minMove()) { +{{ money(p.move) }} } @else if (p.move <= -minMove()) { −{{ money(-p.move) }} } @else { ✓ }
+                      </span>
+                      @if (!p.product.assetId) {
+                        <button type="button" class="btn sm link danger x" (click)="removeProduct(row.type.typeCode, p.product.key)" title="Quitar">×</button>
+                      }
+                    </div>
+                  }
+                  <form class="add" (submit)="$event.preventDefault(); addProduct(row.type.typeCode, newName)">
+                    <input #newName placeholder="Añadir producto que aún no tienes (ej. Oro físico)" />
+                    <button type="submit" class="btn sm">Añadir</button>
+                  </form>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+        <p class="small faint legend-note">
+          Columnas: % real del total · % objetivo · euros a comprar (+) o vender (−) para llegar.
+          En la barra, el color es lo que tienes y la marca negra el objetivo. Los % de productos son dentro de su tipo.
+        </p>
+      </section>
+
+      <div class="side">
+        <section class="card chart-card">
+          <div class="card-head"><strong>Objetivo</strong></div>
+          <app-sunburst [groups]="targetChart()" [selected]="selected()" (selectedChange)="selected.set($event)" totalLabel="Objetivo" [totalValue]="typesSum().toLocaleString('es-ES') + ' %'" />
+        </section>
+        <section class="card">
+          <div class="card-head"><strong>Para llegar al objetivo</strong><span class="small faint">con {{ money(total()) }}</span></div>
+          @if (moves().length) {
+            <ul class="moves">
+              @for (m of moves(); track m.name + m.typeName) {
+                <li>
+                  <span class="dot" [style.background]="m.color"></span>
+                  <span class="name">{{ m.name }}</span>
+                  <span class="num" [class.up]="m.eur > 0" [class.down]="m.eur < 0">{{ m.eur > 0 ? 'Comprar' : 'Vender' }} {{ money(m.eur > 0 ? m.eur : -m.eur) }}</span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="small faint">Tu cartera ya coincide con el objetivo.</p>
+          }
+        </section>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,307 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Sentimiento de mercado</h1>
+      <p>Qué dicen influyentes y noticias de cada empresa del índice, junto con los indicadores de miedo y codicia del mercado.</p>
+    </div>
+    <div class="row head-actions">
+      <select class="fund" [ngModel]="fund()" (ngModelChange)="pickFund($event)" aria-label="Índice">
+        @for (f of overview()?.funds ?? []; track f.id) {
+          <option [value]="f.id">{{ f.label }}</option>
+        } @empty {
+          <option [value]="fund()">{{ fund() }}</option>
+        }
+      </select>
+      <button type="button" class="btn primary" (click)="refresh()" [disabled]="running()">
+        {{ running() ? 'Actualizando…' : 'Actualizar' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>No es una recomendación de inversión.</strong>
+    Análisis automático con fines educativos (proyecto de clase). Resume opiniones públicas y datos de mercado, que pueden ser erróneos o ir con retraso. Decide siempre por tu cuenta.
+  </div>
+
+  @if (error(); as e) {
+    <div class="notice">{{ e }}</div>
+  }
+
+  @if (running() || showLog()) {
+    <section class="card job">
+      <div class="card-head">
+        <h2>{{ running() ? 'Actualizando…' : 'Última actualización' }}</h2>
+        <button type="button" class="btn sm link" (click)="showLog.set(false)" [disabled]="running()">Ocultar</button>
+      </div>
+      <ul class="log">
+        @for (e of events(); track $index) {
+          <li [class]="e.level">{{ e.text }}</li>
+        } @empty {
+          <li>Empezando…</li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (overview(); as o) {
+    <!-- Gauge -->
+    <section class="card gauge-card">
+      <div class="gauge">
+        <svg viewBox="0 0 200 116" role="img" [attr.aria-label]="'Termómetro: ' + (o.gauge == null ? 'sin datos' : o.gauge.toFixed(0))">
+          <path d="M28 100 A72 72 0 0 1 49.1 49.1" class="arc a1" />
+          <path d="M49.1 49.1 A72 72 0 0 1 100 28" class="arc a2" />
+          <path d="M100 28 A72 72 0 0 1 150.9 49.1" class="arc a4" />
+          <path d="M150.9 49.1 A72 72 0 0 1 172 100" class="arc a5" />
+          @if (o.gauge != null) {
+            <line x1="100" y1="100" [attr.x2]="needle(o.gauge).x" [attr.y2]="needle(o.gauge).y" class="needle" />
+          }
+          <circle cx="100" cy="100" r="5" class="hub" />
+        </svg>
+        <div class="gauge-value">
+          <strong class="num">{{ o.gauge == null ? '—' : o.gauge.toFixed(0) }}</strong>
+          <span class="pill" [class]="'pill ' + mood(o.gauge).cls">{{ mood(o.gauge).label }}</span>
+          <span class="faint small">{{ fundLabel() }}{{ o.asOf ? ' · ' + day(o.asOf) : '' }}</span>
+        </div>
+      </div>
+
+      <ul class="parts">
+        @for (p of parts(); track p.key) {
+          <li [title]="p.help">
+            <div class="part-head">
+              <span>{{ p.label }}</span>
+              <span class="faint small num">{{ p.raw }}</span>
+            </div>
+            <div class="bar"><span [style.width.%]="p.value ?? 0" [class]="mood(p.value).cls"></span></div>
+          </li>
+        }
+      </ul>
+
+      <div class="history">
+        <div class="part-head">
+          <span>Histórico del termómetro</span>
+          <button type="button" class="btn sm link" (click)="showHow.set(!showHow())">{{ showHow() ? 'Ocultar' : '¿Cómo se calcula?' }}</button>
+        </div>
+        @if (historyPath(); as h) {
+          <svg viewBox="0 0 600 120" preserveAspectRatio="none" class="spark">
+            <line x1="0" x2="600" y1="60" y2="60" class="mid" />
+            <path [attr.d]="h.line" class="spark-line" vector-effect="non-scaling-stroke" />
+          </svg>
+          <div class="axis faint small"><span>{{ day(h.first) }}</span><span>50 = neutral</span><span>{{ day(h.last) }}</span></div>
+        } @else {
+          <p class="faint small">Sin histórico todavía: pulsa «Actualizar» para cargar los precios.</p>
+        }
+      </div>
+    </section>
+
+    @if (showHow()) {
+      <section class="card how">
+        <p><strong>Termómetro (0–100):</strong> media de los indicadores disponibles, cada uno pasado a 0 (miedo extremo) – 100 (codicia extrema). VIX 35 o más = 0, VIX 12 = 100. Amplitud = % de empresas del índice sobre su media de 200 sesiones. Tendencia: +10 % sobre la media = 100. Funding: +30 % anual = 100.</p>
+        <p><strong>Tono de cada empresa (−1 a +1):</strong> cada mención de los últimos 7 días cuenta su tono (alcista +1, bajista −1) × la confianza del clasificador × el peso de la fuente, y pesa la mitad cada 2 días.</p>
+        <p><strong>Peso de la fuente:</strong> de 0,5 a 2 según cuántas veces acertó: si 7 días después la empresa lo hizo mejor (alcista) o peor (bajista) que el índice. Sin historial, 1,25.</p>
+        <p><strong>Fuentes:</strong> {{ o.counts.sources }} influyentes en Bluesky y YouTube, más titulares de Google News de cada empresa. Clasificador: {{ o.classifier }}.</p>
+        <p class="faint small">{{ o.counts.companies }} empresas · {{ o.counts.posts.toLocaleString('es-ES') }} textos ({{ o.counts.pending }} por clasificar) · {{ o.counts.mentions.toLocaleString('es-ES') }} menciones.</p>
+      </section>
+    }
+
+    <!-- Extremes -->
+    @if (extremes().up.length || extremes().down.length) {
+      <section class="extremes">
+        <div class="card">
+          <h2>Tono más alcista</h2>
+          <ul class="mini">
+            @for (s of extremes().up; track s.symbol) {
+              <li (click)="open(s.symbol)"><span class="sym">{{ s.symbol }}</span><span class="mini-name">{{ s.name }}</span><span class="pill up1 num">{{ s.score!.toFixed(2).replace('.', ',') }}</span><span class="faint small">{{ s.mentions }}</span></li>
+            } @empty {
+              <li class="faint small">Nada claro todavía.</li>
+            }
+          </ul>
+        </div>
+        <div class="card">
+          <h2>Tono más bajista</h2>
+          <ul class="mini">
+            @for (s of extremes().down; track s.symbol) {
+              <li (click)="open(s.symbol)"><span class="sym">{{ s.symbol }}</span><span class="mini-name">{{ s.name }}</span><span class="pill down1 num">{{ s.score!.toFixed(2).replace('.', ',') }}</span><span class="faint small">{{ s.mentions }}</span></li>
+            } @empty {
+              <li class="faint small">Nada claro todavía.</li>
+            }
+          </ul>
+        </div>
+      </section>
+    }
+
+    <!-- Detail of one company -->
+    @if (detail(); as d) {
+      <section class="card detail" id="sentiment-detail">
+        <div class="card-head">
+          <div>
+            <h2><span class="sym">{{ d.symbol }}</span> {{ d.name }}</h2>
+            <p class="faint small">{{ d.sector }} · {{ d.mentions.length }} menciones en 30 días
+              @if (detailRecord().n) { · acertaron {{ detailRecord().hits }} de {{ detailRecord().n }} a 7 días }
+            </p>
+          </div>
+          <button type="button" class="btn sm link" (click)="detail.set(null)">Cerrar</button>
+        </div>
+        @if (pricePath(); as p) {
+          <svg viewBox="0 0 600 100" preserveAspectRatio="none" class="spark price">
+            <path [attr.d]="p.line" class="spark-line" vector-effect="non-scaling-stroke" />
+          </svg>
+          <div class="axis faint small"><span>{{ day(p.first) }}</span><span>{{ p.min.toFixed(2) }} – {{ p.max.toFixed(2) }}</span><span>{{ day(p.last) }}</span></div>
+        }
+        <ul class="posts">
+          @for (m of d.mentions; track $index) {
+            <li>
+              <div class="post-head">
+                <span class="pill" [class]="'pill ' + stanceCls(m.stance)">{{ stanceLabel(m.stance) }}</span>
+                <strong>{{ m.source }}</strong>
+                <span class="faint small">{{ platformLabel(m.platform) }} · {{ ago(m.postedAt) }}</span>
+                @if (m.hit7 != null) {
+                  <span class="hit" [class.ok]="m.hit7" [title]="'7 días después: ' + pct(m.ret7) + ' (' + pct(m.excess7) + ' vs. índice)'">{{ m.hit7 ? '✓ acertó' : '✗ falló' }}</span>
+                } @else if (m.ret1 != null) {
+                  <span class="faint small">1 día después: {{ pct(m.ret1) }}</span>
+                }
+              </div>
+              <p class="post-text">
+                @if (m.url) { <a [href]="m.url" target="_blank" rel="noopener">{{ m.text }}</a> } @else { {{ m.text }} }
+              </p>
+              @if (m.reason) { <p class="reason">{{ m.reason }}</p> }
+            </li>
+          } @empty {
+            <li class="faint">Sin menciones en los últimos 30 días.</li>
+          }
+        </ul>
+      </section>
+    }
+
+    <!-- Companies -->
+    <section class="card">
+      <div class="card-head wrap">
+        <div>
+          <h2>Empresas del {{ fundLabel() }}</h2>
+          <p class="faint small">{{ withData() }} de {{ stocks().length }} con menciones en los últimos 7 días. Pulsa una para ver qué se ha dicho.</p>
+        </div>
+        <div class="row tools">
+          <input type="search" placeholder="Buscar" [ngModel]="search()" (ngModelChange)="search.set($event)" class="search" />
+          <select [ngModel]="sector()" (ngModelChange)="sector.set($event)" aria-label="Sector">
+            <option value="">Todos los sectores</option>
+            @for (s of sectors(); track s) { <option [value]="s">{{ s }}</option> }
+          </select>
+          <span class="lbl">Ordenar por</span>
+          <select [ngModel]="sort()" (ngModelChange)="sort.set($event)" aria-label="Ordenar por">
+            <option value="mentions">Más mencionadas</option>
+            <option value="bull">Más alcistas</option>
+            <option value="bear">Más bajistas</option>
+            <option value="momentum">Subida en 1 mes</option>
+            <option value="symbol">Ticker</option>
+          </select>
+          <label class="check"><input type="checkbox" [ngModel]="onlyWithData()" (ngModelChange)="onlyWithData.set($event)" /> Solo con menciones</label>
+          <app-view-toggle [(view)]="view" storageKey="sentiment.view" />
+        </div>
+      </div>
+
+      @if (view() === 'cards') {
+        <ul class="heat">
+          @for (s of rows(); track s.symbol) {
+            <li [style.background]="tileBg(s)" [class.on]="detail()?.symbol === s.symbol" (click)="open(s.symbol)" [title]="s.name + ' · ' + tone(s.score, s.mentions).label + ' · ' + s.mentions + ' menciones'">
+              <span class="heat-sym">{{ s.symbol }}</span>
+              <span class="heat-name">{{ s.name }}</span>
+              <span class="heat-foot">
+                <span class="num">{{ s.score == null || s.mentions < 2 ? '·' : (s.score >= 0 ? '+' : '') + s.score.toFixed(2).replace('.', ',') }}</span>
+                <span class="num">{{ s.mentions }} 💬</span>
+              </span>
+              <span class="heat-foot faint"><span>1 m</span><span class="num">{{ pct(s.ret1m, 0) }}</span></span>
+            </li>
+          } @empty {
+            <li class="empty faint">{{ onlyWithData() ? 'Ninguna empresa con menciones todavía. Pulsa «Actualizar» o quita «Solo con menciones».' : 'Sin empresas: pulsa «Actualizar».' }}</li>
+          }
+        </ul>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Empresa</th><th class="hide-sm">Sector</th><th>Tono 7 d</th><th class="r">Menciones</th>
+                <th class="r">1 mes</th><th class="r hide-sm">vs. media 200</th><th class="hide-sm">Redes + precio</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of rows(); track s.symbol) {
+                <tr (click)="open(s.symbol)" class="clickable" [class.on]="detail()?.symbol === s.symbol">
+                  <td><span class="sym">{{ s.symbol }}</span> <span class="co-name">{{ s.name }}</span></td>
+                  <td class="hide-sm faint">{{ s.sector }}</td>
+                  <td><span class="pill" [class]="'pill ' + tone(s.score, s.mentions).cls">{{ tone(s.score, s.mentions).label }}</span>
+                    @if (s.score != null && s.mentions >= 2) { <span class="faint small num"> {{ s.score.toFixed(2).replace('.', ',') }}</span> }
+                  </td>
+                  <td class="r num">{{ s.mentions }} <span class="faint small">({{ s.bull }}↑ {{ s.bear }}↓)</span></td>
+                  <td class="r num" [class.up]="(s.ret1m ?? 0) > 0" [class.down]="(s.ret1m ?? 0) < 0">{{ pct(s.ret1m) }}</td>
+                  <td class="r num hide-sm">{{ pct(s.vsSma200) }}</td>
+                  <td class="hide-sm small">{{ combined(s) }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="7" class="faint">Sin empresas que mostrar.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <!-- Influencers -->
+    <section class="card">
+      <div class="card-head">
+        <div class="seg">
+          <button type="button" [class.on]="tab() === 'feed'" (click)="tab.set('feed')">Lo último de los influyentes</button>
+          <button type="button" [class.on]="tab() === 'sources'" (click)="tab.set('sources')">Ranking de aciertos</button>
+        </div>
+      </div>
+
+      @if (tab() === 'feed') {
+        <ul class="posts">
+          @for (p of feed(); track p.id) {
+            <li>
+              <div class="post-head">
+                <strong>{{ p.source }}</strong>
+                <span class="faint small">{{ platformLabel(p.platform) }} · {{ ago(p.postedAt) }}</span>
+                @if (p.marketStance != null) {
+                  <span class="pill" [class]="'pill ' + stanceCls(p.marketStance)">Mercado: {{ stanceLabel(p.marketStance) }}</span>
+                }
+                @for (m of p.mentions; track m.symbol) {
+                  <span class="pill clickable" [class]="'pill clickable ' + stanceCls(m.stance)" [title]="m.reason" (click)="open(m.symbol)">{{ m.symbol }}</span>
+                }
+              </div>
+              <p class="post-text">
+                @if (p.url) { <a [href]="p.url" target="_blank" rel="noopener">{{ p.text }}</a> } @else { {{ p.text }} }
+              </p>
+            </li>
+          } @empty {
+            <li class="faint">Sin publicaciones clasificadas en los últimos 7 días.</li>
+          }
+        </ul>
+      } @else {
+        <p class="faint small">Acierto = la empresa lo hizo mejor (si era alcista) o peor (si era bajista) que el índice en los 7 días siguientes. Hace falta que pasen al menos 8 días desde las primeras menciones.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Fuente</th><th class="hide-sm">Dónde</th><th class="r">Textos</th><th class="r">Opiniones</th><th class="r">Evaluadas</th><th class="r">Acierto</th><th class="r hide-sm">Exceso medio 7 d</th><th class="r">Peso</th></tr>
+            </thead>
+            <tbody>
+              @for (s of sources(); track s.id) {
+                <tr>
+                  <td>{{ s.name }}</td>
+                  <td class="hide-sm faint">{{ platformLabel(s.platform) }}</td>
+                  <td class="r num">{{ s.posts }}</td>
+                  <td class="r num">{{ s.calls }}</td>
+                  <td class="r num">{{ s.evaluated }}</td>
+                  <td class="r num">{{ s.evaluated ? ((s.hits / s.evaluated) * 100).toFixed(0) + ' %' : '—' }}</td>
+                  <td class="r num hide-sm" [class.up]="(s.avgExcess ?? 0) > 0" [class.down]="(s.avgExcess ?? 0) < 0">{{ pct(s.avgExcess) }}</td>
+                  <td class="r num">{{ s.weight.toFixed(2).replace('.', ',') }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  } @else if (!error()) {
+    <p class="faint">Cargando…</p>
+  }
+</div>

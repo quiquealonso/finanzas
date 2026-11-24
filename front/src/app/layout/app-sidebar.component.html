@@ -1,0 +1,38 @@
+<aside class="app-sidebar">
+  <div class="sidebar-head">
+    <button type="button" class="icon-btn" (click)="sidebarToggle.emit()">{{ sidebarOpen ? '<<' : '>>' }}</button>
+    @if (sidebarOpen) {
+      <div>
+        <p class="kicker">Finanzas</p>
+        <h2>Menu</h2>
+      </div>
+    }
+  </div>
+
+  @if (sidebarOpen) {
+    <nav class="sidebar-links">
+      @for (item of navPages; track item.id) {
+        <button
+          type="button"
+          class="nav-item"
+          [class.active]="currentPage === item.id"
+          (click)="pageChange.emit(item.id)"
+        >
+          {{ item.label }}
+        </button>
+      }
+    </nav>
+
+    <section class="sidebar-footer">
+      <label>
+        <span>Vista entidad</span>
+        <select [value]="selectedBankId" (change)="onBankSelect($any($event.target).value)">
+          <option [value]="allBanksId">Global</option>
+          @for (bank of banks; track bank.id) {
+            <option [value]="bank.id">{{ bank.name }}</option>
+          }
+        </select>
+      </label>
+    </section>
+  }
+</aside>

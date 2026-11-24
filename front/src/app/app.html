@@ -1,0 +1,48 @@
+@if (!user) {
+  <app-login-page />
+} @else {
+<div class="shell">
+  <aside class="side">
+    <div class="brand">Finanzas</div>
+    <nav>
+      @for (item of nav; track item.path) {
+        <a class="nav-item" [routerLink]="'/' + item.path" routerLinkActive="on" ariaCurrentWhenActive="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="item.icon" /></svg>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+    <button type="button" class="btn primary new" (click)="store.openMovement()" title="Atajo: tecla N">+ Nuevo movimiento</button>
+    <div class="side-foot">
+      @if (store.overview(); as o) {
+        <div class="faint small">Patrimonio</div>
+        <div class="num side-total">{{ formatMoney0(o.totalEur) }}</div>
+      }
+      <div class="who">
+        <span class="small">{{ userName() }}</span>
+        <button type="button" class="btn sm link" (click)="switchUser()" title="Cerrar la sesión">Salir</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    @if (store.loadError() && !store.overview()) {
+      <div class="notice">{{ store.loadError() }}</div>
+    }
+    <router-outlet />
+  </main>
+</div>
+
+@if (store.movementDialog()) {
+  <app-movement-dialog />
+}
+
+<!-- Confirmations of every page (instead of the browser's confirm()). -->
+<app-confirm-dialog />
+
+<div class="toasts">
+  @for (t of store.toasts(); track t.id) {
+    <div class="toast" [class.error]="t.kind === 'error'">{{ t.text }}</div>
+  }
+</div>
+}

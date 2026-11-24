@@ -1,0 +1,144 @@
+<div class="dialog-backdrop" (click)="close()">
+  <div class="dialog box" [class.wide-box]="step() === 'review'" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <div class="dialog-head">
+      <h2>Importar del correo</h2>
+      <button type="button" class="btn link" (click)="close()" [disabled]="busy()" aria-label="Cerrar">✕</button>
+    </div>
+
+    <!-- In which user: the most important thing to know before importing. -->
+    @if (setup(); as s) {
+      <div class="who" [class.real]="s.user.id === 'user1'">
+        Importando en <strong>{{ s.user.name }}</strong>
+        @if (s.user.id === 'user1') { <span> · tus datos reales</span> }
+      </div>
+    }
+
+    <!-- Step 1: banks and start day -->
+    @if (step() === 'setup') {
+      @if (setup(); as s) {
+        <div class="q">
+          <h3>¿De dónde quieres importar movimientos?</h3>
+          <p class="faint small">Elige uno o varios de tus bancos. Solo se leen los correos; nada se guarda hasta que lo revises.</p>
+        </div>
+        <ul class="banks">
+          @for (b of s.banks; track b.id) {
+            <li>
+              <label class="bank" [class.on]="picked().includes(b.id)">
+                <input type="checkbox" [checked]="picked().includes(b.id)" (change)="toggleBank(b.id)" />
+                <span class="bank-name">{{ b.name }}</span>
+                @if (b.template) { <span class="tag ok" [title]="'Plantilla de ' + b.template">plantilla</span> }
+              </label>
+            </li>
+          }
+        </ul>
+        <div class="since">
+          <label>Desde <input type="date" [(ngModel)]="since" /></label>
+          <span class="faint small">{{ lastText() }}</span>
+        </div>
+        <div class="source small">
+          @if (gmail(); as g) {
+            @if (g.connected) {
+              <span class="up">● Gmail conectado</span> <span class="faint">{{ g.email }} · solo lectura</span>
+            } @else if (g.configured) {
+              <span>Gmail no está conectado: se usarán los correos de ejemplo.</span>
+            } @else {
+              <span class="faint">Falta el cliente de Google en la carpeta .finanzas: se usarán los correos de ejemplo.</span>
+            }
+          }
+        </div>
+      } @else {
+        <p class="faint small">Preparando…</p>
+      }
+    }
+
+    <!-- Steps 2 and 4: progress -->
+    @if (job(); as j) {
+      @if (step() !== 'review') {
+        <div class="progress">
+          <div class="bar"><div [style.width.%]="j.total ? (j.processed / j.total) * 100 : (busy() ? 6 : 100)"></div></div>
+          <div class="counts small">
+            @if (step() === 'scanning') {
+              <span>{{ j.processed }} / {{ j.total || '…' }} correos</span>
+            } @else {
+              <span>{{ j.processed }} / {{ j.total }}</span>
+              <span class="up">{{ j.created }} nuevas</span>
+              <span class="faint">{{ j.linked }} enlazadas</span>
+              @if (j.failed) { <span class="down">{{ j.failed }} con error</span> }
+            }
+          </div>
+        </div>
+        <ol class="log" #log>
+          @for (e of events(); track e.n) {
+            <li [class]="e.level"><span class="icon">{{ icons[e.level] }}</span><span>{{ e.text }}</span></li>
+          }
+          @if (busy()) { <li class="info typing"><span class="icon">⋯</span><span>trabajando</span></li> }
+        </ol>
+      } @else {
+        <!-- Step 3: review -->
+        <div class="review-head">
+          <div class="seg small-seg">
+            <button type="button" [class.on]="filter() === 'all'" (click)="filter.set('all')">Todas ({{ j.candidates.length }})</button>
+            <button type="button" [class.on]="filter() === 'new'" (click)="filter.set('new')">Nuevas ({{ count('new') }})</button>
+            @if (count('maybe')) { <button type="button" [class.on]="filter() === 'maybe'" (click)="filter.set('maybe')">Dudosas ({{ count('maybe') }})</button> }
+            <button type="button" [class.on]="filter() === 'exists'" (click)="filter.set('exists')">Ya las tienes ({{ count('exists') }})</button>
+            <button type="button" [class.on]="filter() === 'imported'" (click)="filter.set('imported')">Ya importadas ({{ count('imported') }})</button>
+          </div>
+          <span class="spacer"></span>
+          @if (count('new')) {
+            <button type="button" class="btn sm link" (click)="tickAll(ticked().size < count('new'))">{{ ticked().size < count('new') ? 'Marcar todas' : 'Desmarcar todas' }}</button>
+          }
+        </div>
+        @if (j.candidates.length) {
+          <div class="table-wrap rows">
+            <table>
+              <thead>
+                <tr><th></th><th>Fecha</th><th>Banco</th><th>Operación</th><th>Activo</th><th class="r">Títulos</th><th class="r">Precio</th><th class="r">Importe</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                @for (c of rows(); track c.key) {
+                  <tr [class.dim]="!tickable(c.status)" (click)="tickable(c.status) && toggle(c.key)">
+                    <td><input type="checkbox" [checked]="ticked().has(c.key)" [disabled]="!tickable(c.status)" (click)="$event.stopPropagation()" (change)="toggle(c.key)" /></td>
+                    <td class="nowrap">{{ day(c.date) }}</td>
+                    <td>{{ c.bankName }}</td>
+                    <td>{{ c.type === 'order' ? 'Orden de ' + (c.kind === 'buy' ? 'compra' : 'venta') : (c.kind === 'buy' ? 'Compra' : 'Venta') }}</td>
+                    <td>{{ c.assetName }}</td>
+                    <td class="r num">{{ num(c.quantity, 4) }}</td>
+                    <td class="r num">{{ num(c.price, 4) }}</td>
+                    <td class="r num">{{ c.amount == null ? '—' : num(c.amount) + ' ' + c.currency }}</td>
+                    <td><span class="tag" [class]="'tag ' + c.status">{{ statusLabel(c.status) }}</span> <span class="faint small note">{{ c.note }}</span></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="faint">No hay movimientos en los correos de esos bancos desde esa fecha.</p>
+        }
+        <p class="faint small">Las que ya tienes se enlazan a su correo (no se duplican). Las dudosas (mismos títulos, fecha distinta) se enlazan si no las marcas; márcalas solo si son otra operación. Las órdenes de BBVA quedan por confirmar en Movimientos.</p>
+      }
+    }
+
+    <div class="dialog-foot">
+      <span class="spacer"></span>
+      @switch (step()) {
+        @case ('setup') {
+          @if (gmail()?.configured && !gmail()?.connected) {
+            <button type="button" class="btn" (click)="connect()">Conectar Gmail</button>
+            <button type="button" class="btn link" (click)="loadGmail()" title="Después de dar permiso en Google">Ya lo he conectado</button>
+          }
+          @if (gmail()?.connected) { <button type="button" class="btn link" (click)="disconnect()">Desconectar Gmail</button> }
+          <button type="button" class="btn primary" (click)="scan()" [disabled]="!picked().length || !setup()">Buscar movimientos</button>
+        }
+        @case ('review') {
+          <button type="button" class="btn" (click)="close()">Cancelar</button>
+          <button type="button" class="btn primary" (click)="apply()" [disabled]="!ticked().size && !count('exists') && !count('maybe')">
+            {{ ticked().size ? 'Importar ' + ticked().size + (ticked().size === 1 ? ' movimiento' : ' movimientos') : 'Solo enlazar las que ya tengo' }}
+          </button>
+        }
+        @default {
+          <button type="button" class="btn primary" (click)="close()" [disabled]="busy()">{{ busy() ? 'Trabajando…' : 'Cerrar' }}</button>
+        }
+      }
+    </div>
+  </div>
+</div>

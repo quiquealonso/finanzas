@@ -1,0 +1,35 @@
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; }
+.kpi span { font-size: 12px; color: var(--text-2); }
+.kpi strong { font-size: 20px; font-weight: 600; }
+.kpi small { font-size: 12px; color: var(--text-3); }
+
+.calendar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.cal-item { flex: none; min-width: 110px; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); }
+.cal-item.past { background: var(--warn-soft); }
+
+.seg { align-self: flex-start; }
+
+.tickets { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.ticket { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.ticket.matured { border-color: var(--warn-text); }
+.ticket.incomplete { border-style: dashed; }
+.t-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.t-amounts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.t-amounts div { display: flex; flex-direction: column; }
+.progress { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.progress div { height: 100%; background: var(--t-real); border-radius: 3px; }
+.ticket.matured .progress div { background: var(--warn-text); }
+.t-dates { display: flex; justify-content: space-between; margin-top: -6px; }
+.t-actions { display: flex; justify-content: flex-end; gap: 6px; }
+
+.s-active { background: var(--accent-soft); color: var(--accent-text); }
+.s-matured { background: var(--warn-soft); color: var(--warn-text); }
+.s-collected { background: var(--up-soft); color: var(--up); }
+
+.flush { padding: 0; }
+.flush table th:first-child, .flush table td:first-child { padding-left: 18px; }
+.flush table th:last-child, .flush table td:last-child { padding-right: 18px; }
+.dialog-foot .spacer { flex: 1; }
+
+@media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

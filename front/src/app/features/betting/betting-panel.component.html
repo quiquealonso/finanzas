@@ -1,0 +1,153 @@
+<div class="toolbar">
+  <div class="field-inline year">
+    <span class="small muted">Año</span>
+    <input type="number" [value]="year" (change)="updateYear($any($event.target).value)" min="2000" max="2100" />
+  </div>
+  @if (firstDate) {
+    <span class="small faint">Datos desde el {{ formatDate(firstDate) }}</span>
+  }
+  <span class="spacer"></span>
+  <form class="field-inline" (ngSubmit)="submitHouse()">
+    <input type="text" name="bettingHouseName" [(ngModel)]="newBettingHouseName" placeholder="Nueva casa: Bet365, Codere…" />
+    <button type="submit" class="btn" [disabled]="actionInProgress">Crear casa</button>
+  </form>
+  <button type="button" class="btn primary" (click)="openTransactionDialog()" [disabled]="actionInProgress || !hasHouses">
+    + Ingreso o retirada
+  </button>
+</div>
+
+<section class="summary-grid">
+  <article class="metric-card">
+    <div class="small faint">Ingresado</div>
+    <div class="metric-value num">{{ money(dashboard.totals.deposits) }}</div>
+    <div class="small muted">Dinero metido en las casas en el año</div>
+  </article>
+  <article class="metric-card">
+    <div class="small faint">Retirado</div>
+    <div class="metric-value num">{{ money(dashboard.totals.withdrawals) }}</div>
+    <div class="small muted">Dinero sacado de las casas en el año</div>
+  </article>
+  <article class="metric-card metric-card-accent">
+    <div class="small faint">Beneficio</div>
+    <div class="metric-value num" [class]="signClass(totalProfit)">{{ signedMoney(totalProfit) }}</div>
+    <div class="small muted">Retirado menos ingresado</div>
+  </article>
+  <article class="metric-card">
+    <div class="small faint">Casas</div>
+    <div class="metric-value num">{{ dashboard.houses.length }}</div>
+    <div class="small muted">Con movimientos o dadas de alta</div>
+  </article>
+</section>
+
+<section class="card flush">
+  <div class="card-head pad"><h2>Por casa</h2></div>
+  @if (dashboard.houses.length === 0) {
+    <p class="empty">Todavía no hay casas de apuestas.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Casa</th>
+            <th class="r">Ingresado</th>
+            <th class="r">Retirado</th>
+            <th class="r">Beneficio</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (house of dashboard.houses; track house.id) {
+            <tr>
+              <td><strong>{{ house.name }}</strong></td>
+              <td class="r muted">{{ money(house.deposits) }}</td>
+              <td class="r muted">{{ money(house.withdrawals) }}</td>
+              <td class="r" [class]="signClass(profit(house))"><strong>{{ signedMoney(profit(house)) }}</strong></td>
+              <td class="r">
+                <button type="button" class="btn sm link danger" (click)="removeHouse.emit(house.id)" [disabled]="actionInProgress">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<section class="card flush">
+  <div class="card-head pad"><h2>Movimientos</h2></div>
+  @if (dashboard.transactions.length === 0) {
+    <p class="empty">Aún no hay movimientos este año.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Casa</th>
+            <th>Tipo</th>
+            <th class="r">Importe</th>
+            <th>Nota</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (transaction of dashboard.transactions; track transaction.id) {
+            <tr>
+              <td class="nowrap">{{ formatDate(transaction.date) }}</td>
+              <td>{{ transaction.bettingHouseName }}</td>
+              <td><span class="badge">{{ transaction.type === 'DEPOSIT' ? 'Ingreso' : 'Retirada' }}</span></td>
+              <td class="r" [class]="transaction.type === 'DEPOSIT' ? 'down' : 'up'">
+                {{ signedMoney(transaction.type === 'DEPOSIT' ? -transaction.amount : transaction.amount) }}
+              </td>
+              <td class="muted">{{ transaction.note || '—' }}</td>
+              <td class="r">
+                <button type="button" class="btn sm link danger" (click)="removeTransaction.emit(transaction.id)" [disabled]="actionInProgress">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (showTransactionDialog) {
+  <div class="dialog-backdrop" (click)="closeTransactionDialog()">
+    <form class="dialog stack" (click)="$event.stopPropagation()" (ngSubmit)="submitTransaction()">
+      <div class="dialog-head">
+        <h2>Ingreso o retirada</h2>
+        <button type="button" class="btn link" (click)="closeTransactionDialog()">Cerrar</button>
+      </div>
+      <label class="field">
+        <span>Casa de apuestas</span>
+        <select name="bettingHouseId" [(ngModel)]="transactionDraft.bettingHouseId">
+          @for (house of dashboard.houses; track house.id) {
+            <option [value]="house.id">{{ house.name }}</option>
+          }
+        </select>
+      </label>
+      <div class="seg full">
+        <button type="button" [class.on]="transactionDraft.type === 'DEPOSIT'" (click)="transactionDraft.type = 'DEPOSIT'">Ingreso</button>
+        <button type="button" [class.on]="transactionDraft.type === 'WITHDRAWAL'" (click)="transactionDraft.type = 'WITHDRAWAL'">Retirada</button>
+      </div>
+      <div class="grid-form">
+        <label class="field">
+          <span>Importe (€)</span>
+          <input type="number" name="bettingAmount" [(ngModel)]="transactionDraft.amount" min="0" step="0.01" />
+        </label>
+        <label class="field">
+          <span>Fecha</span>
+          <input type="date" name="bettingDate" [(ngModel)]="transactionDraft.date" />
+        </label>
+      </div>
+      <label class="field">
+        <span>Nota</span>
+        <input type="text" name="bettingNote" [(ngModel)]="transactionDraft.note" placeholder="Opcional" />
+      </label>
+      <div class="dialog-foot">
+        <button type="button" class="btn" (click)="closeTransactionDialog()">Cancelar</button>
+        <button type="submit" class="btn primary" [disabled]="actionInProgress">Guardar</button>
+      </div>
+    </form>
+  </div>
+}

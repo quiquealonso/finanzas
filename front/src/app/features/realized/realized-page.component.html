@@ -1,0 +1,269 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Ventas y posiciones cerradas</h1>
+      <p>Lo que has ganado o perdido al vender, con criterio FIFO (el que usa Hacienda: se venden primero las compras más antiguas).</p>
+    </div>
+    <div class="row">
+      <button class="btn" type="button" (click)="newOld()">+ Posición antigua</button>
+      <button class="btn primary" type="button" (click)="sell()">+ Vender</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="seg">
+      <button type="button" [class.on]="!year()" (click)="year.set('')">Todo</button>
+      @for (y of years(); track y) {
+        <button type="button" [class.on]="year() === y" (click)="year.set(y)">{{ y }}</button>
+      }
+    </div>
+    <span class="spacer"></span>
+    <div class="seg">
+      <button type="button" [class.on]="view() === 'sales'" (click)="view.set('sales')">Cada venta</button>
+      <button type="button" [class.on]="view() === 'assets'" (click)="view.set('assets')">Por activo</button>
+    </div>
+    <app-view-toggle [(view)]="layout" storageKey="realized.view" />
+  </div>
+
+  <div class="kpis">
+    <div class="kpi main">
+      <span>Resultado {{ year() ? 'en ' + year() : 'total' }}</span>
+      <strong class="num" [class]="fmt.signClass(totals().net)">{{ fmt.formatSignedMoney(totals().net) }}</strong>
+      <small class="num" [class]="fmt.signClass(totals().pct)">{{ fmt.formatSignedPercent(totals().pct, 1) }} sobre lo vendido</small>
+    </div>
+    <div class="kpi"><span>Ganancias</span><strong class="num up">{{ fmt.formatSignedMoney(totals().gains) }}</strong></div>
+    <div class="kpi"><span>Pérdidas</span><strong class="num" [class.down]="totals().losses < 0">{{ fmt.formatSignedMoney(totals().losses) }}</strong></div>
+    <div class="kpi"><span>Ventas</span><strong class="num">{{ totals().count }}</strong><small>{{ (totals().winRate * 100).toFixed(0) }} % con beneficio</small></div>
+    <div class="kpi"><span>Retención media</span><strong class="num">{{ totals().count ? holding(totals().avgDays) : '—' }}</strong></div>
+  </div>
+
+  @if (!year() && (data()?.byYear?.length ?? 0) > 1) {
+    <section class="card flush">
+      <div class="card-head pad"><h2>Por año fiscal</h2></div>
+      <table>
+        <thead><tr><th>Año</th><th class="r">Ventas</th><th class="r">Ganancias</th><th class="r">Pérdidas</th><th class="r">Neto (a declarar)</th></tr></thead>
+        <tbody>
+          @for (y of data()!.byYear; track y.year) {
+            <tr class="clickable" (click)="year.set(y.year)">
+              <td><strong>{{ y.year }}</strong></td>
+              <td class="r">{{ y.count }}</td>
+              <td class="r up">{{ fmt.formatSignedMoney(y.gains) }}</td>
+              <td class="r" [class.down]="y.losses < 0">{{ fmt.formatSignedMoney(y.losses) }}</td>
+              <td class="r" [class]="fmt.signClass(y.net)"><strong>{{ fmt.formatSignedMoney(y.net) }}</strong></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+
+  <section class="card flush">
+    <div class="table-wrap">
+      @if (view() === 'sales' && layout() === 'cards') {
+        @let maxSale = maxAbsSale();
+        <ul class="tiles pad-tiles">
+          @for (s of sales(); track s.id) {
+            <li class="tile" [title]="s.assetName + ' · comprado ' + fmt.formatDay(s.firstBuyDay) + ' · vendido ' + fmt.formatDay(s.date)">
+              <div class="tile-name">
+                <span class="dot" [style.background]="typeColors[s.typeCode]"></span><span class="tile-label">{{ s.assetName }}</span>
+                @if (s.kind !== 'sell') { <span class="badge">{{ kindLabel(s.kind) }}</span> }
+                @else if (s.positionClosed) { <span class="badge">Cerrada</span> }
+              </div>
+              <div class="tile-sub">{{ s.bankName }} · {{ fmt.formatDay(s.date) }} · {{ holding(s.holdingDays) }}</div>
+              <div class="tile-big" [class]="fmt.signClass(s.pnlEur)">
+                <strong>{{ fmt.formatSignedMoney(s.pnlEur) }}</strong>
+                <span class="tile-aside">{{ fmt.formatSignedPercent(s.pnlPct, 1) }}</span>
+              </div>
+              <!-- Result against the biggest sale of the list. -->
+              <div class="tile-meter"><div [style.width.%]="(abs(s.pnlEur) / maxSale) * 100" [style.background]="s.pnlEur < 0 ? 'var(--down)' : 'var(--up)'"></div></div>
+              <div class="tile-foot">
+                <span title="Coste">{{ fmt.formatMoney(s.costEur) }}</span>
+                <span title="Venta">→ {{ fmt.formatMoney(s.proceedsEur) }}</span>
+              </div>
+            </li>
+          } @empty {
+            <li class="faint small empty">{{ loading() ? 'Cargando…' : 'Sin ventas en este periodo.' }}</li>
+          }
+        </ul>
+      } @else if (view() === 'sales') {
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha venta</th>
+              <th>Activo</th>
+              <th class="r">Cantidad</th>
+              <th class="r">Coste</th>
+              <th class="r">Venta</th>
+              <th class="r">Resultado</th>
+              <th class="r">%</th>
+              <th class="r">Retención</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of sales(); track s.id) {
+              <tr>
+                <td class="nowrap">
+                  {{ fmt.formatDay(s.date) }}
+                  @if (s.kind !== 'sell') { <span class="badge">{{ kindLabel(s.kind) }}</span> }
+                </td>
+                <td>
+                  <div class="asset">
+                    <span class="dot" [style.background]="typeColors[s.typeCode]"></span>
+                    <div>
+                      <div>{{ s.assetName }}</div>
+                      <div class="faint small">{{ s.bankName }} · comprado {{ fmt.formatDay(s.firstBuyDay) }}{{ s.positionClosed ? ' · cerrada' : '' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="r">{{ fmt.formatQty(s.quantity) }}</td>
+                <td class="r muted">{{ fmt.formatMoney(s.costEur) }}</td>
+                <td class="r">{{ fmt.formatMoney(s.proceedsEur) }}</td>
+                <td class="r" [class]="fmt.signClass(s.pnlEur)"><strong>{{ fmt.formatSignedMoney(s.pnlEur) }}</strong></td>
+                <td class="r" [class]="fmt.signClass(s.pnlPct)">{{ fmt.formatSignedPercent(s.pnlPct, 1) }}</td>
+                <td class="r nowrap">{{ holding(s.holdingDays) }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="8" class="empty">{{ loading() ? 'Cargando…' : 'Sin ventas en este periodo.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      } @else if (layout() === 'table') {
+        <table>
+          <thead>
+            <tr>
+              <th>Activo</th>
+              <th class="r">Ventas</th>
+              <th class="r">Invertido</th>
+              <th class="r">Recuperado</th>
+              <th class="r">Resultado</th>
+              <th class="r">%</th>
+              <th class="r">Retención</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of assets(); track a.assetId) {
+              <tr>
+                <td>
+                  <div class="asset">
+                    <span class="dot" [style.background]="typeColors[a.typeCode]"></span>
+                    <div>
+                      <div>{{ a.assetName }} @if (a.positionClosed) { <span class="badge">Cerrada</span> } @else { <span class="badge open">Abierta</span> }</div>
+                      <div class="faint small">{{ a.bankName }} · {{ fmt.formatDay(a.firstBuyDay) }} → {{ fmt.formatDay(a.lastSellDay) }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="r">{{ a.sales }}</td>
+                <td class="r muted">{{ fmt.formatMoney(a.costEur) }}</td>
+                <td class="r">{{ fmt.formatMoney(a.proceedsEur) }}</td>
+                <td class="r" [class]="fmt.signClass(a.pnlEur)"><strong>{{ fmt.formatSignedMoney(a.pnlEur) }}</strong></td>
+                <td class="r" [class]="fmt.signClass(a.pnlPct)">{{ fmt.formatSignedPercent(a.pnlPct, 1) }}</td>
+                <td class="r nowrap">{{ holding(a.holdingDays) }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="empty">{{ loading() ? 'Cargando…' : 'Sin posiciones vendidas en este periodo.' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        @let maxPnl = maxAbsPnl();
+        <ul class="tiles pad-tiles">
+          @for (a of assets(); track a.assetId) {
+            <li class="tile" [title]="a.assetName + ' · ' + fmt.formatDay(a.firstBuyDay) + ' → ' + fmt.formatDay(a.lastSellDay)">
+              <div class="tile-name">
+                <span class="dot" [style.background]="typeColors[a.typeCode]"></span><span class="tile-label">{{ a.assetName }}</span>
+                @if (a.positionClosed) { <span class="badge">Cerrada</span> } @else { <span class="badge open">Abierta</span> }
+              </div>
+              <div class="tile-sub">{{ a.bankName }} · {{ a.sales }} {{ a.sales === 1 ? 'venta' : 'ventas' }} · {{ holding(a.holdingDays) }}</div>
+              <div class="tile-big" [class]="fmt.signClass(a.pnlEur)">
+                <strong>{{ fmt.formatSignedMoney(a.pnlEur) }}</strong>
+                <span class="tile-aside">{{ fmt.formatSignedPercent(a.pnlPct, 1) }}</span>
+              </div>
+              <!-- Result against the biggest result of the list. -->
+              <div class="tile-meter"><div [style.width.%]="(abs(a.pnlEur) / maxPnl) * 100" [style.background]="a.pnlEur < 0 ? 'var(--down)' : 'var(--up)'"></div></div>
+              <div class="tile-foot">
+                <span title="Invertido">{{ fmt.formatMoney(a.costEur) }}</span>
+                <span title="Recuperado">→ {{ fmt.formatMoney(a.proceedsEur) }}</span>
+              </div>
+            </li>
+          } @empty {
+            <li class="faint small empty">{{ loading() ? 'Cargando…' : 'Sin posiciones vendidas en este periodo.' }}</li>
+          }
+        </ul>
+      }
+    </div>
+  </section>
+
+  <p class="faint small">
+    "Retención" es el tiempo medio que tuviste las participaciones vendidas, ponderado por cantidad. Lo ganado con ventas se suma a la rentabilidad de su año en el Resumen.
+    Los traspasos entre fondos aparecen como venta para que veas su resultado, aunque fiscalmente en España no tributan.
+  </p>
+</div>
+
+@if (draft; as d) {
+  <div class="dialog-backdrop" (click)="draft = null">
+    <form class="dialog" (click)="$event.stopPropagation()" (ngSubmit)="saveOld()" autocomplete="off">
+      <div class="dialog-head">
+        <h2>Posición antigua</h2>
+        <button type="button" class="btn link" (click)="draft = null" aria-label="Cerrar">✕</button>
+      </div>
+      <p class="muted small">Algo que compraste y vendiste antes de usar la app. Cuenta en tus ventas, pero no en la cartera actual ni en los gráficos de patrimonio.</p>
+      <div class="grid-2">
+        <label class="field">
+          <span>Activo</span>
+          <input name="name" [(ngModel)]="d.name" placeholder="Inditex" />
+        </label>
+        <label class="field">
+          <span>Banco o broker</span>
+          <input name="bank" [(ngModel)]="d.bankName" list="banks" />
+          <datalist id="banks">
+            @for (b of store.banks(); track b.id) { <option [value]="b.name"></option> }
+          </datalist>
+        </label>
+      </div>
+      <div class="grid-2">
+        <label class="field">
+          <span>Tipo</span>
+          <select name="type" [(ngModel)]="d.typeCode">
+            @for (t of store.types(); track t.code) {
+              @if (!t.isLiquidity) { <option [value]="t.code">{{ t.name }}</option> }
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span>Cantidad <span class="faint">(opcional)</span></span>
+          <input type="number" name="qty" step="any" min="0" [(ngModel)]="d.quantity" placeholder="100" />
+        </label>
+      </div>
+      <div class="grid-2">
+        <label class="field">
+          <span>Fecha de compra</span>
+          <input type="date" name="buyDate" [(ngModel)]="d.buyDate" [max]="today" />
+        </label>
+        <label class="field">
+          <span>Total pagado (€, con comisiones)</span>
+          <input type="number" name="buyAmount" step="any" min="0" [(ngModel)]="d.buyAmountEur" placeholder="1000" />
+        </label>
+      </div>
+      <div class="grid-2">
+        <label class="field">
+          <span>Fecha de venta</span>
+          <input type="date" name="sellDate" [(ngModel)]="d.sellDate" [max]="today" [min]="d.buyDate" />
+        </label>
+        <label class="field">
+          <span>Total recibido (€, sin comisiones)</span>
+          <input type="number" name="sellAmount" step="any" min="0" [(ngModel)]="d.sellAmountEur" placeholder="1250" />
+        </label>
+      </div>
+      @if (draftResult(); as r) {
+        <div class="summary-box">
+          Resultado <strong [class]="fmt.signClass(r.pnl)">{{ fmt.formatSignedMoney(r.pnl) }} ({{ fmt.formatSignedPercent(r.pct, 1) }})</strong>
+          en {{ holding(r.days) }}
+        </div>
+      }
+      <div class="dialog-foot">
+        <button type="button" class="btn" (click)="draft = null">Cancelar</button>
+        <button type="submit" class="btn primary" [disabled]="saving()">Guardar</button>
+      </div>
+    </form>
+  </div>
+}

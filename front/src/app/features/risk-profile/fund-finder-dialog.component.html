@@ -1,0 +1,122 @@
+<div class="dialog-backdrop" (click)="close()">
+  <div class="dialog box" [class.wide]="step() === 'results'" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <div class="dialog-head">
+      <h2><span class="ai-badge">✦ IA</span> Analizar mejores opciones</h2>
+      <button type="button" class="btn link" (click)="close()" [disabled]="step() === 'searching'" aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="who" [style.--pc]="profileInfo().color">
+      <span>{{ profileInfo().emoji }}</span> Perfil <strong>{{ profileInfo().name }}</strong>
+      <span class="faint small">· riesgo orientativo {{ profileInfo().equity[0] }}–{{ profileInfo().equity[1] }} % en bolsa</span>
+    </div>
+
+    @switch (step()) {
+      <!-- 1. Regions -->
+      @case ('zones') {
+        <div class="q">
+          <h3>¿En qué zonas del mundo quieres invertir?</h3>
+          <p class="faint small">Elige una o varias. Solo se buscarán fondos que inviertan sobre todo ahí.</p>
+        </div>
+        <ul class="zones">
+          @for (z of zones; track z.id) {
+            <li>
+              <button type="button" class="zone" [class.on]="picked().includes(z.id)" (click)="toggle(z.id)">
+                <span class="flag">{{ z.flag }}</span>
+                <span class="zname">{{ z.name }}</span>
+                @if (z.hint) { <span class="zhint">{{ z.hint }}</span> }
+                <span class="check">{{ picked().includes(z.id) ? '✓' : '' }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+        <p class="faint small">Datos: fondos registrados en España (CNMV, oficiales) y fondos y ETFs internacionales populares (precios de Yahoo).</p>
+      }
+
+      <!-- 2. Searching: the AI at work -->
+      @case ('searching') {
+        <div class="thinking">
+          <div class="orb"><span></span><span></span><span></span></div>
+          <div>
+            <strong>La IA está analizando fondos…</strong>
+            <div class="faint small">{{ events().at(-1)?.text ?? 'Empezando…' }}</div>
+          </div>
+        </div>
+        <ol class="log" #log>
+          @for (e of events(); track e.n) {
+            <li [class]="e.level"><span class="icon">{{ e.level === 'ai' ? '✦' : e.level === 'ok' ? '✓' : e.level === 'warn' ? '!' : e.level === 'error' ? '✕' : '›' }}</span><span>{{ e.text }}</span></li>
+          }
+          <li class="info typing"><span class="icon">⋯</span><span>trabajando</span></li>
+        </ol>
+      }
+
+      <!-- 3. Results -->
+      @case ('results') {
+        @if (job(); as j) {
+          @if (j.picks.length) {
+            <p class="summary small">
+              De {{ j.considered.toLocaleString('es-ES') }} fondos, {{ j.matched.toLocaleString('es-ES') }} encajan con tu riesgo y zonas.
+              @if (j.model) { <span class="ai-badge sm">✦ Elegidos por IA · {{ j.model }}</span> } @else { <span class="faint">Elegidos por puntuación (IA no disponible).</span> }
+            </p>
+            <ol class="picks">
+              @for (p of j.picks; track p.isin; let i = $index) {
+                <li class="pick" [style.animation-delay.ms]="i * 120">
+                  <div class="rank">{{ i + 1 }}</div>
+                  <div class="pbody">
+                    <div class="pname">{{ p.name }}</div>
+                    <div class="faint small">{{ p.manager }} · {{ p.category }} · {{ p.isin }} · {{ p.source === 'cnmv' ? 'CNMV' : 'Internacional' }}</div>
+                    <p class="reason">✦ {{ p.reason }}</p>
+                    <div class="facts">
+                      <span><em>12 meses</em><strong [class.up]="(p.ret1y ?? 0) > 0" [class.down]="(p.ret1y ?? 0) < 0">{{ pct(p.ret1y) }}</strong></span>
+                      @if (p.ret3y != null) { <span><em>3 años/año</em><strong>{{ pct(p.ret3y) }}</strong></span> }
+                      <span><em>Volatilidad</em><strong>{{ plain(p.vol) }}</strong></span>
+                      <span><em>Riesgo</em><strong>{{ p.risk }}/7</strong></span>
+                      <span><em>Gastos/año</em><strong>{{ plain(p.ter, 2) }}</strong></span>
+                      @if (p.aum) { <span><em>Patrimonio</em><strong>{{ money(p.aum) }}</strong></span> }
+                      <span><em>Zonas</em><strong>{{ regionFlags(p.regions) }}</strong></span>
+                    </div>
+                  </div>
+                  <div class="pick-actions">
+                    @if (savedIsins().has(p.isin)) {
+                      <span class="saved-tag">★ Guardado</span>
+                    } @else {
+                      <button type="button" class="btn sm" (click)="save([p])" [disabled]="saving()">☆ Guardar</button>
+                    }
+                    <a class="btn sm link more" [href]="link(p)" target="_blank" rel="noopener">Ficha ↗</a>
+                  </div>
+                </li>
+              }
+            </ol>
+          }
+          <details class="trace">
+            <summary class="faint small">Ver cómo se ha hecho ({{ events().length }} pasos)</summary>
+            <ol class="log short">
+              @for (e of events(); track e.n) { <li [class]="e.level"><span class="icon">{{ e.level === 'ai' ? '✦' : '›' }}</span><span>{{ e.text }}</span></li> }
+            </ol>
+          </details>
+          <p class="disclaimer small"><strong>No es una recomendación de inversión.</strong> Selección automática con fines educativos a partir de datos públicos (CNMV, Yahoo), que pueden tener retraso o errores. Rentabilidades pasadas no garantizan las futuras. Antes de invertir, lee el folleto y el documento de datos fundamentales del fondo.</p>
+        }
+      }
+    }
+
+    <div class="dialog-foot">
+      <span class="spacer"></span>
+      @switch (step()) {
+        @case ('zones') {
+          <button type="button" class="btn" (click)="close()">Cancelar</button>
+          <button type="button" class="btn primary" (click)="search()" [disabled]="!picked().length">✦ Buscar los 5 mejores</button>
+        }
+        @case ('results') {
+          <button type="button" class="btn" (click)="again()">Cambiar zonas</button>
+          @if (job()?.picks?.length) {
+            @if (allSaved()) {
+              <span class="saved-tag">★ Guardados en «Mis fondos»</span>
+            } @else {
+              <button type="button" class="btn" (click)="save(job()!.picks)" [disabled]="saving()">★ Guardar los {{ job()!.picks.length }}</button>
+            }
+          }
+          <button type="button" class="btn primary" (click)="close()">Cerrar</button>
+        }
+      }
+    </div>
+  </div>
+</div>

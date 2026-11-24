@@ -1,0 +1,170 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Cierres mensuales</h1>
+      <p>Valor de tus activos actuales a fin de cada mes, más la liquidez que apuntes a mano. Hoja aparte: no cambia nada del resto de la app.</p>
+    </div>
+    @if (headline(); as h) {
+      <div class="headline">
+        <div class="faint small">Patrimonio total · cierre {{ h.month }}</div>
+        <div class="big num">{{ fmt.formatMoney0(h.total) }}</div>
+        <div class="small num">
+          @if (h.delta) {
+            <span [class]="fmt.signClass(h.delta.eur)">{{ fmt.formatSignedMoney(h.delta.eur) }}@if (h.delta.pct !== null) { ({{ fmt.formatSignedPercent(h.delta.pct) }})}</span>
+            <span class="faint"> en {{ h.month }}</span>
+            @if (contribText(h.contrib); as a) { <span class="faint"> · {{ a }}</span> }
+          }
+          @if (h.ytd) {
+            <span class="faint"> · </span>
+            <span [class]="fmt.signClass(h.ytd.eur)">{{ fmt.formatSignedMoney(h.ytd.eur) }}@if (h.ytd.pct !== null) { ({{ fmt.formatSignedPercent(h.ytd.pct) }})}</span>
+            <span class="faint"> sobre lo invertido</span>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="toolbar">
+    @if (sheet(); as s) {
+      <div class="seg">
+        @for (y of s.years; track y) {
+          <button type="button" [class.on]="s.year === y" (click)="closeMonth.set(null); load(y)">{{ y }}</button>
+        }
+      </div>
+      @if (closable().length) {
+        <div class="close-box">
+          <select [value]="closeMonth() ?? closable()[0]" (change)="closeMonth.set(+$any($event.target).value)">
+            @for (m of closable(); track m) { <option [value]="m">{{ monthNames[m] }}</option> }
+          </select>
+          <button type="button" class="btn primary" [disabled]="closing()" (click)="doClose()">{{ closing() ? 'Cerrando…' : 'Hacer cierre' }}</button>
+        </div>
+      }
+    }
+    <div class="seg">
+      <button type="button" [class.on]="deltaMode() === 'pct'" (click)="deltaMode.set('pct')">Var. %</button>
+      <button type="button" [class.on]="deltaMode() === 'eur'" (click)="deltaMode.set('eur')">Var. €</button>
+      <button type="button" [class.on]="deltaMode() === 'none'" (click)="deltaMode.set('none')">Solo valor</button>
+    </div>
+    <span class="spacer"></span>
+    <span class="faint small">Clic en una celda para editar · Enter baja · Tab avanza · Esc cancela</span>
+    <button type="button" class="btn" (click)="addSection()">+ Sección</button>
+  </div>
+
+  <div class="card flush">
+    @if (view().length) {
+      <div class="sheet">
+        <table>
+          <thead>
+            <tr>
+              <th class="sticky">Producto</th>
+              @for (m of months; track m; let i = $index) {
+                <th class="r" [class.start]="i === 0" [attr.title]="i === 0 ? 'Lo invertido a 1 de enero, o la primera compra si entró durante el año' : null">{{ m }}</th>
+              }
+              <th class="r year-col" title="Valor del último cierre frente a lo invertido. En liquidez: cambio desde el primer dato del año.">Rentab.</th>
+            </tr>
+          </thead>
+
+          @for (s of view(); track s.section.id; let first = $first; let last = $last) {
+            <tbody>
+              <tr class="section-row">
+                <td class="sticky" [attr.colspan]="1">
+                  <div class="name-cell">
+                    <strong>{{ s.section.name }}</strong>
+                    @if (!s.section.inTotal) { <span class="badge" title="No suma en el patrimonio total">fuera del total</span> }
+                    <span class="tools">
+                      <button type="button" class="ghost-btn" title="Añadir producto" (click)="addRow(s.section)">+</button>
+                      <button type="button" class="ghost-btn" title="Renombrar" (click)="renameSection(s.section)">✎</button>
+                      <button type="button" class="ghost-btn" [title]="s.section.inTotal ? 'Sacar del patrimonio total' : 'Sumar en el patrimonio total'" (click)="toggleInTotal(s.section)">Σ</button>
+                      @if (!first) { <button type="button" class="ghost-btn" title="Subir" (click)="moveSection(s.section, -1)">↑</button> }
+                      @if (!last) { <button type="button" class="ghost-btn" title="Bajar" (click)="moveSection(s.section, 1)">↓</button> }
+                      <button type="button" class="ghost-btn danger" title="Borrar sección" (click)="deleteSection(s.section)">×</button>
+                    </span>
+                  </div>
+                </td>
+                <td [attr.colspan]="14"></td>
+              </tr>
+
+              @for (r of s.rows; track r.row.id; let rf = $first; let rl = $last) {
+                <tr>
+                  <td class="sticky">
+                    <div class="name-cell">
+                      <span class="row-name" (dblclick)="renameRow(r.row)" title="Doble clic para renombrar">{{ r.row.name }}</span>
+                      @if (r.row.typeName) { <span class="faint small">{{ r.row.typeName }}</span> }
+                      <span class="tools">
+                        @if (!rf) { <button type="button" class="ghost-btn" title="Subir" (click)="moveRow(r.row, -1)">↑</button> }
+                        @if (!rl) { <button type="button" class="ghost-btn" title="Bajar" (click)="moveRow(r.row, 1)">↓</button> }
+                        <button type="button" class="ghost-btn danger" title="Borrar fila" (click)="deleteRow(r.row)">×</button>
+                      </span>
+                    </div>
+                  </td>
+                  @for (c of r.cells; track c.key) {
+                    <td class="r cell" [class.start]="c.key === '0'" (click)="startEdit(r.row.id, c.key)">
+                      @if (isEditing(r.row.id, c.key)) {
+                        <input #box class="edit" [value]="rawValue(r.row, c.key)"
+                          (keydown)="onKey($event, r.row, c.key)" (blur)="commit(r.row, c.key, box)" (click)="$event.stopPropagation()" />
+                      } @else if (c.note) {
+                        <span class="note">{{ c.note }}</span>
+                      } @else {
+                        <div class="num">{{ number(c.value) }}</div>
+                        @if (deltaText(c.delta); as d) { <div class="delta num" [class]="fmt.signClass(c.delta!.eur)">{{ d }}</div> }
+                        @if (contribText(c.contrib); as a) { <div class="contrib num">{{ a }}</div> }
+                      }
+                    </td>
+                  }
+                  <td class="r cell year-col">
+                    @if (r.ytd; as y) {
+                      <div class="num" [class]="fmt.signClass(y.eur)">{{ fmt.formatSignedMoney(y.eur) }}</div>
+                      @if (y.pct !== null) { <div class="delta num" [class]="fmt.signClass(y.eur)">{{ fmt.formatSignedPercent(y.pct, 1) }}</div> }
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td class="sticky faint small">Sin productos</td><td [attr.colspan]="14"></td></tr>
+              }
+
+              <tr class="total-row">
+                <td class="sticky">Total {{ s.section.name.toLowerCase() }}</td>
+                @for (v of s.total.values; track $index; let i = $index) {
+                  <td class="r cell" [class.start]="i === 0">
+                    <div class="num">{{ number(v) }}</div>
+                    @if (deltaText(s.total.deltas[i]); as d) { <div class="delta num" [class]="fmt.signClass(s.total.deltas[i]!.eur)">{{ d }}</div> }
+                    @if (contribText(s.total.contribs[i]); as a) { <div class="contrib num">{{ a }}</div> }
+                  </td>
+                }
+                <td class="r cell year-col">
+                  @if (s.total.ytd; as y) {
+                    <div class="num" [class]="fmt.signClass(y.eur)">{{ fmt.formatSignedMoney(y.eur) }}</div>
+                    @if (y.pct !== null) { <div class="delta num" [class]="fmt.signClass(y.eur)">{{ fmt.formatSignedPercent(y.pct, 1) }}</div> }
+                  }
+                </td>
+              </tr>
+            </tbody>
+          }
+
+          @if (grand(); as g) {
+            <tfoot>
+              <tr>
+                <td class="sticky">Patrimonio total</td>
+                @for (v of g.values; track $index; let i = $index) {
+                  <td class="r cell" [class.start]="i === 0">
+                    <div class="num">{{ number(v) }}</div>
+                    @if (deltaText(g.deltas[i]); as d) { <div class="delta num" [class]="fmt.signClass(g.deltas[i]!.eur)">{{ d }}</div> }
+                    @if (contribText(g.contribs[i]); as a) { <div class="contrib num">{{ a }}</div> }
+                  </td>
+                }
+                <td class="r cell year-col">
+                  @if (g.ytd; as y) {
+                    <div class="num" [class]="fmt.signClass(y.eur)">{{ fmt.formatSignedMoney(y.eur) }}</div>
+                    @if (y.pct !== null) { <div class="delta num" [class]="fmt.signClass(y.eur)">{{ fmt.formatSignedPercent(y.pct, 1) }}</div> }
+                  }
+                </td>
+              </tr>
+            </tfoot>
+          }
+        </table>
+      </div>
+    } @else if (!loading()) {
+      <div class="empty">Este año no tiene cierres todavía. Elige un mes y pulsa "Hacer cierre".</div>
+    }
+  </div>
+</div>

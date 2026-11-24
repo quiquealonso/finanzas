@@ -1,0 +1,57 @@
+name: Seguridad
+
+# Secretos en todo el historial de git y dependencias con vulnerabilidades conocidas.
+on:
+  push:
+  pull_request:
+  schedule:
+    # Cada lunes: avisa de vulnerabilidades nuevas aunque no se toque el código
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: Secretos en el historial de Git
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.28.0 \
+            git /repo --redact --no-banner --config /repo/.gitleaks.toml
+
+  dependencies:
+    name: Dependencias con vulnerabilidades
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [back, front, mobile]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # Falla si hay vulnerabilidades altas o críticas en lo que se ejecuta en producción. --omit=peer deja fuera la CLI
+      # de Prisma (peer de @prisma/client, solo se usa en local para generar el cliente): sus avisos se quitan al pasar a
+      # Prisma 7 (ver docs/backlog.md).
+      - run: npm audit --omit=dev --omit=peer --audit-level=high
+        working-directory: ${{ matrix.dir }}
+
+  osv:
+    name: OSV-Scanner (todos los package-lock.json)
+    runs-on: ubuntu-latest
+    # Informativo: revisa también las herramientas de desarrollo (avisos que no llegan a producción). Lo que bloquea es
+    # npm audit, arriba. Los resultados quedan en el registro del workflow.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: OSV-Scanner
+        run: |
+          docker run --rm -v "$PWD:/src" ghcr.io/google/osv-scanner:v2.2.2 \
+            scan source --recursive /src

@@ -1,0 +1,222 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Inmobiliario</h1>
+      <p>Tus tickets de crowdfunding: cada uno va sumando intereses cada día hasta que vence y lo cobras.</p>
+    </div>
+    <button class="btn primary" type="button" (click)="openNew()">+ Nuevo ticket</button>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><span>Capital invertido</span><strong class="num">{{ fmt.formatMoney(kpis().invested) }}</strong><small>{{ kpis().count }} {{ kpis().count === 1 ? 'ticket' : 'tickets' }} en curso</small></div>
+    <div class="kpi"><span>Intereses generados</span><strong class="num up">{{ fmt.formatSignedMoney(kpis().accrued) }}</strong><small>de {{ fmt.formatMoney(kpis().expected) }} previstos al vencer</small></div>
+    <div class="kpi"><span>Rentabilidad media</span><strong class="num">{{ kpis().rate.toFixed(2).replace('.', ',') }} %</strong><small>anual, ponderada por importe</small></div>
+    <div class="kpi"><span>Ya cobrado</span><strong class="num up">{{ fmt.formatSignedMoney(kpis().earned) }}</strong><small>intereses de tickets terminados</small></div>
+  </div>
+
+  @if (kpis().matured.length) {
+    <div class="notice">
+      {{ kpis().matured.length }} {{ kpis().matured.length === 1 ? 'ticket ha vencido y está' : 'tickets han vencido y están' }} pendiente de cobro.
+      Cuando te paguen, pulsa "Cobrar" y apunta lo que recibiste.
+    </div>
+  }
+
+  @if (calendar().length) {
+    <section class="card">
+      <div class="card-head"><h2>Vencimientos</h2><span class="faint small">Capital + intereses previstos por mes</span></div>
+      <div class="calendar">
+        @for (c of calendar(); track c.month) {
+          <div class="cal-item" [class.past]="c.month < today.slice(0, 7)">
+            <span class="faint small">{{ monthLabel(c.month) }}</span>
+            <strong class="num">{{ fmt.formatMoney(c.amount) }}</strong>
+            <span class="faint small">{{ c.count }} {{ c.count === 1 ? 'ticket' : 'tickets' }}</span>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <div class="seg">
+    <button type="button" [class.on]="tab() === 'open'" (click)="tab.set('open')">En curso ({{ open().length }})</button>
+    <button type="button" [class.on]="tab() === 'collected'" (click)="tab.set('collected')">Cobrados ({{ collected().length }})</button>
+  </div>
+
+  @if (tab() === 'open') {
+    <div class="tickets">
+      @for (t of open(); track t.assetId) {
+        <article class="ticket" [class.matured]="t.status === 'matured'" [class.incomplete]="t.status === 'incomplete'">
+          <div class="t-head">
+            <div>
+              <h3>{{ t.name }}</h3>
+              <span class="faint small">{{ t.bankName }}{{ t.ratePct ? ' · ' + t.ratePct + ' % anual' : '' }}{{ t.termMonths ? ' · ' + t.termMonths + ' meses' : '' }}</span>
+            </div>
+            <span class="badge" [class]="'s-' + t.status">{{ statusLabel(t) }}</span>
+          </div>
+
+          <div class="t-amounts">
+            <div><span class="faint small">Invertido</span><strong class="num">{{ fmt.formatMoney(t.investedEur) }}</strong></div>
+            <div><span class="faint small">Vale hoy</span><strong class="num">{{ fmt.formatMoney(t.valueEur) }}</strong></div>
+            <div><span class="faint small">Al vencer</span><strong class="num up">{{ t.expectedInterestEur !== null ? fmt.formatSignedMoney(t.expectedInterestEur) : '—' }}</strong></div>
+          </div>
+
+          @if (t.progress !== null) {
+            <div class="progress"><div [style.width.%]="t.progress * 100"></div></div>
+            <div class="t-dates faint small">
+              <span>{{ t.startDate ? fmt.formatDay(t.startDate) : '' }}</span>
+              <span>{{ t.endDate ? fmt.formatDay(t.endDate) : '' }}</span>
+            </div>
+          } @else {
+            <p class="faint small">Indica fecha de inicio, rentabilidad y plazo para que calcule los intereses.</p>
+          }
+
+          <div class="t-actions">
+            <button type="button" class="btn sm link" (click)="openEdit(t)">Editar</button>
+            <button type="button" class="btn sm" [class.primary]="t.status === 'matured'" (click)="openCollect(t)">Cobrar</button>
+          </div>
+        </article>
+      } @empty {
+        <div class="card empty">{{ loading() ? 'Cargando…' : 'No tienes tickets en curso.' }}</div>
+      }
+    </div>
+  } @else {
+    <section class="card flush">
+      <table>
+        <thead>
+          <tr><th>Proyecto</th><th>Periodo</th><th class="r">Invertido</th><th class="r">Cobrado</th><th class="r">Ganancia</th><th class="r">Prevista</th></tr>
+        </thead>
+        <tbody>
+          @for (t of collected(); track t.assetId) {
+            <tr>
+              <td><div>{{ t.name }}</div><div class="faint small">{{ t.bankName }} · {{ t.ratePct }} %</div></td>
+              <td class="small muted nowrap">{{ t.startDate ? fmt.formatDay(t.startDate) : '' }} → {{ t.collectedDate ? fmt.formatDay(t.collectedDate) : '' }}</td>
+              <td class="r muted">{{ fmt.formatMoney(t.investedEur) }}</td>
+              <td class="r">{{ fmt.formatMoney(t.collectedEur ?? 0) }}</td>
+              <td class="r" [class]="fmt.signClass(t.realizedEur ?? 0)"><strong>{{ fmt.formatSignedMoney(t.realizedEur ?? 0) }}</strong></td>
+              <td class="r faint">{{ t.expectedInterestEur !== null ? fmt.formatSignedMoney(t.expectedInterestEur) : '' }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="empty">Aún no has cobrado ningún ticket.</td></tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</div>
+
+@if (newDraft; as d) {
+  <div class="dialog-backdrop" (click)="newDraft = null">
+    <form class="dialog" (click)="$event.stopPropagation()" (ngSubmit)="saveNew()" autocomplete="off">
+      <div class="dialog-head">
+        <h2>Nuevo ticket</h2>
+        <button type="button" class="btn link" (click)="newDraft = null" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="grid-2">
+        <label class="field">
+          <span>Proyecto</span>
+          <input name="name" [(ngModel)]="d.name" placeholder="Residencial Valencia" />
+        </label>
+        <label class="field">
+          <span>Plataforma</span>
+          <input name="bank" [(ngModel)]="d.bankName" list="platforms" />
+          <datalist id="platforms">
+            @for (p of platforms(); track p) { <option [value]="p"></option> }
+          </datalist>
+        </label>
+      </div>
+      <div class="grid-3">
+        <label class="field">
+          <span>Importe (€)</span>
+          <input type="number" name="amount" step="any" min="0" [(ngModel)]="d.amountEur" />
+        </label>
+        <label class="field">
+          <span>Rentabilidad anual (%)</span>
+          <input type="number" name="rate" step="any" min="0" [(ngModel)]="d.ratePct" />
+        </label>
+        <label class="field">
+          <span>Plazo (meses)</span>
+          <input type="number" name="term" step="1" min="1" [(ngModel)]="d.termMonths" />
+        </label>
+      </div>
+      <label class="field">
+        <span>Fecha de inicio</span>
+        <input type="date" name="start" [(ngModel)]="d.startDate" [max]="today" />
+      </label>
+      @if (preview(d); as p) {
+        <div class="summary-box">
+          Vence el <strong>{{ fmt.formatDay(p.end) }}</strong>: cobrarás unos
+          <strong>{{ fmt.formatMoney(d.amountEur + p.interest) }}</strong> ({{ fmt.formatSignedMoney(p.interest) }} de intereses).
+        </div>
+      }
+      <div class="dialog-foot">
+        <button type="button" class="btn" (click)="newDraft = null">Cancelar</button>
+        <button type="submit" class="btn primary" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Guardar' }}</button>
+      </div>
+    </form>
+  </div>
+}
+
+@if (editDraft; as d) {
+  <div class="dialog-backdrop" (click)="editDraft = null">
+    <form class="dialog" (click)="$event.stopPropagation()" (ngSubmit)="saveEdit()" autocomplete="off">
+      <div class="dialog-head">
+        <h2>Editar ticket</h2>
+        <button type="button" class="btn link" (click)="editDraft = null" aria-label="Cerrar">✕</button>
+      </div>
+      <label class="field">
+        <span>Proyecto</span>
+        <input name="name" [(ngModel)]="d.name" />
+      </label>
+      <div class="grid-3">
+        <label class="field">
+          <span>Rentabilidad anual (%)</span>
+          <input type="number" name="rate" step="any" min="0" [(ngModel)]="d.ratePct" />
+        </label>
+        <label class="field">
+          <span>Plazo (meses)</span>
+          <input type="number" name="term" step="1" min="1" [(ngModel)]="d.termMonths" />
+        </label>
+        <label class="field">
+          <span>Inicio</span>
+          <input type="date" name="start" [(ngModel)]="d.startDate" [max]="today" />
+        </label>
+      </div>
+      <p class="faint small">Si el importe está mal, elimina el ticket y créalo de nuevo.</p>
+      <div class="dialog-foot">
+        <button type="button" class="btn danger" (click)="remove()" [disabled]="saving()">Eliminar</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" (click)="editDraft = null">Cancelar</button>
+        <button type="submit" class="btn primary" [disabled]="saving()">Guardar</button>
+      </div>
+    </form>
+  </div>
+}
+
+@if (collectDraft; as d) {
+  <div class="dialog-backdrop" (click)="collectDraft = null">
+    <form class="dialog" (click)="$event.stopPropagation()" (ngSubmit)="saveCollect()" autocomplete="off">
+      <div class="dialog-head">
+        <h2>Cobrar {{ d.ticket.name }}</h2>
+        <button type="button" class="btn link" (click)="collectDraft = null" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="grid-2">
+        <label class="field">
+          <span>Fecha del cobro</span>
+          <input type="date" name="date" [(ngModel)]="d.date" [max]="today" />
+        </label>
+        <label class="field">
+          <span>Total recibido (€)</span>
+          <input type="number" name="amount" step="any" min="0" [(ngModel)]="d.amountEur" />
+          <span class="hint">Capital + intereses, después de comisiones</span>
+        </label>
+      </div>
+      <div class="summary-box">
+        Ganancia: <strong [class]="fmt.signClass(d.amountEur - d.ticket.investedEur)">{{ fmt.formatSignedMoney(d.amountEur - d.ticket.investedEur) }}</strong>
+        sobre {{ fmt.formatMoney(d.ticket.investedEur) }}. Pasará a Ventas y a la rentabilidad de su año.
+      </div>
+      <div class="dialog-foot">
+        <button type="button" class="btn" (click)="collectDraft = null">Cancelar</button>
+        <button type="submit" class="btn primary" [disabled]="saving()">Registrar cobro</button>
+      </div>
+    </form>
+  </div>
+}

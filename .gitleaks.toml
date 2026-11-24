@@ -1,0 +1,13 @@
+# Configuración de gitleaks (workflow "Seguridad"): reglas por defecto + excepciones revisadas a mano.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Valores de ejemplo, no son claves reales"
+paths = [
+  # Plantillas con valores de ejemplo ("<contraseña>", vacíos); los reales solo están en back/.env de cada máquina
+  '''(^|/)\.env\.example$''',
+  '''mobile/src/app/supabase\.config\.example\.ts$''',
+  # Clave inventada solo para los tests del login (back/test)
+  '''back/test/.*\.test\.js$''',
+]

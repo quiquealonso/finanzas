@@ -1,0 +1,134 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Calendario</h1>
+      <p>Lo que ganó o perdió tu cartera cada día. Las compras, ventas y aportaciones no cuentan como ganancia: solo el movimiento de los precios.</p>
+    </div>
+    <div class="row">
+      <select class="year-pick" aria-label="Año" [value]="year()" (change)="pickYear($any($event.target).value)">
+        @for (y of years(); track y) {
+          <option [value]="y" [selected]="year() === y">{{ y }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (error(); as e) {
+    <div class="notice">{{ e }}</div>
+  }
+
+  @if (summary(); as s) {
+    <section class="card stats">
+      <div><span class="faint small">Resultado {{ year() }}</span><strong class="num" [class]="fmt.signClass(s.total)">{{ fmt.formatSignedMoney(s.total) }}</strong></div>
+      <div><span class="faint small">Días en verde</span><strong class="num">{{ (s.upShare * 100).toFixed(0) }} %</strong></div>
+      <div>
+        <span class="faint small">Mejor día</span>
+        <button type="button" class="link-day num up" (click)="open({ date: s.best.date, day: 0, data: s.best, future: false })">{{ fmt.formatSignedMoney(s.best.pnl) }}</button>
+      </div>
+      <div>
+        <span class="faint small">Peor día</span>
+        <button type="button" class="link-day num down" (click)="open({ date: s.worst.date, day: 0, data: s.worst, future: false })">{{ fmt.formatSignedMoney(s.worst.pnl) }}</button>
+      </div>
+      <div><span class="faint small">Racha actual</span><strong class="num" [class.up]="s.streakUp" [class.down]="!s.streakUp">{{ s.streak }} {{ s.streak === 1 ? 'día' : 'días' }} {{ s.streakUp ? 'en verde' : 'en rojo' }}</strong></div>
+      <div class="legend small faint">
+        <span>Pérdida</span>
+        <span class="ramp"></span>
+        <span>Ganancia</span>
+      </div>
+    </section>
+  }
+
+  @if (!days() && !error()) {
+    <p class="faint small">Cargando…</p>
+  }
+
+  <div class="months">
+    @for (m of months(); track m.key) {
+      <section class="card month">
+        <div class="month-head">
+          <strong>{{ m.name }}</strong>
+          <span class="num" [class]="fmt.signClass(m.pnl)">{{ fmt.formatSignedMoney(m.pnl) }}</span>
+        </div>
+        <div class="month-sub faint small num">
+          <span>{{ pctText(m.pct) }}</span>
+          <span>{{ m.up }} ▲ · {{ m.down }} ▼</span>
+        </div>
+        <div class="grid">
+          @for (w of weekdays; track $index) { <span class="wd">{{ w }}</span> }
+          <span class="wd wk">Sem.</span>
+          @for (week of m.weeks; track $index) {
+            @for (c of week.cells; track $index) {
+              @if (c) {
+                <button type="button" class="cell" [class.empty]="!c.data" [class.future]="c.future" [class.strong]="strong(c.data)"
+                        [class.sel]="selected() === c.date" [style.background]="color(c.data)" [title]="tip(c)"
+                        [disabled]="!c.data" (click)="open(c)">
+                  <span class="d">{{ c.day }}</span>
+                  @if (c.data && (c.data.pnl > 0.5 || c.data.pnl < -0.5)) {
+                    <span class="vals">
+                      <span class="v num">{{ short(c.data.pnl) }}</span>
+                      <span class="p num">{{ shortPct(c.data.pct) }}</span>
+                    </span>
+                  }
+                </button>
+              } @else {
+                <span class="cell blank"></span>
+              }
+            }
+            <span class="week num" [class.none]="week.pnl === null" [class.up]="(week.pnl ?? 0) > 0.5" [class.down]="(week.pnl ?? 0) < -0.5"
+                  [style.background]="weekColor(week)" [title]="weekTip(week)">
+              @if (week.pnl !== null) {
+                <span>{{ short(week.pnl) }}</span>
+                <span class="p">{{ shortPct(week.pct) }}</span>
+              }
+            </span>
+          }
+        </div>
+      </section>
+    }
+  </div>
+  @if (selected() && selectedDay(); as sd) {
+    <div class="dialog-backdrop" (click)="selected.set(null)">
+    <section class="dialog day-card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="day-head">
+        <div>
+          <p class="faint small cap">{{ dayLabel(sd.date) }}</p>
+          <strong class="num big" [class]="fmt.signClass(sd.pnl)">{{ fmt.formatSignedMoney(sd.pnl) }}</strong>
+          @if (sd.pct !== null) { <span class="num" [class]="fmt.signClass(sd.pnl)"> {{ pctText(sd.pct) }}</span> }
+        </div>
+        <button type="button" class="btn link" (click)="selected.set(null)" aria-label="Cerrar">✕</button>
+      </div>
+      @if (detailLoading()) {
+        <p class="faint small">Cargando…</p>
+      } @else if (detail(); as d) {
+        @let maxMove = d.assets.length ? (d.assets[0].pnl < 0 ? -d.assets[0].pnl : d.assets[0].pnl) : 1;
+        <ul class="tiles">
+          @for (a of d.assets.slice(0, 16); track a.assetId) {
+            <li class="tile">
+              <div class="tile-name"><span class="dot" [style.background]="typeColors[a.typeCode]"></span><span class="tile-label">{{ a.name }}</span></div>
+              <div class="tile-sub">{{ a.bankName }}</div>
+              <div class="tile-big" [class]="fmt.signClass(a.pnl)">
+                <strong>{{ fmt.formatSignedMoney(a.pnl) }}</strong>
+                <span class="tile-aside">{{ pctText(a.pct) }}</span>
+              </div>
+              <!-- Share of the biggest move of the day. -->
+              <div class="tile-meter">
+                <div [style.width.%]="((a.pnl < 0 ? -a.pnl : a.pnl) / maxMove) * 100" [style.background]="a.pnl < 0 ? 'var(--heat-down)' : 'var(--heat-up)'"></div>
+              </div>
+              <div class="tile-foot">
+                <!-- What this asset added to the day's % of the whole portfolio: they add up to the day's %. -->
+                @if (sd.pct !== null && sd.pnl) {
+                  <span title="Lo que este activo sumó o restó a la rentabilidad del día de toda la cartera. Sumando todos sale el % del día.">
+                    {{ pctText((a.pnl / sd.pnl) * sd.pct) }} a la cartera
+                  </span>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+        @if (d.assets.length > 16) { <p class="faint small">Y {{ d.assets.length - 16 }} activos más con movimientos pequeños.</p> }
+      }
+    </section>
+    </div>
+  }
+
+</div>

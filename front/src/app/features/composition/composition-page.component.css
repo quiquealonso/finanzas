@@ -1,0 +1,98 @@
+.duo { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(300px, 1.2fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .duo { grid-template-columns: 1fr; } }
+.side { display: flex; flex-direction: column; gap: 16px; }
+.chart-card { display: flex; flex-direction: column; gap: 8px; }
+.center-note { text-align: center; margin: 0; }
+
+.rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.rows li.clickable { cursor: pointer; border-radius: var(--radius-sm); margin: -6px; padding: 6px; }
+.rows li.clickable:hover { background: var(--surface-hover); }
+.row-top, .row-foot { display: flex; justify-content: space-between; gap: 8px; }
+.row-top { font-size: 13.5px; margin-bottom: 5px; }
+.row-foot { margin-top: 4px; }
+.name { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
+
+.meter { position: relative; height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.meter > div { height: 100%; }
+.meter.stacked { display: flex; gap: 1.5px; background: transparent; min-width: 4px; }
+.meter.stacked > div { min-width: 2px; }
+.meter.dual { margin-top: 6px; overflow: visible; }
+.meter.dual .m-real { border-radius: 999px; opacity: 0.85; }
+.meter.dual .m-target { position: absolute; top: -3px; width: 2.5px; height: 14px; margin-left: -1px; border-radius: 2px; background: var(--text); }
+
+.detail-head { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.detail-head .btn { align-self: flex-start; padding-left: 0; }
+.detail-title { display: flex; align-items: center; gap: 8px; font-size: 17px; }
+
+.type-grid { columns: 280px; column-gap: 12px; }
+/* Masonry: each card as tall as its products, short ones stack in the same column. */
+.type-grid > .type-card { break-inside: avoid; display: block; margin-bottom: 12px; }
+.type-card { cursor: pointer; padding: 14px 16px; transition: border-color 0.12s; }
+.type-card:hover, .type-card.on { border-color: var(--border-strong); }
+.type-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.mini { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.mini li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: baseline; }
+.mini .num { white-space: nowrap; }
+.mini .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.mini .num:last-child { text-align: right; min-width: 52px; }
+
+.toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sum { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--surface-2); }
+.sum.ok { background: var(--up-soft); color: var(--up); }
+.sum.bad { background: var(--warn-soft); color: var(--warn-text); }
+
+.plan { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.plan-type { padding: 10px 0 12px; border-bottom: 1px solid var(--border); }
+.plan-type:last-child { border-bottom: 0; }
+.plan-line, .product-line { display: grid; grid-template-columns: 1fr 52px 84px 76px; gap: 8px; align-items: center; }
+.product-line { grid-template-columns: 1fr 52px 84px 76px 22px; padding: 4px 0; font-size: 13px; }
+.real { text-align: right; }
+.diff { text-align: right; white-space: nowrap; }
+.expand { display: inline-flex; align-items: center; gap: 7px; border: 0; background: none; padding: 0; cursor: pointer; font-weight: 500; text-align: left; }
+.chev { display: inline-block; width: 10px; color: var(--text-3); transition: transform 0.15s; }
+.open .chev { transform: rotate(90deg); }
+.pct-input { display: inline-flex; align-items: center; gap: 4px; }
+.pct-input input { height: 28px; padding: 0 6px; text-align: right; }
+.products { margin: 10px 0 0 17px; padding: 8px 0 0 12px; border-left: 2px solid var(--border); }
+.products-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.x { padding: 0; width: 22px; }
+.add { display: flex; gap: 6px; margin-top: 8px; }
+.add input { height: 28px; font-size: 13px; }
+.badge { margin-left: 6px; }
+.legend-note { margin: 12px 0 0; line-height: 1.5; }
+
+.moves { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
+.moves li { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
+.rows li.lit { background: var(--surface-hover); border-radius: var(--radius-sm); margin: -6px; padding: 6px; }
+.tiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+.tiles li { padding: 9px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); transition: border-color 0.12s; }
+.tiles li.lit { border-color: var(--border-strong); background: var(--surface-hover); }
+.tile-name { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.tile-name span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile-pct { font-size: 17px; margin: 2px 0 6px; }
+.tiles .meter { height: 5px; }
+.tiles li.clickable { cursor: pointer; }
+.tiles li.clickable:hover { border-color: var(--border-strong); background: var(--surface-hover); }
+.tiles .meter.stacked { height: 5px; }
+.tiles .row-foot { white-space: nowrap; }
+
+/* How a metal is held: ETF or physical. */
+.via {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 16px;
+  color: var(--text-2, var(--text));
+  vertical-align: middle;
+}
+.via-split {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: -4px 0 12px;
+}
+.via-split .via { margin-left: 0; }

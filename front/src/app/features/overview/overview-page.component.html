@@ -1,0 +1,210 @@
+@if (store.overview(); as o) {
+  <div class="page">
+    <!-- Same filter as Activos: everything below shows the selected assets only. -->
+    <app-asset-filter class="card ov-filter" [(banks)]="bankFilter" [(types)]="typeFilter" [showValues]="false">
+      <div filterAside class="top-stats">
+        @if (annual(); as r) {
+          <div class="stat" [title]="'TTWROR (rentabilidad ponderada en el tiempo) anualizada desde el ' + fmt.formatDay(r.from) + ': lo que hicieron tus inversiones por año, sin importar cuándo metiste dinero. Es la que se compara con un índice. No depende del periodo de la gráfica.'">
+            <span class="faint small">{{ r.annualized ? 'TTWROR anual' : 'TTWROR desde el ' + fmt.formatDay(r.from) }}</span>
+            <strong class="num" [class]="fmt.signClass(r.ttwror)">{{ fmt.formatSignedPercent(r.ttwror) }}</strong>
+          </div>
+          <div class="stat" [title]="r.irr === null ? 'TIR: hace falta al menos 3 meses de historia.' : 'TIR (tasa interna de rentabilidad) anual desde el ' + fmt.formatDay(r.from) + ': tiene en cuenta cuándo metiste cada euro. Es la rentabilidad real de tu dinero. No depende del periodo de la gráfica.'">
+            <span class="faint small">TIR anual</span>
+            <strong class="num" [class]="fmt.signClass(r.irr ?? 0)">{{ r.irr === null ? '—' : fmt.formatSignedPercent(r.irr) }}</strong>
+          </div>
+        }
+        @if (pendingCash() > 0.005) {
+          <div class="stat">
+            <span class="faint small">Pendiente de reinvertir</span>
+            <strong class="num">{{ fmt.formatMoney(pendingCash()) }}</strong>
+            <span class="stat-actions">
+              <button type="button" class="btn sm link" (click)="store.openMovement({ kind: 'buy' })">Reinvertir</button>
+              <button type="button" class="btn sm link" (click)="store.openMovement({ kind: 'withdraw' })">Retirar</button>
+            </span>
+          </div>
+        }
+      </div>
+    </app-asset-filter>
+
+    <section class="card hero">
+      <div class="hero-top">
+        <div class="hero-main">
+          <p class="muted small">{{ selection() ? 'Patrimonio de la selección' : 'Patrimonio' }}</p>
+          <div class="total num">{{ fmt.formatMoney0(selection()?.value ?? o.totalEur) }}</div>
+          @if (selection()) {
+            <p class="faint small">{{ ((selection()!.value / o.totalEur) * 100).toFixed(1) }} % de {{ fmt.formatMoney0(o.totalEur) }}@if (loadingSeries()) { · cargando… }</p>
+          }
+          <!-- Result of the range chosen on the right (1D = today). -->
+          @if (periodResult(); as p) {
+            <div class="stat period" [title]="p.from ? 'Del ' + fmt.formatDay(p.from) + ' al ' + fmt.formatDay(p.to) + '. Solo lo que movieron los precios: comprar, vender o meter dinero no cuenta. Es la suma de esos días en el Calendario. ' + (range() === 'ALL' ? 'El % es sobre todo el dinero que ha estado en juego: el valor del primer día más lo metido después.' : 'El % tiene en cuenta cuándo entró cada aportación.') :'Último precio de cada activo frente a su cierre anterior'">
+              <span class="faint small">{{ periodLabel() }}</span>
+              <strong class="num" [class]="fmt.signClass(p.pnl)">{{ fmt.formatSignedMoney(p.pnl) }}</strong>
+              <span class="num small" [class]="fmt.signClass(p.pnl)">{{ fmt.formatSignedPercent(p.pct) }}</span>
+              @if (range() === '1D' && o.lastCloseDay && o.lastCloseDay !== o.asOf) {
+                <span class="faint small">Bolsa: cierre del {{ fmt.formatDay(o.lastCloseDay) }}</span>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Secondary figures, in the middle of the card. -->
+        <div class="hero-stats">
+          <div class="stat" title="Desde que compraste cada cosa (también antes de 2025): valor de hoy menos lo que te costó, más lo ganado vendiendo. El % es sobre el dinero metido neto.">
+            <span class="faint small">Ganancia total</span>
+            @let gt = selection() ? selection()!.pnl : o.pnlEur;
+            <strong class="num" [class]="fmt.signClass(gt)">{{ fmt.formatSignedMoney(gt) }}</strong>
+            <span class="num small" [class]="fmt.signClass(gt)">{{ fmt.formatSignedPercent(selection() ? selection()!.pnlPct : o.pnlPct) }}</span>
+          </div>
+        </div>
+
+        <div class="hero-side">
+          <div class="seg">
+            @for (r of ranges; track r.id) {
+              <button type="button" [class.on]="range() === r.id" (click)="range.set(r.id)" [title]="rangeTitles[r.id] ?? ''">{{ r.label }}</button>
+            }
+          </div>
+          @if (range() === 'CUSTOM') {
+            <div class="custom-range small">
+              <label>Desde <input type="date" [min]="firstDay()" [max]="customTo()" [value]="customFrom()" (change)="setCustom('from', $any($event.target).value)" /></label>
+              <label>Hasta <input type="date" [min]="customFrom()" [max]="lastDay()" [value]="customTo()" (change)="setCustom('to', $any($event.target).value)" /></label>
+            </div>
+          }
+        </div>
+      </div>
+
+      <app-line-chart [points]="chartPoints()" [height]="300" />
+
+      <div class="hero-foot small">
+        <span class="legend"><i class="sw sw-line"></i>Valor</span>
+        <span class="legend"><i class="sw sw-cost"></i>Dinero invertido</span>
+        <span class="spacer"></span>
+        <span class="faint">{{ lastSyncLabel() }}</span>
+        <button class="btn sm link" type="button" (click)="syncNow()" [disabled]="syncing()">
+          {{ syncing() ? 'Actualizando…' : 'Actualizar ahora' }}
+        </button>
+      </div>
+    </section>
+
+    @if (years().length) {
+      <section class="card flush">
+        <div class="card-head pad">
+          <h2>Rentabilidad por año</h2>
+          <span class="faint small">Solo ganancias: lo que metes o sacas no cuenta. Coincide con el Calendario.</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Año</th>
+                <th class="r">Valor al empezar</th>
+                <th class="r">Ganancia</th>
+                <th class="r" title="Rentabilidad ponderada en el tiempo: lo bien que lo hicieron tus inversiones, sin importar cuándo metiste dinero. Es la que se compara con un índice.">TTWROR</th>
+                <th class="r" title="La ganancia sobre el dinero que de verdad estuvo invertido: cada aportación cuenta según el tiempo que estuvo dentro (Modified Dietz). Va con el signo de los euros.">Rentab. de tu dinero</th>
+                <th class="r" title="Dinero que entró o salió, a valor de mercado; no es ganancia. Las posiciones dadas de alta con saldo inicial no cuentan aquí: ya las tenías, así que van en el valor al empezar.">Dinero metido</th>
+                <th class="r">Valor al acabar</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (y of years(); track y.year) {
+                <tr>
+                  <td><strong>{{ y.year }}</strong>@if (y.partial) { <span class="faint small"> hasta hoy</span> }</td>
+                  <td class="r muted">{{ fmt.formatMoney0(y.startValue) }}</td>
+                  <td class="r" [class]="fmt.signClass(y.total)"><strong>{{ fmt.formatSignedMoney(y.total) }}</strong></td>
+                  <td class="r" [class]="fmt.signClass(y.ttwror)"><strong>{{ fmt.formatSignedPercent(y.ttwror, 1) }}</strong></td>
+                  <td class="r" [class]="fmt.signClass(y.pct)"><strong>{{ fmt.formatSignedPercent(y.pct, 1) }}</strong></td>
+                  <td class="r faint">{{ fmt.formatSignedMoney(y.contributed) }}</td>
+                  <td class="r">{{ fmt.formatMoney0(y.endValue) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="faint small foot-note">Valor al empezar + dinero metido + ganancia = valor al acabar. Las posiciones dadas de alta con saldo inicial cuentan en el valor al empezar, porque ya las tenías. TTWROR: lo que hicieron tus inversiones, sin importar cuándo metiste dinero. Rentabilidad de tu dinero: la ganancia sobre el valor al empezar más cada aportación según el tiempo que estuvo invertida (Modified Dietz). Pueden tener distinto signo si ganaste con poco dinero dentro y perdiste con mucho, o al revés.</p>
+      </section>
+    }
+
+    @if (months().length) {
+      <section class="card flush">
+        <div class="card-head pad">
+          <h2>Rentabilidad por mes</h2>
+          <span class="faint small">Respecto al cierre del mes anterior</span>
+          <span class="spacer"></span>
+          <app-view-toggle [(view)]="monthView" storageKey="overview.months.view" />
+        </div>
+        @if (monthView() === 'table') {
+          <div class="table-wrap months-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mes</th>
+                  <th class="r">Valor al empezar</th>
+                  <th class="r" title="Dinero que entró o salió, a valor de mercado; no es ganancia">Dinero metido</th>
+                  <th class="r">Ganancia</th>
+                  <th class="r" title="Rentabilidad ponderada en el tiempo: no la mueve meter o sacar dinero">TTWROR</th>
+                  <th class="r" title="Ganancia sobre el dinero que estuvo invertido (Modified Dietz)">Rentab. de tu dinero</th>
+                  <th class="r hide-sm" title="Días con ganancia / días con pérdida">Días ▲ / ▼</th>
+                  <th class="r hide-sm">Mejor día</th>
+                  <th class="r hide-sm">Peor día</th>
+                  <th class="r">Valor al acabar</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (m of months(); track m.month) {
+                  <tr>
+                    <td><strong>{{ m.label }}</strong>@if (m.partial) { <span class="faint small"> hasta hoy</span> }</td>
+                    <td class="r muted">{{ fmt.formatMoney0(m.startValue) }}</td>
+                    <td class="r faint">{{ fmt.formatSignedMoney(m.contributed) }}</td>
+                    <td class="r" [class]="fmt.signClass(m.gain)"><strong>{{ fmt.formatSignedMoney(m.gain) }}</strong></td>
+                    <td class="r" [class]="fmt.signClass(m.ttwror)"><strong>{{ fmt.formatSignedPercent(m.ttwror, 1) }}</strong></td>
+                    <td class="r" [class]="fmt.signClass(m.pct)">{{ fmt.formatSignedPercent(m.pct, 1) }}</td>
+                    <td class="r hide-sm"><span class="pos">{{ m.up }}</span> / <span class="neg">{{ m.down }}</span></td>
+                    <td class="r hide-sm pos" [title]="m.best ? fmt.formatDay(m.best.date) : ''">{{ m.best ? fmt.formatSignedMoney(m.best.gain) : '' }}</td>
+                    <td class="r hide-sm neg" [title]="m.worst ? fmt.formatDay(m.worst.date) : ''">{{ m.worst ? fmt.formatSignedMoney(m.worst.gain) : '' }}</td>
+                    <td class="r">{{ fmt.formatMoney0(m.endValue) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <ul class="tiles month-tiles">
+            @for (m of months(); track m.month) {
+              <li class="tile month-tile" [style.border-top-color]="m.gain >= 0 ? 'var(--up)' : 'var(--down)'">
+                <div class="tile-name"><span class="tile-label">{{ m.label }}</span>@if (m.partial) { <span class="faint small">hasta hoy</span> }</div>
+                <div class="tile-big" [class]="fmt.signClass(m.gain)">
+                  <strong>{{ fmt.formatSignedMoney(m.gain) }}</strong>
+                  <span class="tile-aside" title="TTWROR">{{ fmt.formatSignedPercent(m.ttwror, 1) }}</span>
+                </div>
+                <div class="tile-sub">{{ fmt.formatMoney0(m.startValue) }} → {{ fmt.formatMoney0(m.endValue) }}</div>
+                <dl class="month-facts">
+                  <div><dt>Dinero metido</dt><dd>{{ fmt.formatSignedMoney(m.contributed) }}</dd></div>
+                  <div><dt>Rentab. de tu dinero</dt><dd [class]="fmt.signClass(m.pct)">{{ fmt.formatSignedPercent(m.pct, 1) }}</dd></div>
+                  <div><dt>Días ▲ / ▼</dt><dd><span class="pos">{{ m.up }}</span> / <span class="neg">{{ m.down }}</span></dd></div>
+                  @if (m.best) { <div><dt>Mejor día ({{ m.best.date.slice(8, 10) }})</dt><dd class="pos">{{ fmt.formatSignedMoney(m.best.gain) }}</dd></div> }
+                  @if (m.worst) { <div><dt>Peor día ({{ m.worst.date.slice(8, 10) }})</dt><dd class="neg">{{ fmt.formatSignedMoney(m.worst.gain) }}</dd></div> }
+                </dl>
+              </li>
+            }
+          </ul>
+        }
+        <p class="faint small foot-note">La ganancia de cada mes es la suma de sus días en el Calendario. Las dos rentabilidades, como en la tabla de años.</p>
+      </section>
+    }
+
+    <div class="split">
+      <section class="card">
+        <div class="card-head"><h2>Reparto por tipo</h2></div>
+        <app-donut-chart [segments]="typeSlices()" title="Reparto por tipo de activo" />
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>Por banco</h2><span class="faint small">Con la ganancia de cada uno</span></div>
+        <app-donut-chart [segments]="bankSlices()" title="Reparto por banco" />
+      </section>
+    </div>
+  </div>
+} @else if (store.loadError(); as err) {
+  <div class="card empty">{{ err }}</div>
+} @else {
+  <div class="card empty">Cargando…</div>
+}

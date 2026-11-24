@@ -1,0 +1,249 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Perfil de riesgo</h1>
+      <p>Cuánto riesgo te conviene asumir según tu situación, tu actitud y tu experiencia.</p>
+    </div>
+  </div>
+
+  @switch (mode()) {
+    @case ('loading') { <p class="faint">Cargando…</p> }
+
+    <!-- Intro -->
+    @case ('intro') {
+      <section class="card intro pop">
+        <div class="intro-emoji">🧭</div>
+        <h2>Descubre tu perfil de inversor</h2>
+        <p>{{ questions.length }} preguntas cortas, unos 3 minutos. No hay respuestas buenas ni malas: contesta lo que de verdad harías.</p>
+        <ul class="intro-dims">
+          <li><span>🏠</span> Tu situación</li>
+          <li><span>💭</span> Tu actitud ante las caídas</li>
+          <li><span>🎓</span> Tu experiencia</li>
+        </ul>
+        <button type="button" class="btn primary big" (click)="start()">Empezar</button>
+        <p class="faint small">Puedes responder con las teclas 1–5. Es orientativo y no es una recomendación de inversión.</p>
+      </section>
+    }
+
+    <!-- One question at a time -->
+    @case ('quiz') {
+      @let q = question();
+      <section class="quiz">
+        <div class="quiz-top">
+          <button type="button" class="btn sm link" (click)="back()" [disabled]="index() === 0">‹ Anterior</button>
+          <span class="faint small">Pregunta {{ index() + 1 }} de {{ questions.length }} · {{ dimLabel[q.dimension] }}</span>
+          <button type="button" class="btn sm link" (click)="mode.set(result() ? 'result' : 'intro')">Salir</button>
+        </div>
+        <div class="progress"><div [style.width.%]="progress()"></div></div>
+
+        @for (qq of [q]; track qq.id) {
+          <div class="card qcard" [class.from-left]="dir() === 'back'">
+            <h2>{{ q.title }}</h2>
+            @if (q.help) { <p class="help">{{ q.help }}</p> }
+
+            @if (q.ranges) {
+              <ul class="options ranges">
+                @for (o of q.options; track o.id; let i = $index) {
+                  @let r = q.ranges[o.id];
+                  <li>
+                    <button type="button" class="opt" [class.on]="picked() === o.id || answers()[q.id] === o.id" [class.dim]="picked() && picked() !== o.id" (click)="choose(o.id)">
+                      <span class="k">{{ i + 1 }}</span>
+                      <span class="opt-label">{{ o.emoji }} {{ o.label }}</span>
+                      <span class="range">
+                        <span class="half neg"><span [style.width.%]="rangeWidth(r.down)"></span></span>
+                        <span class="half pos"><span [style.width.%]="rangeWidth(r.up)"></span></span>
+                      </span>
+                      <span class="range-nums"><span class="down">{{ euros(r.down) }}</span><span class="up">{{ euros(r.up) }}</span></span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <ul class="options" [class.two]="q.options.length > 3">
+                @for (o of q.options; track o.id; let i = $index) {
+                  <li>
+                    <button type="button" class="opt" [class.on]="picked() === o.id || (!picked() && answers()[q.id] === o.id)"
+                            [class.dim]="picked() && picked() !== o.id"
+                            [class.right]="flash() && picked() === o.id && o.correct" [class.wrong]="flash() && picked() === o.id && !o.correct"
+                            (click)="choose(o.id)">
+                      <span class="emoji">{{ o.emoji }}</span>
+                      <span class="opt-text">
+                        <span class="opt-label">{{ o.label }}</span>
+                        @if (o.hint) { <span class="opt-hint">{{ o.hint }}</span> }
+                      </span>
+                      <span class="k">{{ i + 1 }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+            @if (flash(); as f) { <p class="flash pop">{{ f }}</p> }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Result -->
+    @case ('result') {
+      @if (result(); as r) {
+        @let p = profile();
+        <section class="card result pop" [style.--pc]="p.color">
+          <div class="result-head">
+            <div class="badge-emoji">{{ p.emoji }}</div>
+            <div>
+              <p class="faint small">Tu perfil de inversor</p>
+              <h2 class="pname">{{ p.name }}</h2>
+              <p class="psum">{{ p.summary }}</p>
+            </div>
+            <div class="score">
+              <strong class="num">{{ shown() }}</strong>
+              <span class="faint small">de 100</span>
+            </div>
+          </div>
+
+          <!-- The five profiles, this one highlighted -->
+          <ol class="scale">
+            @for (x of profiles; track x.id; let i = $index) {
+              <li [class.on]="x.id === p.id" [class.past]="i < profileIndex()" [style.--c]="x.color">
+                <span class="dot"></span><span class="lbl">{{ x.name }}</span>
+              </li>
+            }
+          </ol>
+
+          @if (r.capped) {
+            <p class="note">ℹ️ Por tu actitud podrías asumir algo más de riesgo, pero tu situación (horizonte, colchón, ingresos) aconseja no pasar de este perfil.</p>
+          }
+
+          <div class="dims">
+            <div><span class="faint small">🏠 Capacidad para asumir pérdidas</span><div class="bar"><div [style.width.%]="r.capacity"></div></div><span class="num small">{{ r.capacity }}</span></div>
+            <div><span class="faint small">💭 Tolerancia a las caídas</span><div class="bar"><div [style.width.%]="r.tolerance"></div></div><span class="num small">{{ r.tolerance }}</span></div>
+            <div><span class="faint small">🎓 Conocimiento y experiencia</span><div class="bar"><div [style.width.%]="r.knowledge"></div></div><span class="num small">{{ r.knowledge }}</span></div>
+          </div>
+
+          <div class="equity">
+            <span class="faint small">Peso orientativo en bolsa y otros activos de riesgo</span>
+            <div class="eq-bar">
+              <div class="eq-range" [style.left.%]="p.equity[0]" [style.width.%]="p.equity[1] - p.equity[0]"></div>
+              @if (riskyShare() !== null) { <div class="eq-you" [style.left.%]="riskyShare()" [title]="'Tu cartera: ' + riskyShare()!.toFixed(0) + ' %'"></div> }
+            </div>
+            <div class="eq-axis faint small"><span>0 %</span><span>{{ p.equity[0] }}–{{ p.equity[1] }} %</span><span>100 %</span></div>
+            @if (fit(); as f) { <p class="fit" [class]="'fit ' + f.cls">{{ f.text }}</p> }
+          </div>
+
+          <!-- Next step: funds that fit this profile, chosen with AI. -->
+          <div class="next-step">
+            <div>
+              <strong>¿Y ahora qué fondos encajan contigo?</strong>
+              <p class="faint small">Elige las zonas del mundo y la IA buscará entre miles de fondos los 5 que mejor encajan con tu perfil.</p>
+            </div>
+            <button type="button" class="btn ai-btn" (click)="finding.set(true)">✦ Analizar mejores opciones</button>
+          </div>
+
+          <div class="result-foot">
+            <span class="faint small">Orientativo y educativo: no es una recomendación de inversión.</span>
+            <span class="spacer"></span>
+            <button type="button" class="btn" (click)="start()">Repetir el test</button>
+          </div>
+        </section>
+
+        @if (finding()) {
+          <app-fund-finder-dialog [profile]="r.profile" (closed)="finding.set(false)" (saved)="loadFunds()" />
+        }
+
+        <!-- Saved funds, by profile -->
+        <section class="card funds pop" [style.--pc]="tabProfile().color">
+          <div class="funds-head">
+            <div>
+              <h2>★ Mis fondos</h2>
+              <p class="faint small">Los que guardaste de «Analizar mejores opciones», con los datos del día en que los guardaste.</p>
+            </div>
+            <div class="tabs" role="tablist">
+              @for (t of fundTabs(); track t.id) {
+                <button type="button" class="tab" role="tab" [class.on]="t.id === activeTab()" [style.--c]="t.color" (click)="fundTab.set(t.id)">
+                  <span>{{ t.emoji }}</span> {{ t.name }}
+                  @if (t.count) { <span class="count">{{ t.count }}</span> }
+                  @if (t.current) { <span class="you">tu perfil</span> }
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (tabFunds().length) {
+            <div class="table-wrap">
+              <table class="ftable">
+                <thead>
+                  <tr>
+                    <th>Fondo</th>
+                    <th>Zonas</th>
+                    <th class="r">12 meses</th>
+                    <th class="r">3 años/año</th>
+                    <th class="r">Volatilidad</th>
+                    <th>Riesgo</th>
+                    <th class="r">Gastos</th>
+                    <th class="r">Patrimonio</th>
+                    <th>Guardado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (f of tabFunds(); track f.id; let i = $index) {
+                    @let d = f.data;
+                    <tr [style.animation-delay.ms]="i * 50">
+                      <td class="fname">
+                        <div class="fn-top">
+                          <span class="src" [class.intl]="d.source !== 'cnmv'">{{ d.source === 'cnmv' ? 'ES' : 'INT' }}</span>
+                          <strong>{{ d.name }}</strong>
+                        </div>
+                        <div class="faint small">{{ subline(d) }}</div>
+                        @if (d.reason) { <div class="freason" [title]="d.reason">✦ {{ d.reason }}</div> }
+                      </td>
+                      <td class="nowrap small">{{ regionFlags(d.regions) }}</td>
+                      <td class="r num" [class.up]="(d.ret1y ?? 0) > 0" [class.down]="(d.ret1y ?? 0) < 0"><strong>{{ pct(d.ret1y) }}</strong></td>
+                      <td class="r num" [class.up]="(d.ret3y ?? 0) > 0" [class.down]="(d.ret3y ?? 0) < 0">{{ pct(d.ret3y) }}</td>
+                      <td class="r num">{{ plain(d.vol) }}</td>
+                      <td>
+                        <span class="risk" [title]="'Riesgo ' + d.risk + ' de 7'">
+                          @for (s of riskSteps; track s) { <i [style.background]="s <= (d.risk ?? 0) ? riskColor(s) : null"></i> }
+                        </span>
+                      </td>
+                      <td class="r num">{{ plain(d.ter, 2) }}</td>
+                      <td class="r num nowrap">{{ money(d.aum) }}</td>
+                      <td class="nowrap small faint">{{ when(f.createdAt) }}<br>{{ zoneFlags(f.zones) }}</td>
+                      <td class="actions">
+                        <a class="btn sm link" [href]="fundLink(d)" target="_blank" rel="noopener">Ficha ↗</a>
+                        <button type="button" class="btn sm link danger-link" (click)="removeFund(f)" aria-label="Quitar">✕</button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="faint small">Datos de CNMV y Yahoo en el momento de guardar. No es una recomendación de inversión.</p>
+          } @else {
+            <div class="funds-empty">
+              <span class="empty-star">☆</span>
+              <div>
+                <strong>Aún no tienes fondos guardados para el perfil {{ tabProfile().name }}.</strong>
+                <p class="faint small">Pulsa «Analizar mejores opciones», elige zonas y guarda los que te gusten.</p>
+              </div>
+              @if (activeTab() === r.profile) {
+                <button type="button" class="btn ai-btn" (click)="finding.set(true)">✦ Analizar mejores opciones</button>
+              }
+            </div>
+          }
+        </section>
+
+        @if (history().length > 1) {
+          <section class="card">
+            <h2>Tus resultados anteriores</h2>
+            <ul class="hist">
+              @for (h of history(); track h.id) {
+                <li><span class="faint small">{{ when(h.createdAt) }}</span><strong>{{ profileName(h.profile) }}</strong><span class="num faint small">{{ h.score }}/100</span></li>
+              }
+            </ul>
+          </section>
+        }
+      }
+    }
+  }
+</div>

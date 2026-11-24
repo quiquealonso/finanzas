@@ -1,0 +1,68 @@
+.pending {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.pending-row { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: var(--radius-sm); padding: 8px 10px; }
+.grow { flex: 1; min-width: 0; }
+.amount { display: flex; align-items: center; gap: 4px; }
+.amount input { width: 90px; text-align: right; }
+.qty input { width: 110px; }
+
+.plan-form {
+  display: grid;
+  grid-template-columns: 2fr 1fr 0.7fr 1fr;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+}
+.plan-form .full { grid-column: 1 / -1; }
+
+.plans { list-style: none; margin: 0; padding: 0; }
+.plans li { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--border); }
+.plans li:first-child { border-top: 0; }
+.plans li.paused { opacity: 0.6; }
+
+.flush { padding: 0; }
+.pad { padding: 14px 18px 4px; flex-wrap: wrap; }
+.pad select { width: auto; }
+.search { width: 170px; }
+.flush table th:first-child, .flush table td:first-child { padding-left: 18px; }
+.flush table th:last-child, .flush table td:last-child { padding-right: 14px; }
+
+.k-buy, .k-recurring { background: var(--accent-soft); color: var(--accent-text); }
+.k-sell { background: var(--down-soft); color: var(--down); }
+.k-deposit { background: var(--up-soft); color: var(--up); }
+.k-transfer { background: var(--warn-soft); color: var(--warn-text); }
+
+@media (max-width: 720px) {
+  .plan-form { grid-template-columns: 1fr 1fr; }
+  .pending-row { flex-wrap: wrap; }
+}
+
+/* History as cards */
+.pad-tiles { padding: 0 18px 14px; }
+.month-head { padding: 12px 18px 8px; }
+.tile-name .badge { margin-left: auto; flex: none; }
+.tile-foot .detail { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile-foot .btn { flex: none; }
+
+/* Periodic contributions, folded */
+.fold-head { margin-bottom: 0; }
+.fold {
+  display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; padding: 0; border: 0; background: none;
+  color: inherit; font: inherit; cursor: pointer; text-align: left; flex-wrap: wrap;
+}
+.fold h2 { margin: 0; }
+.chev { flex: none; transition: transform 0.15s; color: var(--text-3); transform: rotate(90deg); }
+.plans-card.folded .chev { transform: rotate(0deg); }
+.fold:hover .chev { color: var(--text); }
+.due { padding: 1px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn-text); font-size: 12px; font-weight: 600; }
+.plans-help { margin: 10px 0 12px; }

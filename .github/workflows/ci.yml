@@ -1,0 +1,71 @@
+name: CI
+
+# En cada push y pull request: el back compila y pasa sus tests, y el front y la app móvil compilan en producción.
+# No usa ningún secreto: no hace falta base de datos ni claves para comprobar el código.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (tipos, build y tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: back
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: back/package-lock.json
+      - run: npm ci
+      # El cliente de Prisma se genera del esquema; no se conecta a ninguna base de datos
+      - run: npx prisma generate
+      - run: npm run typecheck
+      - run: npm run build
+      # Login: qué tokens dejan pasar una petición y como qué usuario (test/auth.test.js)
+      - run: npm test
+
+  frontend:
+    name: Frontend (build de producción)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+      - run: npm ci
+      - run: npx ng build
+
+  mobile:
+    name: App móvil (build de producción)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      # La configuración real de Supabase no está en el repositorio: se compila con la plantilla
+      - run: cp src/app/supabase.config.example.ts src/app/supabase.config.ts
+      - run: npx ng build

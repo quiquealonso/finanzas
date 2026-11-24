@@ -1,0 +1,244 @@
+<div class="dialog-backdrop" (click)="close()">
+  <form class="dialog" (click)="$event.stopPropagation()" (ngSubmit)="save()" autocomplete="off">
+    <div class="dialog-head">
+      <h2>Nuevo movimiento</h2>
+      <button type="button" class="btn link" (click)="close()" aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="seg full kinds">
+      @for (k of kinds; track k.id) {
+        <button type="button" [class.on]="kind() === k.id" (click)="setKind(k.id)">{{ k.label }}</button>
+      }
+    </div>
+
+    @switch (kind()) {
+      @case ('buy') { <ng-container *ngTemplateOutlet="trade" /> }
+      @case ('sell') { <ng-container *ngTemplateOutlet="trade" /> }
+      @case ('deposit') { <ng-container *ngTemplateOutlet="cash" /> }
+      @case ('withdraw') { <ng-container *ngTemplateOutlet="withdraw" /> }
+      @case ('transfer') { <ng-container *ngTemplateOutlet="transfer" /> }
+      @case ('adjust') { <ng-container *ngTemplateOutlet="adjust" /> }
+    }
+
+    <ng-template #trade>
+      <label class="field">
+        <span>Activo</span>
+        <select name="asset" [(ngModel)]="assetId" (ngModelChange)="onAssetChange()" required>
+          <option value="" disabled>Elige un activo</option>
+          @for (g of banksWithAssets(); track g.bank) {
+            <optgroup [label]="g.bank">
+              @for (a of g.assets; track a.id) { <option [value]="a.id">{{ a.name }}</option> }
+            </optgroup>
+          }
+        </select>
+        @if (kind() === 'sell' && asset(); as a) {
+          <span class="hint">Tienes {{ fmt.formatQty(a.quantity) }} · <a href="" (click)="$event.preventDefault(); setAll()">vender todo</a></span>
+        }
+      </label>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Fecha</span>
+          <input type="date" name="date" [(ngModel)]="date" [max]="today" (change)="loadPrice()" required />
+        </label>
+        <label class="field">
+          <span>Precio ({{ currencyLabel() }})</span>
+          <input type="number" name="price" step="any" min="0" [(ngModel)]="price" [placeholder]="priceLoading() ? 'Buscando…' : ''" />
+          @if (priceInfo()) { <span class="hint">{{ priceInfo() }}</span> }
+        </label>
+      </div>
+
+      @if (kind() === 'buy') {
+        <div class="seg mode">
+          <button type="button" [class.on]="buyMode === 'qty'" (click)="buyMode = 'qty'">Por cantidad</button>
+          <button type="button" [class.on]="buyMode === 'amount'" (click)="buyMode = 'amount'">Por importe</button>
+        </div>
+      }
+
+      <div class="grid-2">
+        @if (kind() === 'buy' && buyMode === 'amount') {
+          <label class="field">
+            <span>Importe total ({{ currencyLabel() }})</span>
+            <input type="number" name="amount" step="any" min="0" [(ngModel)]="amount" placeholder="100" />
+          </label>
+        } @else {
+          <label class="field">
+            <span>Cantidad</span>
+            <input type="number" name="qty" step="any" min="0" [(ngModel)]="quantity" placeholder="10" />
+          </label>
+        }
+        <label class="field">
+          <span>Comisión</span>
+          <input type="number" name="fee" step="any" min="0" [(ngModel)]="fee" placeholder="0" />
+        </label>
+      </div>
+
+      @if (kind() === 'sell') {
+        <label class="check">
+          <input type="checkbox" name="useCash" [(ngModel)]="useCash" />
+          Guardar el importe en "Pendiente de reinvertir" (no baja el patrimonio)
+        </label>
+      } @else if (pendingCash() > 0) {
+        <label class="check">
+          <input type="checkbox" name="useCash" [(ngModel)]="useCash" />
+          Pagar con dinero pendiente de reinvertir (hay {{ fmt.formatMoney(pendingCash()) }})
+        </label>
+      }
+
+      @if (asset(); as a) {
+        <div class="summary-box">
+          @if (kind() === 'buy' && buyMode === 'amount') {
+            Compras <strong>{{ fmt.formatQty(effectiveQty()) }}</strong> participaciones a {{ fmt.formatPrice(price ?? 0, a.currency) }}
+          } @else {
+            Total {{ kind() === 'buy' ? 'a pagar' : 'a recibir' }}: <strong>{{ fmt.formatPrice(total(), a.currency) }}</strong>
+          }
+        </div>
+      }
+    </ng-template>
+
+    <ng-template #cash>
+      <label class="field">
+        <span>Cuenta</span>
+        <select name="cash" [(ngModel)]="assetId" required>
+          @for (c of cashAccounts(); track c.id) {
+            <option [value]="c.id">{{ c.bankName }} · {{ c.name }} ({{ fmt.formatMoney(c.valueEur) }})</option>
+          }
+        </select>
+      </label>
+      <div class="grid-2">
+        <label class="field">
+          <span>Importe (€)</span>
+          <input type="number" name="amount" step="any" min="0" [(ngModel)]="amount" placeholder="500" />
+        </label>
+        <label class="field">
+          <span>Fecha</span>
+          <input type="date" name="date" [(ngModel)]="date" [max]="today" required />
+        </label>
+      </div>
+      <label class="field">
+        <span>Nota (opcional)</span>
+        <input name="note" [(ngModel)]="note" placeholder="Nómina, transferencia…" />
+      </label>
+    </ng-template>
+
+    <ng-template #withdraw>
+      <div class="summary-box">
+        Sacas dinero de "Pendiente de reinvertir" para uso personal. Baja el patrimonio, pero no la rentabilidad.
+        Disponible: <strong>{{ fmt.formatMoney(pendingCash()) }}</strong>
+      </div>
+      <div class="grid-2">
+        <label class="field">
+          <span>Importe (€)</span>
+          <input type="number" name="amount" step="any" min="0" [(ngModel)]="amount" placeholder="1000" />
+        </label>
+        <label class="field">
+          <span>Fecha</span>
+          <input type="date" name="date" [(ngModel)]="date" [max]="today" required />
+        </label>
+      </div>
+      <label class="field">
+        <span>Nota (opcional)</span>
+        <input name="note" [(ngModel)]="note" placeholder="Para qué es" />
+      </label>
+    </ng-template>
+
+    <ng-template #transfer>
+      <div class="grid-2">
+        <label class="field">
+          <span>Desde</span>
+          <select name="from" [(ngModel)]="assetId" (ngModelChange)="loadPrice()" required>
+            <option value="" disabled>Elige</option>
+            @for (g of allByBank(); track g.bank) {
+              <optgroup [label]="g.bank">
+                @for (a of g.assets; track a.id) { <option [value]="a.id">{{ a.name }}</option> }
+              </optgroup>
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span>Hacia</span>
+          <select name="to" [(ngModel)]="toAssetId" (ngModelChange)="loadPrice()" required>
+            <option value="" disabled>Elige</option>
+            @for (g of allByBank(); track g.bank) {
+              <optgroup [label]="g.bank">
+                @for (a of g.assets; track a.id) { <option [value]="a.id" [disabled]="a.id === assetId">{{ a.name }}</option> }
+              </optgroup>
+            }
+          </select>
+        </label>
+      </div>
+      <div class="grid-2">
+        <label class="field">
+          <span>Cantidad que sale</span>
+          <input type="number" name="qty" step="any" min="0" [(ngModel)]="quantity" />
+          @if (asset(); as a) { <span class="hint">Tienes {{ fmt.formatQty(a.quantity) }} · <a href="" (click)="$event.preventDefault(); setAll()">todo</a></span> }
+        </label>
+        <label class="field">
+          <span>Fecha</span>
+          <input type="date" name="date" [(ngModel)]="date" [max]="today" (change)="loadPrice()" required />
+        </label>
+      </div>
+      <div class="grid-3">
+        @if (!asset()?.isLiquidity) {
+          <label class="field">
+            <span>Precio venta</span>
+            <input type="number" name="sellPrice" step="any" min="0" [(ngModel)]="price" />
+          </label>
+        }
+        @if (!asset(toAssetId)?.isLiquidity) {
+          <label class="field">
+            <span>Precio compra</span>
+            <input type="number" name="buyPrice" step="any" min="0" [(ngModel)]="buyPrice" />
+          </label>
+        }
+        <label class="field">
+          <span>Comisión</span>
+          <input type="number" name="fee" step="any" min="0" [(ngModel)]="fee" placeholder="0" />
+        </label>
+      </div>
+      @if (asset() && asset(toAssetId)) {
+        <div class="summary-box">Recibirás aprox. <strong>{{ fmt.formatQty(transferReceived()) }}</strong> en {{ asset(toAssetId)?.name }}</div>
+      }
+    </ng-template>
+
+    <ng-template #adjust>
+      <label class="field">
+        <span>Activo</span>
+        <select name="asset" [(ngModel)]="assetId" required>
+          <option value="" disabled>Elige un activo</option>
+          @for (g of allByBank(); track g.bank) {
+            <optgroup [label]="g.bank">
+              @for (a of g.assets; track a.id) { <option [value]="a.id">{{ a.name }}</option> }
+            </optgroup>
+          }
+        </select>
+      </label>
+      @if (asset(); as a) {
+        @if (isManual(a)) {
+          <label class="field">
+            <span>Valor actual (€)</span>
+            <input type="number" name="value" step="any" min="0" [(ngModel)]="value" [placeholder]="a.valueEur" />
+            <span class="hint">Ahora mismo figura con {{ fmt.formatMoney(a.valueEur) }}.</span>
+          </label>
+        } @else {
+          <label class="field">
+            <span>{{ a.isLiquidity ? 'Saldo actual (€)' : 'Cantidad que tienes ahora' }}</span>
+            <input type="number" name="qty" step="any" min="0" [(ngModel)]="quantity" [placeholder]="a.quantity" />
+            <span class="hint">Ahora figura {{ a.isLiquidity ? fmt.formatMoney(a.quantity) : fmt.formatQty(a.quantity) }}. Se apunta la diferencia.</span>
+          </label>
+        }
+        <label class="field">
+          <span>Fecha</span>
+          <input type="date" name="date" [(ngModel)]="date" [max]="today" required />
+        </label>
+      }
+    </ng-template>
+
+    @if (error()) { <div class="notice">{{ error() }}</div> }
+
+    <div class="dialog-foot">
+      <button type="button" class="btn" (click)="close()">Cancelar</button>
+      <button type="submit" class="btn primary" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Guardar' }}</button>
+    </div>
+  </form>
+</div>

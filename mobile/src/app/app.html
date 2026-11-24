@@ -1,0 +1,54 @@
+<main class="shell">
+  @if (!api.ready()) {
+    <div class="center faint">Cargando…</div>
+  } @else if (!api.session()) {
+    <form class="login" (submit)="signIn($event)">
+      <h1>Finanzas</h1>
+      <input type="email" name="email" placeholder="Email" autocomplete="username" [value]="email()" (input)="email.set($any($event.target).value)" required />
+      <input type="password" name="password" placeholder="Contraseña" autocomplete="current-password" [value]="password()" (input)="password.set($any($event.target).value)" required />
+      <button type="submit" class="primary" [disabled]="signingIn()">{{ signingIn() ? 'Entrando…' : 'Entrar' }}</button>
+      @if (error()) { <p class="error small">{{ error() }}</p> }
+    </form>
+  } @else {
+    <header class="top">
+      <span class="faint small">Patrimonio</span>
+      <button type="button" class="link small" (click)="signOut()">Salir</button>
+    </header>
+
+    @if (summary(); as s) {
+      <section class="hero">
+        <div class="total num">{{ fmt.formatMoney0(s.totalEur) }}</div>
+        @if (period(); as p) {
+          <div class="change num" [class]="fmt.signClass(p.pnl)">
+            {{ fmt.formatSignedMoney(p.pnl) }} ({{ fmt.formatSignedPercent(p.pct) }})
+            <span class="faint">{{ periodLabel() }}</span>
+          </div>
+        }
+        <div class="small num">
+          <span class="faint">Total </span>
+          <span [class]="fmt.signClass(s.pnlEur)">{{ fmt.formatSignedMoney(s.pnlEur) }} ({{ fmt.formatSignedPercent(s.pnlPct) }})</span>
+        </div>
+        @if (s.pendingEur > 0.005) {
+          <div class="small"><span class="faint">Pendiente de reinvertir </span><span class="num">{{ fmt.formatMoney(s.pendingEur) }}</span></div>
+        }
+      </section>
+    }
+
+    <nav class="ranges">
+      @for (r of ranges; track r.id) {
+        <button type="button" [class.on]="range() === r.id" (click)="range.set(r.id)">{{ r.label }}</button>
+      }
+    </nav>
+
+    <section class="chart-card" [class.dim]="loading()">
+      <app-line-chart [points]="chart()" [height]="240" />
+    </section>
+
+    @if (error()) { <p class="error small">{{ error() }}</p> }
+
+    <footer class="foot small faint">
+      <span>{{ updated() }}</span>
+      <button type="button" class="link small" (click)="refresh()" [disabled]="loading()">{{ loading() ? 'Cargando…' : 'Actualizar' }}</button>
+    </footer>
+  }
+</main>

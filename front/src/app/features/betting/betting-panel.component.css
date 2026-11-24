@@ -1,0 +1,10 @@
+:host { display: flex; flex-direction: column; gap: 16px; }
+.toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.toolbar .year input { width: 90px; }
+.toolbar form input { width: 220px; }
+.metric-value { font-size: 22px; font-weight: 600; margin: 4px 0 2px; }
+.flush { padding: 0; overflow: hidden; }
+.pad { padding: 14px 18px 0; }
+.card-head h2 { margin: 0; font-size: 15px; }
+.flush table th:first-child, .flush table td:first-child { padding-left: 18px; }
+.flush table th:last-child, .flush table td:last-child { padding-right: 18px; }

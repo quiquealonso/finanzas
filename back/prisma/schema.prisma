@@ -1,0 +1,356 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Currency {
+  EUR
+  USD
+  GBP
+}
+
+enum OperationType {
+  BUY
+  SELL
+}
+
+enum BettingTransactionType {
+  DEPOSIT
+  WITHDRAWAL
+}
+
+model Bank {
+  id        String                     @id @default(cuid())
+  name      String                     @unique
+  createdAt DateTime                   @default(now())
+  updatedAt DateTime                   @updatedAt
+  assets    Asset[]
+  snapshots MonthlyPortfolioSnapshot[]
+  weeklySnapshots WeeklyPortfolioSnapshot[]
+
+  @@map("banks")
+}
+
+model Asset {
+  id                      String     @id @default(cuid())
+  bankId                  String
+  name                    String
+  assetTypeId             String
+  currency                Currency   @default(EUR)
+  marketSymbol            String?
+  marketProvider          String?    @default("stooq")
+  lastPriceSyncAt         DateTime?
+  purchasedAt             DateTime?
+  regions                 Json?
+
+  // Current open position
+  quantity                Decimal    @default(0)
+  investedCostLocal       Decimal    @default(0)
+  investedCostEur         Decimal    @default(0)
+  marketPriceLocal        Decimal    @default(0)
+  marketPriceEur          Decimal    @default(0)
+
+  // Historical accumulators for weighted averages and partial sales
+  totalBoughtQty          Decimal    @default(0)
+  totalBoughtCostLocal    Decimal    @default(0)
+  totalBoughtCostEur      Decimal    @default(0)
+  totalSoldQty            Decimal    @default(0)
+  totalSoldProceedsLocal  Decimal    @default(0)
+  totalSoldProceedsEur    Decimal    @default(0)
+  totalSoldCostBasisLocal Decimal    @default(0)
+  totalSoldCostBasisEur   Decimal    @default(0)
+
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
+
+  bank                    Bank       @relation(fields: [bankId], references: [id], onDelete: Restrict)
+  assetType               AssetTypeEntity @relation(fields: [assetTypeId], references: [id])
+  realEstateDetails       RealEstateDetails?
+  dailySnapshots          DailyAssetSnapshot[]
+  recurringContributions  RecurringContribution[]
+  transferSources         Transfer[] @relation("source_asset")
+  transferTargets         Transfer[] @relation("target_asset")
+  priceHistory            AssetPriceHistory[]
+  priceSyncLogs           AssetPriceSyncLog[]
+  operations              AssetOperation[]
+
+  @@unique([bankId, name])
+  @@index([bankId])
+  @@index([currency])
+  @@index([assetTypeId])
+  @@index([purchasedAt])
+  @@map("assets")
+}
+
+model AssetTypeEntity {
+  id          String   @id
+  code        String   @unique
+  slug        String   @unique
+  name        String   @unique
+  isLiquidity Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  assets      Asset[]
+
+  @@map("asset_types")
+}
+
+model RealEstateDetails {
+  assetId                 String   @id
+  investedAmountEur       Decimal
+  expectedAnnualReturnPct Decimal  @default(0)
+  investmentPeriod        String
+  startDate               DateTime? @db.Date
+  termMonths              Int?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  asset                   Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@map("real_estate_details")
+}
+
+model AssetOperation {
+  id                 String        @id @default(cuid())
+  assetId            String
+  operationType      OperationType
+  occurredAt         DateTime
+  quantity           Decimal
+  priceLocal         Decimal
+  feeLocal           Decimal       @default(0)
+  fxToEur            Decimal
+  grossLocal         Decimal
+  grossEur           Decimal
+  netLocal           Decimal
+  netEur             Decimal
+  costBasisLocal     Decimal       @default(0)
+  costBasisEur       Decimal       @default(0)
+  realizedPnlLocal   Decimal       @default(0)
+  realizedPnlEur     Decimal       @default(0)
+  note               String?
+  kind               String?
+  groupId            String?
+  recurringId        String?
+  period             String?
+  createdAt          DateTime      @default(now())
+
+  asset              Asset         @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([groupId], map: "asset_operations_group_idx")
+
+  @@index([occurredAt])
+  @@index([assetId])
+  @@map("asset_operations")
+}
+
+model AssetPriceHistory {
+  id             String   @id @default(cuid())
+  assetId         String
+  month           DateTime
+  provider        String
+  symbol          String
+  priceLocal      Decimal
+  priceEur        Decimal
+  fxToEur         Decimal
+  syncedAt        DateTime @default(now())
+
+  asset           Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([assetId, month])
+  @@index([month])
+  @@map("asset_price_history")
+}
+
+model AssetPriceSyncLog {
+  id             String   @id @default(cuid())
+  assetId        String
+  referenceMonth DateTime
+  provider       String
+  symbol         String
+  priceLocal     Decimal
+  priceEur       Decimal
+  fxToEur        Decimal
+  syncedAt       DateTime @default(now())
+
+  asset          Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, syncedAt])
+  @@index([referenceMonth])
+  @@map("asset_price_sync_logs")
+}
+
+model Transfer {
+  id                 String   @id @default(cuid())
+  occurredAt         DateTime
+  note               String?
+
+  sourceAssetId      String
+  sourceCurrency     Currency
+  soldQuantity       Decimal
+  sellPriceLocal     Decimal
+  sellFeeLocal       Decimal  @default(0)
+  sourceFxToEur      Decimal
+  soldCostBasisLocal Decimal
+  soldCostBasisEur   Decimal
+  soldNetLocal       Decimal
+  soldNetEur         Decimal
+  realizedPnlLocal   Decimal
+  realizedPnlEur     Decimal
+
+  targetAssetId      String
+  targetCurrency     Currency
+  buyPriceLocal      Decimal
+  buyFeeLocal        Decimal  @default(0)
+  targetFxToEur      Decimal
+  boughtQuantity     Decimal
+  buyCostLocal       Decimal
+  buyCostEur         Decimal
+
+  createdAt          DateTime @default(now())
+
+  sourceAsset        Asset    @relation("source_asset", fields: [sourceAssetId], references: [id], onDelete: Restrict)
+  targetAsset        Asset    @relation("target_asset", fields: [targetAssetId], references: [id], onDelete: Restrict)
+
+  @@index([occurredAt])
+  @@index([sourceAssetId])
+  @@index([targetAssetId])
+  @@map("transfers")
+}
+
+model FxRate {
+  id           String   @id @default(cuid())
+  date         DateTime
+  fromCurrency Currency
+  toCurrency   Currency
+  rate         Decimal
+  provider     String?
+  createdAt    DateTime @default(now())
+
+  @@unique([date, fromCurrency, toCurrency])
+  @@index([fromCurrency, toCurrency, date])
+  @@map("fx_rates")
+}
+
+model MonthlyPortfolioSnapshot {
+  id               String   @id @default(cuid())
+  bankId           String?
+  month            DateTime
+
+  // Aggregated values are always stored in EUR.
+  positionValueEur Decimal
+  positionCostEur  Decimal
+  realizedPnlEur   Decimal
+  unrealizedPnlEur Decimal
+  totalPnlEur      Decimal
+  profitability    Decimal
+
+  createdAt        DateTime @default(now())
+
+  bank             Bank?    @relation(fields: [bankId], references: [id], onDelete: SetNull)
+
+  @@unique([bankId, month])
+  @@index([month])
+  @@map("monthly_portfolio_snapshots")
+}
+
+model WeeklyPortfolioSnapshot {
+  id               String   @id @default(cuid())
+  bankId           String?
+  week             DateTime
+
+  // Aggregated values are always stored in EUR.
+  positionValueEur Decimal
+  positionCostEur  Decimal
+  realizedPnlEur   Decimal
+  unrealizedPnlEur Decimal
+  totalPnlEur      Decimal
+  profitability    Decimal
+
+  createdAt        DateTime @default(now())
+
+  bank             Bank?    @relation(fields: [bankId], references: [id], onDelete: SetNull)
+
+  @@unique([bankId, week])
+  @@index([week])
+  @@map("weekly_portfolio_snapshots")
+}
+
+model BettingHouse {
+  id           String              @id @default(cuid())
+  name         String              @unique
+  transactions BettingTransaction[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@map("betting_houses")
+}
+
+model BettingTransaction {
+  id             String                  @id @default(cuid())
+  bettingHouseId String
+  bettingHouse   BettingHouse            @relation(fields: [bettingHouseId], references: [id], onDelete: Cascade)
+  type           BettingTransactionType
+  amount         Decimal
+  date           DateTime
+  note           String?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@index([bettingHouseId])
+  @@index([date])
+  @@map("betting_transactions")
+}
+
+// Written nightly by the Supabase function public.sync_daily_snapshots() (see supabase/daily_snapshots.sql).
+model DailyAssetSnapshot {
+  assetId    String
+  date       DateTime @db.Date
+  quantity   Decimal @db.Decimal
+  priceLocal Decimal @db.Decimal
+  currency   String
+  fxToEur    Decimal @db.Decimal
+  priceEur   Decimal @db.Decimal
+  valueEur   Decimal @db.Decimal
+  costEur    Decimal @db.Decimal
+  source     String
+  createdAt  DateTime @default(now()) @db.Timestamp(6)
+  asset      Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([assetId, date])
+  @@index([date])
+  @@map("daily_asset_snapshots")
+}
+
+model PriceSyncRun {
+  id           BigInt    @id @default(autoincrement())
+  startedAt    DateTime  @default(now()) @db.Timestamptz(6)
+  finishedAt   DateTime? @db.Timestamptz(6)
+  fromDate     DateTime? @db.Date
+  toDate       DateTime? @db.Date
+  assetsOk     Int       @default(0)
+  assetsFailed Int       @default(0)
+  errors       String?
+
+  @@map("price_sync_runs")
+}
+
+model RecurringContribution {
+  id         String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  assetId    String
+  amountEur  Decimal  @db.Decimal
+  dayOfMonth Int      @default(1)
+  fromCash   Boolean  @default(false)
+  startMonth String
+  active     Boolean  @default(true)
+  note       String?
+  createdAt  DateTime @default(now()) @db.Timestamp(6)
+  updatedAt  DateTime @default(now()) @db.Timestamp(6)
+  asset      Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("recurring_contributions")
+}

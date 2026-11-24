@@ -1,0 +1,246 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Valoraciones y tesis</h1>
+      <p>Las métricas típicas para valorar cada empresa, tal como estaban el día de cada foto semanal. Elige las que quieras: se ordenan y combinan en una puntuación.</p>
+    </div>
+    <div class="row head-actions">
+      <select [ngModel]="fund()" (ngModelChange)="pickFund($event)" aria-label="Índice">
+        @for (f of data()?.funds ?? []; track f.id) { <option [value]="f.id">{{ f.label }}</option> }
+      </select>
+      @if (data()?.runs?.length) {
+        <select [ngModel]="data()!.run!.id" (ngModelChange)="pickRun($event)" aria-label="Fecha de la foto" title="Fecha de la foto">
+          @for (r of data()!.runs; track r.id) { <option [value]="r.id">Foto del {{ day(r.runDate) }}</option> }
+        </select>
+      }
+      <button type="button" class="btn primary" (click)="refresh()" [disabled]="running()">{{ running() ? 'Haciendo foto…' : 'Nueva foto' }}</button>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>No es una recomendación de inversión.</strong>
+    Datos de la SEC (cuentas presentadas por las empresas) y de Nasdaq, calculados por la app con fines educativos: pueden tener errores o retraso. Una métrica barata no significa una buena compra.
+  </div>
+
+  @if (error(); as e) { <div class="notice">{{ e }}</div> }
+
+  @if (running()) {
+    <section class="card job">
+      <h2>Haciendo la foto…</h2>
+      <ul class="log">
+        @for (e of events(); track $index) { <li [class]="e.level">{{ e.text }}</li> } @empty { <li>Empezando…</li> }
+      </ul>
+    </section>
+  }
+
+  <!-- My theses -->
+  @if (theses().length) {
+    <section class="card">
+      <div class="card-head"><h2>Mis tesis de inversión</h2><span class="faint small">{{ theses().length }}</span></div>
+      <ul class="tiles theses">
+        @for (t of theses(); track t.symbol) {
+          @let ch = change(t.priceAtWrite, t.price);
+          @let up = change(t.price, t.targetPrice);
+          <li class="tile clickable" (click)="open(t.symbol)" [class.on]="company()?.symbol === t.symbol">
+            <div class="tile-name"><span class="sym">{{ t.symbol }}</span><span class="tile-label">{{ t.name }}</span>
+              <span class="pill" [class.up]="t.stance > 0" [class.down]="t.stance < 0">{{ stanceLabel(t.stance) }}</span></div>
+            <div class="tile-sub">Escrita el {{ day(t.createdAt.slice(0, 10)) }} a {{ price(t.priceAtWrite) }}</div>
+            <div class="tile-big"><strong class="num">{{ price(t.price) }}</strong>
+              <span class="num" [class.up]="(ch ?? 0) > 0" [class.down]="(ch ?? 0) < 0">{{ signed(ch) }}</span></div>
+            @if (t.targetPrice) { <div class="tile-sub">Objetivo {{ price(t.targetPrice) }} · {{ signed(up) }} hasta él</div> }
+            @if (t.thesis) { <p class="thesis-snip">{{ t.thesis }}</p> }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (data(); as d) {
+    @if (!d.run) {
+      <section class="card"><p class="faint">Todavía no hay ninguna foto. Pulsa «Nueva foto» (tarda unos minutos).</p></section>
+    } @else {
+      <!-- Metric picker -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>Métricas</h2>
+            <p class="faint small">{{ picked().length }} elegidas. La puntuación es el percentil medio de la empresa en esas métricas dentro de la lista (100 = la mejor en todas).</p>
+          </div>
+          <div class="row">
+            <button type="button" class="btn sm link" (click)="showMetrics.set(!showMetrics())">{{ showMetrics() ? 'Ocultar explicación' : '¿Qué mide cada una?' }}</button>
+            <button type="button" class="btn sm" (click)="resetPick()">Por defecto</button>
+          </div>
+        </div>
+        <div class="groups">
+          @for (g of groups; track g) {
+            <div class="group">
+              <span class="faint small">{{ g }}</span>
+              <div class="chips">
+                @for (m of METRICS; track m.key) {
+                  @if (m.group === g) {
+                    <button type="button" class="chip" [class.on]="picked().includes(m.key)" (click)="toggle(m.key)" [title]="m.help">{{ m.label }}</button>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+        @if (showMetrics()) {
+          <dl class="help">
+            @for (m of METRICS; track m.key) {
+              <div><dt>{{ m.label }} <span class="faint small">({{ m.better === 'low' ? 'mejor bajo' : 'mejor alto' }})</span></dt><dd>{{ m.help }}</dd></div>
+            }
+          </dl>
+        }
+      </section>
+
+      <!-- Company detail -->
+      @if (company(); as c) {
+        @let now = c.history[0];
+        <section class="card detail" id="valuation-detail">
+          <div class="card-head">
+            <div>
+              <h2><span class="sym">{{ c.symbol }}</span> {{ now.name }}</h2>
+              <p class="faint small">{{ now.sector }} · {{ now.industry }} · {{ money(now.marketCapUsd) }} · precio {{ price(c.price ?? now.priceUsd) }}
+                · cuentas hasta {{ now.period }}@if (now.raw['annualOnly']) { (solo anuales) }</p>
+            </div>
+            <button type="button" class="btn sm link" (click)="company.set(null)">Cerrar</button>
+          </div>
+
+          <div class="detail-grid">
+            <div>
+              <h3>Todas las métricas</h3>
+              <table class="compact">
+                <thead><tr><th>Métrica</th><th class="r">Valor</th><th class="r">Mediana lista</th><th class="r">Percentil</th></tr></thead>
+                <tbody>
+                  @for (m of detailMetrics(); track m.key) {
+                    <tr [title]="m.help">
+                      <td>{{ m.label }}</td>
+                      <td class="r num" [style.background]="tint(m.pct)">{{ fmt(m.key, m.value) }}</td>
+                      <td class="r num faint">{{ fmt(m.key, m.median) }}</td>
+                      <td class="r num">{{ m.pct == null ? '—' : (m.pct * 100).toFixed(0) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              <p class="faint small">Cifras: ventas {{ money($any(now.raw['revenue'])) }}, EBIT {{ money($any(now.raw['ebit'])) }}, beneficio {{ money($any(now.raw['netIncome'])) }}, deuda {{ money($any(now.raw['debt'])) }}, caja {{ money($any(now.raw['cash'])) }}.</p>
+            </div>
+
+            <div class="thesis-box">
+              <h3>Mi tesis de inversión</h3>
+              <div class="seg">
+                <button type="button" [class.on]="draft.stance === 1" (click)="draft.stance = 1">Alcista</button>
+                <button type="button" [class.on]="draft.stance === 0" (click)="draft.stance = 0">En vigilancia</button>
+                <button type="button" [class.on]="draft.stance === -1" (click)="draft.stance = -1">Bajista</button>
+              </div>
+              <textarea rows="7" [(ngModel)]="draft.thesis" placeholder="Por qué creo que está barata o cara, qué tiene que pasar, qué me haría cambiar de opinión…"></textarea>
+              <label class="target">Precio objetivo ($) <input type="number" step="any" min="0" [(ngModel)]="draft.targetPrice" /></label>
+              @if (c.thesis; as t) {
+                <p class="faint small">Escrita el {{ day(t.createdAt.slice(0, 10)) }} con el precio a {{ price(t.priceAtWrite) }}: desde entonces {{ signed(change(t.priceAtWrite, c.price)) }}.</p>
+              }
+              <div class="row">
+                @if (c.thesis) { <button type="button" class="btn sm link danger" (click)="deleteThesis()">Borrar</button> }
+                <span class="spacer"></span>
+                <button type="button" class="btn sm primary" (click)="saveThesis()" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Guardar tesis' }}</button>
+              </div>
+            </div>
+          </div>
+
+          @if (c.history.length > 1) {
+            <h3>Evolución en cada foto</h3>
+            <div class="table-wrap">
+              <table class="compact">
+                <thead><tr><th>Foto</th><th class="r">Precio</th>
+                  @for (k of picked(); track k) { <th class="r">{{ metric(k).short }}</th> }</tr></thead>
+                <tbody>
+                  @for (h of c.history; track h.runDate) {
+                    <tr><td>{{ day(h.runDate) }}</td><td class="r num">{{ price(h.priceUsd) }}</td>
+                      @for (k of picked(); track k) { <td class="r num">{{ fmt(k, h.metrics[k]) }}</td> }</tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+      }
+
+      <!-- Companies -->
+      <section class="card">
+        <div class="card-head wrap">
+          <div>
+            <h2>{{ rows().length }} empresas</h2>
+            <p class="faint small">Foto del {{ day(d.run.runDate) }} · cuentas hasta {{ d.run.period }}. Pulsa una cabecera para ordenar y una empresa para ver todo y escribir tu tesis.</p>
+          </div>
+          <div class="row tools">
+            <input type="search" placeholder="Buscar" [ngModel]="search()" (ngModelChange)="search.set($event)" class="search" />
+            <select [ngModel]="sector()" (ngModelChange)="sector.set($event)" aria-label="Sector">
+              <option value="">Todos los sectores</option>
+              @for (s of sectors(); track s) { <option [value]="s">{{ s }}</option> }
+            </select>
+            <label class="check"><input type="checkbox" [ngModel]="complete()" (ngModelChange)="complete.set($event)" /> Solo con todas las métricas</label>
+            <app-view-toggle [(view)]="view" storageKey="valuations.view" />
+          </div>
+        </div>
+
+        @if (view() === 'table') {
+          <div class="table-wrap">
+            <table class="grid">
+              <thead>
+                <tr>
+                  <th class="sticky">Empresa</th>
+                  <th class="r sortable" (click)="sortBy('score')" [class.sorted]="sortKey() === 'score'">Puntuación {{ sortKey() === 'score' ? (sortDesc() ? '↓' : '↑') : '' }}</th>
+                  @for (k of picked(); track k) {
+                    <th class="r sortable" (click)="sortBy(k)" [class.sorted]="sortKey() === k" [title]="metric(k).help + ' (' + (metric(k).better === 'low' ? 'mejor bajo' : 'mejor alto') + ')'">
+                      {{ metric(k).short }} {{ sortKey() === k ? (sortDesc() ? '↓' : '↑') : '' }}
+                    </th>
+                  }
+                  <th class="r sortable hide-sm" (click)="sortBy('marketCapUsd')" [class.sorted]="sortKey() === 'marketCapUsd'">Capitalización</th>
+                </tr>
+                <tr class="medians">
+                  <td class="sticky faint small">Mediana de la lista</td><td></td>
+                  @for (k of picked(); track k) { <td class="r num faint small">{{ fmt(k, medians()[k]) }}</td> }
+                  <td class="hide-sm"></td>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of rows(); track r.symbol) {
+                  <tr (click)="open(r.symbol)" [class.on]="company()?.symbol === r.symbol">
+                    <td class="sticky">
+                      <span class="sym">{{ r.symbol }}</span>
+                      @if (thesisOf().has(r.symbol)) { <span class="dot-thesis" title="Tienes una tesis">✎</span> }
+                      <span class="co-name">{{ r.name }}</span>
+                    </td>
+                    <td class="r num"><strong>{{ r.score == null ? '—' : (r.score * 100).toFixed(0) }}</strong></td>
+                    @for (k of picked(); track k) {
+                      <td class="r num" [style.background]="tint(r.pct[k])">{{ fmt(k, r.metrics[k]) }}</td>
+                    }
+                    <td class="r num hide-sm faint">{{ money(r.marketCapUsd) }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td [attr.colspan]="picked().length + 3" class="faint">Sin empresas con estos filtros.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <ul class="tiles cards">
+            @for (r of rows(); track r.symbol) {
+              <li class="tile clickable" (click)="open(r.symbol)" [class.on]="company()?.symbol === r.symbol">
+                <div class="tile-name"><span class="sym">{{ r.symbol }}</span><span class="tile-label">{{ r.name }}</span>
+                  <strong class="score num">{{ r.score == null ? '—' : (r.score * 100).toFixed(0) }}</strong></div>
+                <div class="tile-sub">{{ r.sector }} · {{ money(r.marketCapUsd) }}</div>
+                <dl class="mini-metrics">
+                  @for (k of picked(); track k) {
+                    <div [style.background]="tint(r.pct[k])"><dt>{{ metric(k).short }}</dt><dd class="num">{{ fmt(k, r.metrics[k]) }}</dd></div>
+                  }
+                </dl>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  } @else if (!error()) {
+    <p class="faint">Cargando…</p>
+  }
+</div>

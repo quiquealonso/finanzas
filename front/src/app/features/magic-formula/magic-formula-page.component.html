@@ -1,0 +1,100 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Fórmula mágica</h1>
+      <p>Las mejores empresas de EE. UU. según Joel Greenblatt: buen negocio (rentabilidad sobre el capital) a buen precio (rentabilidad por beneficios). Se actualiza cada jueves.</p>
+    </div>
+    @if (data()?.run; as r) {
+      <div class="row">
+        <button type="button" class="btn sm" [disabled]="runIndex() >= data()!.runs.length - 1" (click)="step(1)" title="Semana anterior">‹</button>
+        <span class="small num run-date">{{ day(r.runDate) }}</span>
+        <button type="button" class="btn sm" [disabled]="runIndex() <= 0" (click)="step(-1)" title="Semana siguiente">›</button>
+      </div>
+    }
+  </div>
+
+  @if (error(); as e) {
+    <div class="notice">{{ e }}</div>
+  }
+
+  @if (data(); as d) {
+    @if (d.run; as r) {
+      <section class="card stats">
+        <div><span class="faint small">Empresas analizadas</span><strong class="num">{{ r.universe.toLocaleString('es-ES') }}</strong></div>
+        <div><span class="faint small">Capitalización mínima</span><strong class="num">{{ usd(r.minCapUsd) }}</strong></div>
+        <div><span class="faint small">Beneficios hasta</span><strong class="num">{{ r.period }}</strong></div>
+        <div><span class="faint small">Cambios vs. semana anterior</span>
+          <strong class="num">@if (d.previous) { +{{ newCount() }} / −{{ dropped().length }} } @else { — }</strong>
+        </div>
+        <button type="button" class="btn sm link how-btn" (click)="showHow.set(!showHow())">{{ showHow() ? 'Ocultar' : '¿Cómo funciona?' }}</button>
+      </section>
+
+      @if (showHow()) {
+        <section class="card how">
+          <p><strong>Rentabilidad sobre el capital (ROC)</strong> = EBIT / (capital circulante neto + activo fijo neto). Mide si el negocio es bueno.</p>
+          <p><strong>Rentabilidad por beneficios (EY)</strong> = EBIT / valor empresa (capitalización + deuda − caja). Mide si está barata.</p>
+          <p>Se ordenan todas las empresas por cada una de las dos, se suman los dos puestos y la suma más baja gana. Quedan fuera bancos, aseguradoras, utilities e inmobiliarias.</p>
+          <p><strong>Cómo la usa el libro:</strong> comprar 20–30 de la lista, 2–3 cada 2–3 meses, mantener cada una un año y luego rotar. Funciona como cartera, no empresa a empresa: algunas serán trampas de valor.</p>
+          <p class="faint small">Datos: SEC (XBRL, últimos doce meses) y Nasdaq (precio y capitalización). Es un cálculo propio, puede no coincidir al 100 % con magicformulainvesting.com.</p>
+        </section>
+      }
+
+      @if (sectors().length > 1) {
+        <div class="chips">
+          <button type="button" class="chip" [class.on]="!sector()" (click)="sector.set(null)">Todos <span class="faint num">{{ d.picks.length }}</span></button>
+          @for (s of sectors(); track s.name) {
+            <button type="button" class="chip" [class.on]="sector() === s.name" (click)="sector.set(sector() === s.name ? null : s.name)">{{ s.name }} <span class="faint num">{{ s.count }}</span></button>
+          }
+        </div>
+      }
+
+      <section class="card table-panel">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="r">#</th>
+                <th>Empresa</th>
+                <th class="r" title="EBIT / valor empresa">EY</th>
+                <th class="r" title="EBIT / (capital circulante + activo fijo)">ROC</th>
+                <th class="r hide-sm" title="Puesto por EY + puesto por ROC">Puestos</th>
+                <th class="r hide-sm">Capitalización</th>
+                <th class="r hide-sm">Precio</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of rows(); track p.symbol) {
+                <tr>
+                  <td class="r num faint">{{ p.rank }}</td>
+                  <td>
+                    <div class="co">
+                      <a [href]="link(p)" target="_blank" rel="noopener noreferrer" class="sym">{{ p.symbol }}</a>
+                      <span class="co-name">{{ p.name }}</span>
+                      @if (p.isNew) { <span class="tag new" title="No estaba la semana anterior">Nueva</span> }
+                      @if (p.isHeld) { <span class="tag held" title="Ya la tienes en cartera">En cartera</span> }
+                      @if (p.annualOnly) { <span class="tag" title="Sin trimestres recientes en la SEC: EBIT del último año fiscal">Anual</span> }
+                    </div>
+                    <div class="small faint">{{ p.industry || p.sector || '' }}</div>
+                  </td>
+                  <td class="r num"><strong>{{ pct(p.earningsYield) }}</strong></td>
+                  <td class="r num">{{ pct(p.roc, 0) }}</td>
+                  <td class="r num faint hide-sm">{{ p.rankEy }} + {{ p.rankRoc }}</td>
+                  <td class="r num hide-sm">{{ usd(p.marketCapUsd) }}</td>
+                  <td class="r num hide-sm">{{ price(p.priceUsd) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      @if (dropped().length) {
+        <p class="small faint">Salen de la lista esta semana: {{ dropped().join(', ') }}.</p>
+      }
+    } @else {
+      <div class="card empty">Aún no hay datos. Se calculan cada jueves por la mañana con la tarea semanal.</div>
+    }
+  } @else if (!error()) {
+    <p class="faint small">Cargando…</p>
+  }
+</div>

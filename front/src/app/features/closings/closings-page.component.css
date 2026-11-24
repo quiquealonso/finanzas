@@ -1,0 +1,41 @@
+.toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.close-box { display: inline-flex; gap: 6px; }
+.close-box select { width: auto; }
+
+.headline { text-align: right; }
+.headline .big { font-size: 24px; font-weight: 600; }
+
+.flush { padding: 0; overflow: hidden; }
+.sheet { overflow: auto; max-height: calc(100vh - 220px); }
+.sheet table { border-collapse: separate; border-spacing: 0; font-size: 13px; width: 100%; }
+.sheet th { position: sticky; top: 0; background: var(--surface); z-index: 2; }
+.sheet td, .sheet th { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 5px 8px; }
+.sheet td:last-child, .sheet th:last-child { border-right: 0; }
+.sticky { position: sticky; left: 0; background: var(--surface); z-index: 1; min-width: 190px; }
+thead .sticky { z-index: 3; }
+
+.cell { min-width: 74px; line-height: 1.25; cursor: cell; }
+.cell:hover { background: var(--surface-hover); }
+.start { background: var(--surface-2); }
+.year-col { background: var(--accent-soft); cursor: default; border-left: 2px solid var(--border-strong); }
+.delta { font-size: 11px; white-space: nowrap; }
+.cell .num { white-space: nowrap; }
+.contrib { font-size: 11px; color: var(--accent); white-space: nowrap; }
+.note { font-size: 11px; font-style: italic; color: var(--text-3); }
+.edit { width: 100%; min-width: 60px; padding: 2px 4px; text-align: right; font-size: 13px; }
+
+.name-cell { display: flex; align-items: center; gap: 6px; }
+.row-name { cursor: text; }
+.tools { margin-left: auto; display: inline-flex; gap: 2px; opacity: 0; }
+tr:hover .tools { opacity: 1; }
+.tools .ghost-btn { padding: 0 6px; height: 22px; min-width: 22px; font-size: 12px; }
+.tools .danger:hover { color: var(--down); }
+
+.section-row td { background: var(--surface-2); padding-top: 9px; padding-bottom: 9px; }
+.section-row .sticky { background: var(--surface-2); }
+.total-row td { font-weight: 600; background: var(--surface-2); border-bottom: 2px solid var(--border-strong); }
+.total-row .sticky { background: var(--surface-2); }
+tbody tr:hover .sticky { background: var(--surface-hover); }
+
+tfoot td { position: sticky; bottom: 0; background: var(--accent-soft); font-weight: 700; border-top: 2px solid var(--border-strong); z-index: 1; }
+tfoot .sticky { z-index: 2; }

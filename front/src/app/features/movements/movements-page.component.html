@@ -1,0 +1,231 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Movimientos</h1>
+      <p>Invertido este mes: <strong class="num">{{ fmt.formatMoney(monthTotals().invested) }}</strong></p>
+    </div>
+    <div class="row">
+      <button class="btn" type="button" (click)="importing.set(true)" title="Lee los correos de confirmación de tus brókers y apunta las operaciones nuevas">Importar del correo</button>
+      <button class="btn primary" type="button" (click)="newMovement()">+ Nuevo movimiento</button>
+    </div>
+  </div>
+
+  <!-- Orders read from e-mail waiting for confirmation (BBVA) -->
+  <app-pending-orders />
+
+  <!-- Recurring contributions: folded by default (looked at once a month); the header says if some are due. -->
+  <section class="card plans-card" [class.folded]="!plansOpen()">
+    <div class="card-head fold-head">
+      <button type="button" class="fold" (click)="togglePlans()" [attr.aria-expanded]="plansOpen()">
+        <svg class="chev" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" /></svg>
+        <h2>Aportaciones periódicas</h2>
+        <span class="faint small">{{ plansSummary() }}</span>
+        @if (recurring().pending.length) {
+          <span class="due">{{ recurring().pending.length }} {{ recurring().pending.length === 1 ? 'pendiente' : 'pendientes' }} de registrar</span>
+        }
+      </button>
+      <button class="btn sm" type="button" (click)="openNewPlan()">+ Nueva aportación</button>
+    </div>
+
+    @if (plansOpen()) {
+    <p class="muted small plans-help">Lo que metes cada mes en tus fondos. El primer día hábil del mes te aparece pendiente: si tienes ya las participaciones que te da el banco escríbelas; si no, se usa el precio de ese día.</p>
+
+    @if (recurring().pending.length) {
+      <div class="pending">
+        <div class="row between">
+          <strong class="small">Pendientes de registrar</strong>
+          @if (recurring().pending.length > 1) {
+            <button class="btn sm primary" type="button" (click)="registerAll()" [disabled]="!!busy()">
+              {{ busy() === 'all' ? 'Registrando…' : 'Registrar todas' }}
+            </button>
+          }
+        </div>
+        @for (p of recurring().pending; track pendingKey(p)) {
+          <div class="pending-row">
+            <span class="badge">{{ fmt.formatMonth(p.period) }}</span>
+            <div class="grow">
+              <div>{{ p.assetName }} <span class="faint small">· {{ p.bankName }}@if (p.note) { · {{ p.note }} }</span></div>
+              <div class="faint small">
+                {{ fmt.formatDay(p.dueDate) }}
+                @if (p.estQuantity) { · aprox. {{ fmt.formatQty(p.estQuantity) }} part. a {{ fmt.formatPrice(p.estPrice ?? 0) }} ({{ p.estPriceDate }}) }
+              </div>
+            </div>
+            <label class="amount" title="Importe">
+              <input type="number" step="any" min="0" [(ngModel)]="pendingAmount[pendingKey(p)]" [name]="'pa-' + pendingKey(p)" />
+              <span class="faint">€</span>
+            </label>
+            <label class="amount qty" title="Participaciones que te confirma el banco (opcional)">
+              <input type="number" step="any" min="0" [(ngModel)]="pendingQty[pendingKey(p)]" [name]="'pq-' + pendingKey(p)"
+                     [placeholder]="p.estQuantity ? fmt.formatQty(p.estQuantity) : 'part.'" />
+              <span class="faint">part.</span>
+            </label>
+            <button class="btn sm primary" type="button" (click)="register(p)" [disabled]="!!busy()">
+              {{ busy() === pendingKey(p) ? '…' : 'Registrar' }}
+            </button>
+            <button class="btn sm" type="button" (click)="skip(p)" [disabled]="!!busy()" title="Quitar este mes de pendientes sin apuntar nada">Omitir</button>
+          </div>
+        }
+      </div>
+    }
+
+    @if (showPlanForm) {
+      <form class="plan-form" (ngSubmit)="savePlan()">
+        <label class="field grow2">
+          <span>Fondo / activo</span>
+          <select name="planAsset" [(ngModel)]="planDraft.assetId" [disabled]="!!editingPlanId">
+            <option value="" disabled>Elige</option>
+            @for (a of investable(); track a.id) { <option [value]="a.id">{{ a.name }} · {{ a.bankName }}</option> }
+          </select>
+        </label>
+        <label class="field">
+          <span>Importe al mes (€)</span>
+          <input type="number" name="planAmount" step="any" min="0" [(ngModel)]="planDraft.amountEur" placeholder="100" />
+        </label>
+        <label class="field">
+          <span>Día del mes</span>
+          <input type="number" name="planDay" min="1" max="28" [(ngModel)]="planDraft.dayOfMonth" />
+        </label>
+        <label class="field">
+          <span>Desde</span>
+          <input type="month" name="planStart" [(ngModel)]="planDraft.startMonth" />
+        </label>
+        <div class="row full">
+          @if (editingPlanId) {
+            <button type="button" class="btn sm danger" (click)="deleteEditingPlan()">Eliminar</button>
+          }
+          <span class="spacer"></span>
+          <button type="button" class="btn sm" (click)="showPlanForm = false">Cancelar</button>
+          <button type="submit" class="btn sm primary" [disabled]="busy() === 'plan'">Guardar</button>
+        </div>
+      </form>
+    }
+
+    @if (recurring().items.length) {
+      <ul class="plans">
+        @for (plan of recurring().items; track plan.id) {
+          <li [class.paused]="!plan.active">
+            <div class="grow">
+              <div><strong class="num">{{ fmt.formatMoney(plan.amountEur) }}</strong> al mes → {{ plan.assetName }} <span class="faint small">· {{ plan.bankName }}</span></div>
+              <div class="faint small">
+                Día {{ plan.dayOfMonth }} · desde {{ fmt.formatMonth(plan.startMonth) }}
+                · {{ planLast(plan) }} · Total aportado {{ fmt.formatMoney(plan.totalInvestedEur) }}
+              </div>
+            </div>
+            @if (!plan.active) { <span class="badge">Pausada</span> }
+            <button class="btn sm link" type="button" (click)="togglePlan(plan)">{{ plan.active ? 'Pausar' : 'Reanudar' }}</button>
+            <button class="btn sm link" type="button" (click)="editPlan(plan)">Editar</button>
+          </li>
+        }
+      </ul>
+    } @else if (!showPlanForm) {
+      <p class="faint small">Todavía no tienes ninguna. Crea una para tus fondos de cada mes.</p>
+    }
+    }
+  </section>
+
+  <!-- Movement list -->
+  <section class="card flush">
+    <div class="card-head pad">
+      <h2>Historial</h2>
+      <div class="row">
+        <input class="search" placeholder="Buscar" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+        <select [ngModel]="kindFilter()" (ngModelChange)="kindFilter.set($event)">
+          <option value="">Todo</option>
+          <option value="buy">Compras</option>
+          <option value="recurring">Aportaciones</option>
+          <option value="sell">Ventas</option>
+          <option value="transfer">Traspasos</option>
+          <option value="adjust">Ajustes</option>
+        </select>
+        <app-view-toggle [(view)]="layout" storageKey="movements.view" />
+      </div>
+    </div>
+
+    @if (groups().length && layout() === 'cards') {
+      <!-- One block per month, newest first. -->
+      @for (m of byMonth(); track m.month) {
+        <div class="tiles-group month-head">
+          <strong>{{ fmt.formatMonth(m.month) }}</strong>
+          <span class="faint small">{{ m.groups.length }} {{ m.groups.length === 1 ? 'movimiento' : 'movimientos' }}</span>
+          @if (m.invested) { <span class="num small">Invertido {{ fmt.formatMoney(m.invested) }}</span> }
+          @if (m.realized) { <span class="num small" [class]="fmt.signClass(m.realized)">Ventas {{ fmt.formatSignedMoney(m.realized) }}</span> }
+        </div>
+        <ul class="tiles pad-tiles">
+          @for (g of m.groups; track g.groupId) {
+            <li class="tile">
+              <div class="tile-name">
+                <span class="dot" [style.background]="typeColors[typeOf(g)] || 'var(--text-3)'"></span>
+                <span class="tile-label">{{ g.main.assetName }}</span>
+                <span class="badge" [class]="'k-' + g.kind">{{ g.label }}</span>
+              </div>
+              <div class="tile-sub">{{ g.main.bankName }} · {{ fmt.formatDay(g.date) }}</div>
+              <div class="tile-big">
+                <strong>{{ fmt.formatMoney(g.amountEur) }}</strong>
+                @if (g.realizedPnlEur !== null) {
+                  <span class="tile-aside" [class]="fmt.signClass(g.realizedPnlEur)">{{ fmt.formatSignedMoney(g.realizedPnlEur) }}</span>
+                }
+              </div>
+              <div class="tile-foot">
+                <span class="detail" [title]="describe(g)">{{ describe(g) }}</span>
+                <button class="btn sm link" type="button" (click)="remove(g)" [disabled]="busy() === g.groupId">
+                  {{ busy() === g.groupId ? '…' : 'Borrar' }}
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    } @else if (groups().length) {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Activo</th>
+              <th>Detalle</th>
+              <th class="r">Importe</th>
+              <th class="r">Resultado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (g of groups(); track g.groupId) {
+              <tr>
+                <td class="nowrap">{{ fmt.formatDay(g.date) }}</td>
+                <td><span class="badge" [class]="'k-' + g.kind">{{ g.label }}</span></td>
+                <td>
+                  <div>{{ g.main.assetName }}</div>
+                  <div class="faint small">{{ g.main.bankName }}</div>
+                </td>
+                <td class="small muted">
+                  {{ describe(g) }}
+                </td>
+                <td class="r">{{ fmt.formatMoney(g.amountEur) }}</td>
+                <td class="r" [class]="fmt.signClass(g.realizedPnlEur ?? 0)">
+                  {{ g.realizedPnlEur === null ? '' : fmt.formatSignedMoney(g.realizedPnlEur) }}
+                </td>
+                <td class="r">
+                  <button class="btn sm link" type="button" (click)="remove(g)" [disabled]="busy() === g.groupId" title="Borrar">
+                    {{ busy() === g.groupId ? '…' : 'Borrar' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (loading()) {
+      <div class="empty">Cargando…</div>
+    } @else {
+      <div class="empty">
+        <p>Aún no hay movimientos.</p>
+        <p class="faint small">Las posiciones que ya tenías aparecerán como "Saldo inicial" en cuanto apuntes el primer movimiento de cada activo.</p>
+      </div>
+    }
+  </section>
+</div>
+
+@if (importing()) {
+  <app-mail-import-dialog (closed)="importing.set(false)" />
+}

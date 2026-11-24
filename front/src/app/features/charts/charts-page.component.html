@@ -1,0 +1,70 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Distribución</h1>
+      <p>Cómo se reparte tu patrimonio: {{ money(total()) }}.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <div class="card-head"><h2>Por tipo de activo</h2></div>
+      <app-donut-chart [segments]="byType()" title="Distribución por tipo de activo" />
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Geográfica</h2></div>
+      <app-donut-chart [segments]="byRegion()" title="Distribución geográfica" />
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Por banco</h2></div>
+      <app-donut-chart [segments]="byBank()" title="Distribución por banco" />
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Por moneda</h2>
+        <span class="faint small">Riesgo de divisa: en qué moneda cotiza cada activo</span>
+      </div>
+      <app-donut-chart [segments]="byCurrency()" title="Distribución por moneda" />
+    </section>
+  </div>
+
+  @if (regionDetail(); as d) {
+    <section class="card">
+      <div class="card-head">
+        <h2>Qué hay en cada zona</h2>
+        <div class="chips">
+          @for (r of byRegion(); track r.key) {
+            <button type="button" class="chip" [class.on]="d.code === r.key" (click)="selectRegion(r.key)">
+              <span class="dot" [style.background]="r.color"></span>{{ r.label }}
+            </button>
+          }
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Activo</th><th>Banco</th><th class="r">Parte en {{ d.name }}</th><th class="r">Euros</th><th class="r">% de la zona</th></tr>
+          </thead>
+          <tbody>
+            @for (r of d.rows; track r.asset.id) {
+              <tr>
+                <td>{{ r.asset.name }}</td>
+                <td class="muted">{{ r.asset.bankName }}</td>
+                <td class="r faint">{{ (r.share * 100).toFixed(0) }} %</td>
+                <td class="r">{{ money(r.value) }}</td>
+                <td class="r"><strong>{{ d.total > 0 ? ((r.value / d.total) * 100).toFixed(1) : 0 }} %</strong></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="faint small note">
+        Las acciones cuentan en el país de la empresa; los fondos, con un reparto aproximado de su índice
+        (p. ej. Vanguard Small-Cap: 61 % EE. UU., 16 % Europa, 23 % otros desarrollados). Puedes cambiarlo en Activos → pulsar el activo → Editar.
+      </p>
+    </section>
+  }
+</div>

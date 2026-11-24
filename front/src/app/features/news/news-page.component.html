@@ -1,0 +1,103 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Noticias</h1>
+      <p>Lo que pasa con tus posiciones. Cada jueves: noticias de las acciones de la semana, fondos de gestión activa una vez al mes y un resumen.</p>
+    </div>
+    <div class="seg">
+      <button type="button" [class.on]="scope() === 'all'" (click)="scope.set('all')">Todo</button>
+      <button type="button" [class.on]="scope() === 'daily'" (click)="scope.set('daily')">Acciones</button>
+      <button type="button" [class.on]="scope() === 'monthly'" (click)="scope.set('monthly')">Fondos</button>
+    </div>
+  </div>
+
+  @if (error(); as e) {
+    <div class="notice">{{ e }}</div>
+  }
+
+  <section class="card digest">
+    @if (digest(); as d) {
+      <div class="digest-head">
+        <div>
+          <p class="kicker">Tablón semanal · {{ weekLabel(d.weekStart) }}</p>
+          <h2>{{ d.headline }}</h2>
+        </div>
+        <div class="row">
+          <button type="button" class="btn sm" [disabled]="digestIndex() >= digestCount() - 1" (click)="digestIndex.set(digestIndex() + 1)" title="Semana anterior">‹</button>
+          <button type="button" class="btn sm" [disabled]="digestIndex() === 0" (click)="digestIndex.set(digestIndex() - 1)" title="Semana siguiente">›</button>
+        </div>
+      </div>
+      <div class="digest-body">
+        @for (p of paragraphs(); track $index) {
+          <p>{{ p }}</p>
+        }
+      </div>
+    } @else {
+      <p class="kicker">Tablón semanal</p>
+      <p class="faint small">Aún no hay resumen. Se genera cada jueves por la mañana con las noticias de jueves a miércoles.</p>
+    }
+  </section>
+
+  <div class="filters">
+    <div class="tiers">
+      <button type="button" class="tier-btn" [class.on]="tier() === 'all'" (click)="tier.set('all')">Todas <span class="num">{{ counts().all }}</span></button>
+      <button type="button" class="tier-btn t-important" [class.on]="tier() === 'important'" (click)="tier.set('important')"><span class="tdot"></span>Importantes <span class="num">{{ counts().important }}</span></button>
+      <button type="button" class="tier-btn t-minor" [class.on]="tier() === 'minor'" (click)="tier.set('minor')"><span class="tdot"></span>Sin mucha importancia <span class="num">{{ counts().minor }}</span></button>
+      <button type="button" class="tier-btn t-low" [class.on]="tier() === 'low'" (click)="tier.set('low')"><span class="tdot"></span>Poco relevantes <span class="num">{{ counts().low }}</span></button>
+    </div>
+    @if (assetChips().length) {
+      <div class="chips">
+        @for (c of assetChips(); track c.name) {
+          <button type="button" class="chip" [class.on]="asset() === c.name" (click)="pickAsset(c.name)" [title]="c.count + ' noticias · ' + pct(c.weight) + ' de tu cartera'">
+            {{ c.name }} <span class="faint num">{{ pct(c.weight) }}</span>
+            @if (c.important) { <span class="imp-count">{{ c.important }}</span> }
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (!data() && !error()) {
+    <p class="faint small">Cargando…</p>
+  } @else if (!days().length) {
+    <div class="card empty">No hay noticias con estos filtros.</div>
+  }
+
+  @for (g of days(); track g.day) {
+    <section class="day">
+      <h3 class="day-title">{{ dayLabel(g.day) }}</h3>
+      <ul class="items">
+        @for (n of g.items; track n.id) {
+          @let compact = n.tier === 'low' && !opened().has(n.id);
+          <li [class]="'item card tier-' + n.tier" [class.compact]="compact">
+            <div class="item-top">
+              <span class="tier-tag">{{ tierLabels[n.tier] }}</span>
+              @if (n.assetName) {
+                <span class="asset">{{ n.assetName }}@if (weightOf(n); as w) { <span class="faint num"> · {{ pct(w) }}</span> }</span>
+              } @else {
+                <span class="asset faint">Mercado</span>
+              }
+              @if (n.scope === 'monthly') { <span class="badge">Fondo</span> }
+              <span class="spacer"></span>
+              @if (n.sentiment === 'up') { <span class="sent up" title="Positiva para la posición">▲</span> }
+              @if (n.sentiment === 'down') { <span class="sent down" title="Negativa para la posición">▼</span> }
+              @if (n.source) { <span class="faint small">{{ n.source }}</span> }
+            </div>
+            <a class="title" [href]="n.url" target="_blank" rel="noopener noreferrer">{{ n.title }}</a>
+            @if (compact) {
+              @if (n.summary || n.impact) {
+                <button type="button" class="btn sm link more" (click)="toggle(n.id)">Ver más</button>
+              }
+            } @else {
+              @if (n.summary) { <p class="summary">{{ n.summary }}</p> }
+              @if (n.impact) { <p class="impact"><strong>Para tu cartera:</strong> {{ n.impact }}</p> }
+              @if (n.tier === 'low') {
+                <button type="button" class="btn sm link more" (click)="toggle(n.id)">Ver menos</button>
+              }
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

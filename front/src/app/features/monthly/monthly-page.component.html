@@ -1,0 +1,151 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Evolución mensual</h1>
+      <p>{{ modeHint() }}</p>
+    </div>
+    <button class="btn" type="button" (click)="exportCsv()" [disabled]="!rows().length">Exportar a Excel</button>
+  </div>
+
+  <div class="toolbar">
+    <div class="seg">
+      @for (g of groupOptions; track g.id) {
+        <button type="button" [class.on]="groupBy() === g.id" (click)="groupBy.set(g.id)">Por {{ g.label }}</button>
+      }
+    </div>
+    <div class="seg">
+      @for (y of years(); track y) {
+        <button type="button" [class.on]="year() === y" (click)="year.set(y)">{{ y }}</button>
+      }
+      <button type="button" [class.on]="!year()" (click)="year.set('')">Todo</button>
+    </div>
+    <div class="seg">
+      @for (m of visibleModes(); track m.id) {
+        <button type="button" [class.on]="effectiveMode() === m.id" (click)="mode.set(m.id)">{{ m.label }}</button>
+      }
+    </div>
+    <span class="spacer"></span>
+    <input class="search" [placeholder]="groupBy() === 'asset' ? 'Buscar activo' : 'Filtrar activos'" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+    <select [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)">
+      <option value="">Todos los tipos</option>
+      @for (t of typeOptions(); track t.code) { <option [value]="t.code">{{ t.name }}</option> }
+    </select>
+    <select [ngModel]="bankFilter()" (ngModelChange)="bankFilter.set($event)">
+      <option value="">Todos los bancos</option>
+      @for (b of bankOptions(); track b) { <option [value]="b">{{ b }}</option> }
+    </select>
+  </div>
+
+  <div class="card flush">
+    @if (data() && rows().length) {
+      <div class="sheet">
+        <table>
+          <thead>
+            <tr>
+              <th class="sticky">{{ groupBy() === 'asset' ? 'Activo' : groupBy() === 'bank' ? 'Banco' : 'Tipo de activo' }}</th>
+              @if (groupBy() === 'asset') {
+                <th class="r">Precio inicial</th>
+                <th class="r">{{ pastYear() ? "Precio final" : "Precio actual" }}</th>
+                <th class="r" title="Cuánto ha cambiado el precio del activo en el periodo">Var. precio</th>
+              } @else {
+                <th class="r">Valor inicial</th>
+                <th class="r">{{ pastYear() ? "Valor final" : "Valor actual" }}</th>
+                <th class="r" title="Dinero que has metido (o sacado, en negativo) en el periodo. Valor inicial + dinero metido + ganancia = valor final.">Dinero metido</th>
+              }
+              <th class="r" title="Lo ganado o perdido en el periodo solo por los precios, con las ventas incluidas. Comprar o meter dinero no cuenta. Es la suma de esos días en el Calendario.">Ganancia {{ periodName() }}</th>
+              <th class="r year-col" title="Rentabilidad ponderada en el tiempo (TTWROR), encadenando mes a mes: lo que hicieron tus inversiones, sin importar cuándo metiste el dinero. Como la columna TTWROR del Resumen (allí día a día).">TTWROR {{ periodName() }}</th>
+              <th class="r" title="Lo que vale hoy frente a lo que te costó, desde que lo compraste (no solo este periodo). Sin las ventas ya hechas.">Rentab. desde compra</th>
+              @for (c of columns(); track c.key) {
+                <th class="r" [class.now]="c.isNow" [class.sep]="$first">{{ c.label }}</th>
+              }
+
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of rows(); track r.id) {
+              <tr>
+                <td class="sticky">
+                  <div class="asset">
+                    @if (r.color) { <span class="dot" [style.background]="r.color"></span> }
+                    <div>
+                      <div class="nowrap">{{ r.name }}</div>
+                      <div class="faint small nowrap">{{ r.sub }}</div>
+                    </div>
+                  </div>
+                </td>
+                @if (groupBy() === 'asset') {
+                  <td class="r">{{ r.first ? fmt.formatPrice(r.first.price, r.first.currency) : '' }}
+                    @if (r.first) { <div class="faint small">{{ r.first.date }}</div> }
+                  </td>
+                  <td class="r">{{ r.now ? fmt.formatPrice(r.now.price, r.now.currency) : '' }}</td>
+                  <td class="r" [class]="fmt.signClass(r.priceChange ?? 0)">
+                    {{ r.priceChange === null ? '' : fmt.formatSignedPercent(r.priceChange, 1) }}
+                  </td>
+                } @else {
+                  <td class="r">{{ r.first ? fmt.formatMoney0(r.first.value) : '' }}
+                    @if (r.first) { <div class="faint small nowrap">{{ fmt.formatDay(r.first.date) }}</div> }
+                  </td>
+                  <td class="r">{{ r.now ? fmt.formatMoney0(r.now.value) : '' }}</td>
+                  <td class="r faint">{{ r.contributed === null ? '' : fmt.formatSignedMoney(r.contributed) }}</td>
+                }
+                <td class="r strong" [class]="fmt.signClass(r.gain ?? 0)">
+                  {{ r.gain === null ? '' : fmt.formatSignedMoney(r.gain) }}
+                </td>
+                <td class="r strong year-col" [class]="fmt.signClass(r.periodReturn ?? 0)">
+                  {{ r.periodReturn === null ? '' : fmt.formatSignedPercent(r.periodReturn, 1) }}
+                </td>
+                <td class="r" [class]="fmt.signClass(r.positionReturn ?? 0)">
+                  {{ r.positionReturn === null ? '' : fmt.formatSignedPercent(r.positionReturn, 1) }}
+                </td>
+                @for (cell of r.cells; track $index) {
+                  <td class="r cell" [class.now]="$last" [class.sep]="$first" [style.background]="cell ? tint(cell.tone) : null">
+                    @if (cell) {
+                      <div [class]="cell.sub ? '' : cell.cls">{{ cell.main }}</div>
+                      @if (cell.sub) { <div class="small" [class]="cell.cls">{{ cell.sub }}</div> }
+                    } @else {
+                      <span class="faint">·</span>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="sticky"><strong>Total</strong></td>
+              <td class="r"></td>
+              <td class="r"><strong>{{ groupBy() === 'asset' ? '' : fmt.formatMoney0(totalNow().value) }}</strong></td>
+              <td class="r faint">{{ groupBy() === 'asset' || !totalPeriod() ? '' : fmt.formatSignedMoney(totalPeriod()!.contributed) }}</td>
+              <td class="r strong" [class]="fmt.signClass(totalPeriod()?.gain ?? 0)">
+                {{ totalPeriod() ? fmt.formatSignedMoney(totalPeriod()!.gain) : '' }}
+              </td>
+              <td class="r strong year-col" [class]="fmt.signClass(totalPeriod()?.pct ?? 0)">
+                {{ totalPeriod()?.pct == null ? '' : fmt.formatSignedPercent(totalPeriod()!.pct!, 1) }}
+              </td>
+              <td class="r" [class]="fmt.signClass(totalNow().ret ?? 0)">
+                {{ totalNow().ret === null ? '' : fmt.formatSignedPercent(totalNow().ret!, 1) }}
+              </td>
+              @for (t of totals(); track $index) {
+                <td class="r cell" [class.now]="$last" [class.sep]="$first" [style.background]="t ? tint(t.tone) : null">
+                  @if (t) {
+                    <div><strong [class]="t.sub ? '' : t.cls">{{ t.main }}</strong></div>
+                    @if (t.sub) { <div class="small" [class]="t.cls">{{ t.sub }}</div> }
+                  }
+                </td>
+              }
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    } @else if (loading()) {
+      <div class="empty">Cargando…</div>
+    } @else {
+      <div class="empty">No hay activos con esos filtros.</div>
+    }
+  </div>
+  <p class="faint small">
+    Cada columna es el cierre del día 1 del mes. "Ganancia" y "TTWROR" miden solo el periodo elegido (el año, o todo) y coinciden con el Calendario y el Resumen:
+    comprar o meter dinero no cuenta como ganancia y las ventas sí. Valor inicial + dinero metido + ganancia = valor final.
+    "Rentab. desde compra" es otra cosa: lo que vale hoy frente a lo que te costó, desde que lo compraste.
+  </p>
+</div>

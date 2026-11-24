@@ -1,0 +1,263 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Objetivos</h1>
+      <p>Metas de patrimonio con fecha. La posibilidad sale de simular miles de futuros con la rentabilidad y la volatilidad de tu cartera.</p>
+    </div>
+    <button type="button" class="btn primary" (click)="openNew()">+ Nuevo objetivo</button>
+  </div>
+
+  @if (editing() !== null) {
+    <form class="card stack goal-form" (submit)="save($event)">
+      <div class="card-head"><strong>{{ editing() ? 'Editar objetivo' : 'Nuevo objetivo' }}</strong></div>
+      <div class="grid-form">
+        <label class="field"><span>Nombre</span>
+          <input [value]="draft().name" (input)="setDraft('name', $any($event.target).value)" placeholder="Ej. Entrada del piso" required />
+        </label>
+        <label class="field"><span>Patrimonio objetivo (€)</span>
+          <input inputmode="decimal" [value]="draft().targetEur" (input)="setDraft('targetEur', $any($event.target).value)" placeholder="200.000" required />
+        </label>
+        <label class="field"><span>Fecha</span>
+          <input type="date" [value]="draft().targetDate" (input)="setDraft('targetDate', $any($event.target).value)" required />
+        </label>
+        <label class="field"><span>Aportación mensual (€)</span>
+          <input inputmode="decimal" [value]="draft().monthlyEur" (input)="setDraft('monthlyEur', $any($event.target).value)" [placeholder]="'Planes: ' + fmt.formatMoney0(planned())" />
+          <span class="hint">Vacío = lo que suman tus planes periódicos.</span>
+        </label>
+      </div>
+      <div class="button-row">
+        <button type="button" class="btn" (click)="editing.set(null)">Cancelar</button>
+        <button type="submit" class="btn primary" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Guardar' }}</button>
+      </div>
+    </form>
+  }
+
+  @if (stats(); as s) {
+    @for (v of views(); track v.goal.id) {
+      <section class="card goal">
+        <div class="goal-head">
+          <div>
+            <h2>{{ v.goal.name }}</h2>
+            <div class="small faint">
+              {{ fmt.formatMoney0(v.goal.targetEur) }} para el {{ v.goal.targetDate.slice(8) }}/{{ v.goal.targetDate.slice(5, 7) }}/{{ v.goal.targetDate.slice(0, 4) }}
+              · quedan {{ yearsText(v.months) }}
+            </div>
+          </div>
+          <div class="row">
+            <span class="pill" [class]="v.verdict.tone">{{ v.verdict.label }}</span>
+            <button type="button" class="btn sm link" (click)="openEdit(v.goal)">Editar</button>
+            <button type="button" class="btn sm link danger" (click)="remove(v.goal)">{{ confirmDelete() === v.goal.id ? '¿Seguro? Pulsa otra vez' : 'Borrar' }}</button>
+            @if (confirmDelete() === v.goal.id) { <button type="button" class="btn sm link" (click)="confirmDelete.set(null)">No</button> }
+          </div>
+        </div>
+
+        <div class="bars">
+          <div>
+            <div class="bar-label">
+              <span>Progreso</span>
+              <span class="num"><strong>{{ fmt.formatMoney0(s.value) }}</strong> <span class="faint">&nbsp;de {{ fmt.formatMoney0(v.goal.targetEur) }} · {{ pct(v.progress) }}</span></span>
+            </div>
+            <div class="bar">
+              <div class="fill" [style.width.%]="clamp01(v.progress) * 100"></div>
+              @if (v.needed > 0 && v.needed < v.goal.targetEur) {
+                <div class="mark" [style.left.%]="clamp01(v.needed / v.goal.targetEur) * 100" [title]="'Lo que necesitarías hoy: ' + fmt.formatMoney0(v.needed)"></div>
+              }
+            </div>
+            <div class="small faint bar-foot">
+              @if (s.value >= v.needed) {
+                <span class="up">Vas por delante:</span> con tu aportación y la rentabilidad esperada bastaría con tener {{ fmt.formatMoney0(v.needed) }} hoy.
+              } @else {
+                <span class="down">Vas por detrás:</span> necesitarías tener {{ fmt.formatMoney0(v.needed) }} hoy (te faltan {{ fmt.formatMoney0(v.needed - s.value) }}).
+              }
+              Tiempo transcurrido: {{ pct(v.elapsed) }}.
+            </div>
+          </div>
+
+          <div>
+            <div class="bar-label">
+              <span>Posibilidad de llegar</span>
+              <span class="num"><strong>{{ pct(v.sim.probability) }}</strong></span>
+            </div>
+            <div class="bar">
+              <div class="fill" [class]="v.verdict.tone" [style.width.%]="v.sim.probability * 100"></div>
+              <div class="tick" style="left: 50%"></div>
+              <div class="tick" style="left: 80%"></div>
+            </div>
+            <div class="small faint bar-foot">
+              @if (v.reachText) { Mitad de los escenarios llegan en {{ v.reachText }}. } @else { En la mayoría de escenarios no llegas a tiempo. }
+              En 8 de cada 10 acabarías entre {{ fmt.formatMoney0(v.sim.bands.p10[v.months]) }} y {{ fmt.formatMoney0(v.sim.bands.p90[v.months]) }}.
+            </div>
+          </div>
+        </div>
+
+        <div class="goal-grid">
+          <div class="metric">
+            <div class="faint small">Ritmo de inversión</div>
+            <div><span class="pill" [class]="v.pace.tone">{{ v.pace.label }}</span></div>
+            <div class="small muted">{{ v.pace.text }}</div>
+          </div>
+          <div class="metric">
+            <div class="faint small">Aportación necesaria</div>
+            <div class="num"><strong>{{ fmt.formatMoney0(v.req50) }}</strong>/mes <span class="faint small">50 %</span></div>
+            <div class="num"><strong>{{ fmt.formatMoney0(v.req80) }}</strong>/mes <span class="faint small">80 %</span></div>
+          </div>
+          <div class="metric">
+            <div class="faint small">Rentabilidad que necesitas</div>
+            @if (v.reqReturn === null) {
+              <div class="down"><strong>Más del 60 %/año</strong></div>
+            } @else {
+              <div class="num" [class]="v.reqReturn > s.mu ? 'down' : 'up'"><strong>{{ fmt.formatSignedPercent(v.reqReturn, 1) }}</strong>/año</div>
+            }
+            <div class="small muted">Esperada: {{ fmt.formatSignedPercent(s.mu, 1) }}/año con {{ fmt.formatMoney0(v.monthly) }}/mes.</div>
+          </div>
+          <div class="metric">
+            <div class="faint small">Mediana al final</div>
+            <div class="num"><strong>{{ fmt.formatMoney0(v.sim.bands.p50[v.months]) }}</strong></div>
+            <div class="small muted">Aportado: {{ fmt.formatMoney0(s.value + v.monthly * v.months) }}</div>
+          </div>
+        </div>
+
+        <div class="whatif">
+          <label class="small">
+            Aportación mensual
+            <span class="faint">
+              @switch (v.monthlySource) {
+                @case ('plans') { (tus planes) }
+                @case ('goal') { (del objetivo) }
+                @case ('whatif') { (probando) }
+              }
+            </span>
+          </label>
+          <!-- Fixed scale 0 - 5.000 €/month; the mark shows where the user's contribution plans are. -->
+          <div class="slider">
+            <input type="range" min="0" [max]="SLIDER_MAX" step="10" [value]="v.monthly" (input)="tryMonthly(v.goal.id, $any($event.target).value)"
+                   [attr.aria-label]="'Aportación mensual, de 0 a ' + fmt.formatMoney0(SLIDER_MAX)" />
+            @if (planned() > 0) {
+              <button type="button" class="plan-mark" [style.left.%]="planPct()" [style.--p]="planPct() / 100" (click)="dropWhatIf(v.goal.id)"
+                      [title]="'Tus planes de aportación: ' + fmt.formatMoney0(planned()) + ' al mes. Pulsa para volver a esa cantidad.'">
+                <span class="tick"></span>
+                <span class="mark-label">Tus planes · {{ fmt.formatMoney0(planned()) }}</span>
+              </button>
+            }
+            <div class="scale faint"><span>0 €</span><span>{{ fmt.formatMoney0(SLIDER_MAX) }}</span></div>
+          </div>
+          <span class="num"><strong>{{ fmt.formatMoney0(v.monthly) }}</strong></span>
+          @if (v.monthlySource === 'whatif') {
+            <button type="button" class="btn sm" (click)="keepWhatIf(v)">Guardar</button>
+            <button type="button" class="btn sm link" (click)="dropWhatIf(v.goal.id)">Deshacer</button>
+          }
+        </div>
+
+        <div class="chart">
+          <svg [attr.viewBox]="'0 0 ' + W + ' ' + H" preserveAspectRatio="none" aria-label="Escenarios del patrimonio hasta la fecha del objetivo">
+            <path class="band-outer" [attr.d]="v.chart.outer" />
+            <path class="band-inner" [attr.d]="v.chart.inner" />
+            <path class="paid" [attr.d]="v.chart.paid" vector-effect="non-scaling-stroke" />
+            <path class="median" [attr.d]="v.chart.median" vector-effect="non-scaling-stroke" />
+            <line class="target" x1="0" [attr.x2]="W" [attr.y1]="v.chart.targetY" [attr.y2]="v.chart.targetY" vector-effect="non-scaling-stroke" />
+            @for (t of v.chart.ticks; track t.x) {
+              <line class="grid" [attr.x1]="t.x" [attr.x2]="t.x" y1="0" [attr.y2]="H" vector-effect="non-scaling-stroke" />
+            }
+          </svg>
+          <div class="target-label small" [style.top.%]="(v.chart.targetY / H) * 100">Objetivo {{ fmt.formatMoney0(v.goal.targetEur) }}</div>
+          <div class="axis small faint">
+            <span>Hoy</span>
+            @for (t of v.chart.ticks; track t.x) { <span class="axis-tick" [style.left.%]="(t.x / W) * 100">{{ t.label }}</span> }
+            <span>{{ v.goal.targetDate.slice(0, 4) }}</span>
+          </div>
+          <div class="legend small faint">
+            <span><i class="sw median"></i>Escenario mediano</span>
+            <span><i class="sw inner"></i>50 % de los casos</span>
+            <span><i class="sw outer"></i>80 % de los casos</span>
+            <span><i class="sw paid"></i>Solo lo aportado</span>
+          </div>
+        </div>
+      </section>
+    } @empty {
+      @if (editing() === null) {
+        <div class="card empty">Aún no tienes objetivos. Crea uno con un importe y una fecha.</div>
+      }
+    }
+
+    <section class="card">
+      <div class="card-head">
+        <strong>En qué se basa el cálculo</strong>
+        <span class="small faint">{{ s.histYears.toLocaleString('es-ES', { maximumFractionDigits: 1 }) }} años de historia propia</span>
+      </div>
+      <div class="summary-grid">
+        <div class="metric">
+          <div class="faint small">Rentabilidad esperada</div>
+          <div class="num"><strong>{{ fmt.formatSignedPercent(s.mu, 1) }}</strong>/año</div>
+          <div class="small muted">Tu historia {{ fmt.formatSignedPercent(s.histMu, 1) }} · tu mezcla de activos a largo plazo {{ fmt.formatSignedPercent(s.mixMu, 1) }}</div>
+        </div>
+        <div class="metric">
+          <div class="faint small">Volatilidad</div>
+          <div class="num"><strong>{{ pct(s.vol, 1) }}</strong>/año</div>
+          <div class="small muted">Histórica {{ pct(s.histVol, 1) }} · de tus activos hoy {{ pct(s.mixVol, 1) }}</div>
+        </div>
+        <div class="metric">
+          <div class="faint small">Peor caída</div>
+          <div class="num down"><strong>{{ fmt.formatSignedPercent(s.maxDrawdown, 1) }}</strong></div>
+          <div class="small muted">Desde un máximo, sin contar aportaciones</div>
+        </div>
+        <div class="metric">
+          <div class="faint small">Ritmo de aportación</div>
+          <div class="num"><strong>{{ fmt.formatMoney0(planned()) }}</strong>/mes en planes</div>
+          <div class="small muted">Último año real: {{ fmt.formatMoney0(s.actualMonthly) }}/mes neto</div>
+        </div>
+      </div>
+
+      <div class="basis">
+        <div>
+          <div class="kicker">Rentabilidad por año (sin aportaciones)</div>
+          <table>
+            <tbody>
+              @for (y of s.years; track y.year) {
+                <tr>
+                  <td>{{ y.year }}@if (y.partial) { <span class="faint small"> hasta hoy</span> }</td>
+                  <td class="r" [class]="fmt.signClass(y.twr)">{{ fmt.formatSignedPercent(y.twr, 1) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <div class="kicker">Riesgo por tipo de activo</div>
+          <table>
+            <thead><tr><th>Tipo</th><th class="r">Peso</th><th class="r">Volatilidad</th><th class="r">Esperada</th></tr></thead>
+            <tbody>
+              @for (t of s.byType; track t.code) {
+                <tr>
+                  <td><span class="dot" [style.background]="typeColors[t.code]"></span> {{ t.name }}</td>
+                  <td class="r">{{ pct(t.weight) }}</td>
+                  <td class="r">{{ pct(t.vol) }}</td>
+                  <td class="r">{{ fmt.formatSignedPercent(t.mu, 1) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <div class="kicker">Lo que más riesgo aporta</div>
+          <table>
+            <tbody>
+              @for (a of s.riskiest; track a.name) {
+                <tr>
+                  <td>{{ a.name }}</td>
+                  <td class="r small faint">{{ pct(a.weight, 1) }} peso</td>
+                  <td class="r">{{ pct(a.vol) }} vol.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="small faint note">
+        La rentabilidad esperada mezcla la de tu cartera (pesa más cuantos más años de historia hay) con referencias a largo plazo de cada tipo de activo.
+        La volatilidad de cada producto sale de cómo se ha movido su precio en el último año. Es una estimación, no una garantía.
+      </p>
+    </section>
+  } @else {
+    <div class="card empty">Cargando…</div>
+  }
+</div>

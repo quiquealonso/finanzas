@@ -1,0 +1,398 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Activos</h1>
+      <p>Pulsa en un activo para ver su ficha, comprar, vender o ajustarlo.</p>
+    </div>
+    <div class="row">
+      @if (perps().length || wallets()?.accounts?.length) {
+        <button class="btn" type="button" (click)="syncPerps()" [disabled]="perpSyncing()" title="Lee tus wallets (Solana, Sui, BNB Chain, Ethereum…) y tus futuros de Hyperliquid con sus direcciones públicas">{{ perpSyncing() ? 'Sincronizando…' : 'Sincronizar cripto' }}</button>
+      }
+      <button class="btn" type="button" (click)="newBank()">+ Banco</button>
+      <button class="btn primary" type="button" (click)="newAsset()">+ Activo</button>
+    </div>
+  </div>
+
+  @if (wallets(); as w) {
+    @if (w.pending.length || w.unmapped.length) {
+      <section class="card wallet-card">
+        <div class="wallet-head">
+          <strong>Wallets: revisa estas diferencias</strong>
+          <span class="faint small">Las diferencias de hasta un 2 % (staking, comisiones) se ajustan solas.</span>
+        </div>
+        <ul class="wallet-list">
+          @for (d of w.pending; track d.chain + d.token) {
+            <li>
+              <span><strong>{{ d.assetName }}</strong> <span class="faint small">{{ chainName(d.chain) }}</span></span>
+              <span class="num small">En la wallet {{ fmt.formatQty(d.onChain) }} · en la app {{ fmt.formatQty(d.inApp) }}
+                <span [class]="fmt.signClass(d.diff)">({{ d.diff > 0 ? '+' : '' }}{{ fmt.formatQty(d.diff) }})</span></span>
+              <button type="button" class="btn sm" [disabled]="walletBusy() === d.chain + d.token" (click)="applyWallet(d)"
+                title="Pone en la app la cantidad de la wallet (compra o venta de ajuste al precio de hoy)">Ajustar a la wallet</button>
+            </li>
+          }
+          @for (u of w.unmapped; track u.chain + u.token) {
+            <li>
+              <span><strong>{{ u.symbol || u.name || 'Token' }}</strong> <span class="faint small">{{ chainName(u.chain) }} · no está en la app</span></span>
+              <span class="num small">{{ fmt.formatQty(u.amount) }}@if (u.usdValue) { · {{ usd(u.usdValue) }} }</span>
+              <span class="row">
+                <button type="button" class="btn sm" [disabled]="walletBusy() === u.chain + u.token" (click)="mapWallet(u, false)">Añadir a Cripto</button>
+                <button type="button" class="btn sm link" [disabled]="walletBusy() === u.chain + u.token" (click)="mapWallet(u, true)">Ignorar</button>
+              </span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+
+  <!-- Summary of what is filtered -->
+  <div class="kpis">
+    <div class="kpi"><span>Valor</span><strong class="num">{{ fmt.formatMoney(totals().value) }}</strong></div>
+    <div class="kpi"><span>Invertido</span><strong class="num">{{ fmt.formatMoney(totals().cost) }}</strong></div>
+    <div class="kpi" title="Igual que la Ganancia total del Resumen: lo que ganan las posiciones abiertas más lo ya ganado vendiendo. El % es sobre el dinero metido neto.">
+      <span>Resultado</span>
+      <strong class="num" [class]="fmt.signClass(totals().pnl)">{{ fmt.formatSignedMoney(totals().pnl) }} <small>{{ fmt.formatSignedPercent(totals().pnlPct, 1) }}</small></strong>
+      <span class="kpi-sub num">Abierto {{ fmt.formatSignedMoney(totals().unrealized) }} · Vendido {{ fmt.formatSignedMoney(totals().realized) }}</span>
+    </div>
+    <div class="kpi"><span>Hoy</span><strong class="num" [class]="fmt.signClass(totals().day)">{{ fmt.formatSignedMoney(totals().day) }}</strong></div>
+  </div>
+
+  <!-- Filters -->
+  <app-asset-filter class="card filters" [(banks)]="bankFilter" [(types)]="typeFilter">
+    <div class="filter-row tools">
+      <input class="search" placeholder="Buscar por nombre, banco o ticker" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+      <label class="check"><input type="checkbox" [checked]="groupByBank()" (change)="groupByBank.set(!groupByBank())" /> Agrupar por banco</label>
+      @if (emptyCount()) {
+        <label class="check"><input type="checkbox" [checked]="showEmpty()" (change)="showEmpty.set(!showEmpty())" /> Sin saldo ({{ emptyCount() }})</label>
+      }
+      @if (hasFilters()) {
+        <button type="button" class="btn sm link" (click)="clearFilters()">Quitar filtros</button>
+      }
+      <span class="spacer"></span>
+      <!-- How the list is shown: order (cards; the table sorts by its headers) and view. -->
+      @if (view() === 'cards') {
+        <div class="view-ctl">
+          <span class="filter-label">Ordenar por</span>
+          <div class="seg small-seg">
+            <button type="button" [class.on]="sortKey() === 'value'" (click)="sortBy('value')">Valor</button>
+            <button type="button" [class.on]="sortKey() === 'pnl'" (click)="sortBy('pnl')">Resultado</button>
+            <button type="button" [class.on]="sortKey() === 'pnlPct'" (click)="sortBy('pnlPct')">%</button>
+            <button type="button" [class.on]="sortKey() === 'day'" (click)="sortBy('day')">Hoy</button>
+            <button type="button" [class.on]="sortKey() === 'name'" (click)="sortBy('name')">A-Z</button>
+          </div>
+        </div>
+      }
+      <div class="view-ctl">
+        <span class="filter-label">Ver</span>
+        <div class="seg small-seg">
+          <button type="button" [class.on]="view() === 'cards'" (click)="setView('cards')">Tarjetas</button>
+          <button type="button" [class.on]="view() === 'table'" (click)="setView('table')">Tabla</button>
+        </div>
+      </div>
+    </div>
+  </app-asset-filter>
+
+  @if (view() === 'cards') {
+    <section class="card">
+      @if (groupByBank()) {
+        @for (g of grouped(); track g.name) {
+          <div class="tiles-group">
+            <strong>{{ g.name }}</strong>
+            <span class="num faint">{{ fmt.formatMoney(g.value) }}</span>
+            <span class="num small" [class]="fmt.signClass(g.pnl)">{{ fmt.formatSignedMoney(g.pnl) }}</span>
+          </div>
+          <ul class="tiles">
+            @for (a of g.rows; track a.id) { <ng-container *ngTemplateOutlet="tile; context: { $implicit: a }" /> }
+          </ul>
+        }
+      } @else {
+        <ul class="tiles">
+          @for (a of rows(); track a.id) { <ng-container *ngTemplateOutlet="tile; context: { $implicit: a }" /> }
+        </ul>
+        @if (!rows().length) { <p class="faint small empty">Ningún activo con esos filtros.</p> }
+      }
+    </section>
+  } @else {
+  <section class="card flush">
+    <div class="table-wrap">
+      <table class="assets">
+        <thead>
+          <tr>
+            <th class="sortable" (click)="sort('name')">Activo{{ sortMark('name') }}</th>
+            <th class="sortable" (click)="sort('bank')">Banco{{ sortMark('bank') }}</th>
+            <th class="r sortable" (click)="sort('quantity')">Cantidad{{ sortMark('quantity') }}</th>
+            <th class="r sortable" (click)="sort('price')">Precio{{ sortMark('price') }}</th>
+            <th class="r sortable" (click)="sort('value')">Valor{{ sortMark('value') }}</th>
+            <th class="r sortable" (click)="sort('weight')">Peso{{ sortMark('weight') }}</th>
+            <th class="r sortable" (click)="sort('cost')">Invertido{{ sortMark('cost') }}</th>
+            <th class="r sortable" (click)="sort('pnl')">Resultado{{ sortMark('pnl') }}</th>
+            <th class="r sortable" (click)="sort('pnlPct')">%{{ sortMark('pnlPct') }}</th>
+            <th class="r sortable" (click)="sort('day')">Hoy{{ sortMark('day') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (groupByBank()) {
+            @for (g of grouped(); track g.name) {
+              <tr class="group">
+                <td colspan="4">{{ g.name }} <span class="faint small">· {{ g.rows.length }}</span></td>
+                <td class="r">{{ fmt.formatMoney(g.value) }}</td>
+                <td colspan="2"></td>
+                <td class="r" [class]="fmt.signClass(g.pnl)">{{ fmt.formatSignedMoney(g.pnl) }}</td>
+                <td colspan="2"></td>
+              </tr>
+              @for (a of g.rows; track a.id) {
+                <ng-container *ngTemplateOutlet="row; context: { $implicit: a }" />
+              }
+            }
+          } @else {
+            @for (a of rows(); track a.id) {
+              <ng-container *ngTemplateOutlet="row; context: { $implicit: a }" />
+            } @empty {
+              <tr><td colspan="10" class="empty">Ningún activo con esos filtros.</td></tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+  }
+</div>
+
+<ng-template #tile let-a>
+  <li class="tile clickable" [class.on]="selectedId() === a.id" (click)="open(a)" [title]="a.name + ' · ' + a.bankName">
+    <div class="tile-name">
+      <span class="dot" [style.background]="typeColors[a.typeCode]"></span><span class="tile-label">{{ a.name }}</span>
+      @if (perpOf(a.id)) { <span class="perp-tag">Perp</span> }
+    </div>
+    @if (perpOf(a.id); as p) {
+      <div class="tile-sub">{{ a.bankName }} · {{ p.side === 'closed' ? 'Cerrada' : (p.side === 'long' ? 'Largo' : 'Corto') + ' ' + p.leverage + 'x · liq. ' + usd(p.liquidationPx, 0) }}</div>
+    } @else {
+      <div class="tile-sub">{{ a.bankName }} · {{ a.isLiquidity ? a.typeName : fmt.formatQty(a.quantity) + (a.symbol ? ' · ' + a.symbol : '') }}</div>
+    }
+    <div class="tile-big">
+      <strong>{{ fmt.formatMoney(a.valueEur) }}</strong>
+      <span class="tile-aside faint">{{ (weight(a) * 100).toFixed(1) }} %</span>
+    </div>
+    <!-- Weight in what is filtered, against the biggest position. -->
+    <div class="tile-meter"><div [style.width.%]="(weight(a) / maxWeight()) * 100" [style.background]="typeColors[a.typeCode]"></div></div>
+    <div class="tile-foot">
+      @if (a.isLiquidity) {
+        <span>Liquidez</span><span></span>
+      } @else {
+        <span [class]="fmt.signClass(a.pnlEur)">{{ fmt.formatSignedMoney(a.pnlEur) }} · {{ fmt.formatSignedPercent(a.pnlPct, 1) }}</span>
+        <span class="faint" title="Invertido">{{ fmt.formatMoney0(a.costEur) }}</span>
+      }
+    </div>
+  </li>
+</ng-template>
+
+<ng-template #row let-a>
+  <tr class="clickable" [class.active]="selectedId() === a.id" (click)="open(a)">
+    <td>
+      <div class="asset">
+        <span class="dot" [style.background]="typeColors[a.typeCode]"></span>
+        <div>
+          <div class="name">{{ a.name }}</div>
+          @if (perpOf(a.id); as p) {
+            <div class="faint small"><span class="perp-tag">Perp</span> {{ p.side === 'closed' ? 'Cerrada' : (p.side === 'long' ? 'Largo' : 'Corto') + ' ' + p.leverage + 'x · liq. ' + usd(p.liquidationPx, 0) }}</div>
+          } @else {
+            <div class="faint small">{{ a.typeName }}{{ a.symbol ? ' · ' + a.symbol : '' }}</div>
+          }
+        </div>
+      </div>
+    </td>
+    <td class="muted">{{ a.bankName }}</td>
+    <td class="r">{{ a.isLiquidity ? '' : fmt.formatQty(a.quantity) }}</td>
+    <td class="r">{{ a.isLiquidity ? '' : fmt.formatPrice(a.priceLocal, a.currency) }}</td>
+    <td class="r"><strong>{{ fmt.formatMoney(a.valueEur) }}</strong></td>
+    <td class="r faint">{{ (weight(a) * 100).toFixed(1) }} %</td>
+    <td class="r muted">{{ a.isLiquidity ? '' : fmt.formatMoney(a.costEur) }}</td>
+    <td class="r" [class]="fmt.signClass(a.pnlEur)">{{ a.isLiquidity ? '' : fmt.formatSignedMoney(a.pnlEur) }}</td>
+    <td class="r" [class]="fmt.signClass(a.pnlPct)">{{ a.isLiquidity ? '' : fmt.formatSignedPercent(a.pnlPct, 1) }}</td>
+    <td class="r" [class]="fmt.signClass(a.dayChangePct)">{{ a.dayChangePct ? fmt.formatSignedPercent(a.dayChangePct) : '' }}</td>
+  </tr>
+</ng-template>
+
+<!-- Asset detail -->
+@if (selected(); as a) {
+  <div class="drawer-backdrop" (click)="closeDetail()"></div>
+  <aside class="drawer">
+    <div class="drawer-head">
+      <div>
+        <div class="row"><span class="dot" [style.background]="typeColors[a.typeCode]"></span><h2>{{ a.name }}</h2></div>
+        <p class="faint small">{{ a.bankName }} · {{ a.typeName }}{{ a.symbol ? ' · ' + a.symbol : '' }}{{ a.currency !== 'EUR' ? ' · ' + a.currency : '' }}</p>
+      </div>
+      <button type="button" class="btn link" (click)="closeDetail()" aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="detail-value">
+      <div class="big num">{{ fmt.formatMoney(a.valueEur) }}</div>
+      @if (!a.isLiquidity) {
+        <div class="num" [class]="fmt.signClass(a.pnlEur)">{{ fmt.formatSignedMoney(a.pnlEur) }} ({{ fmt.formatSignedPercent(a.pnlPct) }})</div>
+      }
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn primary" (click)="action('buy')">{{ a.isLiquidity ? 'Ingresar' : 'Comprar' }}</button>
+      <button type="button" class="btn" (click)="action('sell')" [disabled]="a.quantity <= 0">{{ a.isLiquidity ? 'Retirar' : 'Vender' }}</button>
+      <button type="button" class="btn" (click)="action('adjust')">Ajustar</button>
+      <button type="button" class="btn" (click)="editAsset(a)">Editar</button>
+    </div>
+
+    @if (perpOf(a.id); as p) {
+      <p class="perp-note small">Futuro perpetuo en Hyperliquid. Cuenta en tu patrimonio el margen + la ganancia sin realizar, no el nocional. La cantidad son dólares de margen aportados.</p>
+      <dl class="facts">
+        <div><dt>Posición</dt><dd class="num">{{ p.side === 'closed' ? 'Cerrada' : (p.side === 'long' ? 'Largo ' : 'Corto ') + p.size + ' ' + p.coin }}</dd></div>
+        <div><dt>Apalancamiento</dt><dd class="num">{{ p.leverage ? p.leverage + 'x ' + (p.leverageType === 'isolated' ? 'aislado' : 'cruzado') : '—' }}</dd></div>
+        <div><dt>Nocional</dt><dd class="num">{{ usd(p.notionalUsd) }}</dd></div>
+        <div><dt>Precio entrada / actual</dt><dd class="num">{{ usd(p.entryPx, 0) }} / {{ usd(p.markPx, 0) }}</dd></div>
+        <div><dt>Liquidación</dt><dd class="num down">{{ usd(p.liquidationPx, 0) }}</dd></div>
+        <div><dt>Margen</dt><dd class="num">{{ usd(p.marginUsd) }}</dd></div>
+        <div><dt>Ganancia sin realizar</dt><dd class="num" [class]="fmt.signClass(p.unrealizedPnlUsd)">{{ usd(p.unrealizedPnlUsd) }}</dd></div>
+        <div><dt>Valor (margen + ganancia)</dt><dd class="num"><strong>{{ usd(p.valueUsd) }}</strong></dd></div>
+        <div><dt>Comisiones</dt><dd class="num" [title]="'Hyperliquid ' + usd(p.feesUsd) + ' · app (MetaMask) ' + usd(p.builderFeesUsd)">{{ usd(p.feesUsd + p.builderFeesUsd) }}</dd></div>
+        <div><dt>Funding</dt><dd class="num" [class]="fmt.signClass(p.fundingUsd)">{{ usd(p.fundingUsd) }}</dd></div>
+        <div><dt>Coste de mantenerla</dt><dd class="num" [class]="fmt.signClass(p.feesUsd + p.builderFeesUsd + p.fundingUsd)">{{ usd(p.feesUsd + p.builderFeesUsd + p.fundingUsd) }}</dd></div>
+        <div><dt>Ganancia realizada</dt><dd class="num" [class]="fmt.signClass(a.realizedEur)">{{ fmt.formatSignedMoney(a.realizedEur) }}</dd></div>
+      </dl>
+      <p class="faint small">Actualizado {{ fmt.formatDay(p.syncedAt.slice(0, 10)) }} {{ p.syncedAt.slice(11, 16) }} UTC · cada hora en automático.</p>
+    } @else if (!a.isLiquidity) {
+      <dl class="facts">
+        <div><dt>Cantidad</dt><dd class="num">{{ fmt.formatQty(a.quantity) }}</dd></div>
+        <div><dt>Precio actual</dt><dd class="num">{{ fmt.formatPrice(a.priceLocal, a.currency) }}</dd></div>
+        <div><dt>Invertido</dt><dd class="num">{{ fmt.formatMoney(a.costEur) }}</dd></div>
+        <div><dt>Precio medio</dt><dd class="num">{{ a.quantity > 0 ? fmt.formatMoney(a.costEur / a.quantity) : '—' }}</dd></div>
+        <div><dt>Hoy</dt><dd class="num" [class]="fmt.signClass(a.dayChangePct)">{{ fmt.formatSignedPercent(a.dayChangePct) }}</dd></div>
+        <div><dt>Ganancia realizada</dt><dd class="num" [class]="fmt.signClass(a.realizedEur)">{{ fmt.formatSignedMoney(a.realizedEur) }}</dd></div>
+      </dl>
+    }
+
+    <h3>Movimientos</h3>
+    @if (detailLoading()) {
+      <p class="faint small">Cargando…</p>
+    } @else if (detailMovements().length) {
+      <ul class="moves">
+        @for (m of detailMovements(); track m.id) {
+          <li>
+            <div>
+              <div>{{ kindLabels[m.kind] ?? m.kind }}</div>
+              <div class="faint small">{{ fmt.formatDay(m.date) }}{{ m.isLiquidity ? '' : ' · ' + fmt.formatQty(m.quantity) + ' × ' + fmt.formatPrice(m.price, m.currency) }}</div>
+            </div>
+            <span class="num" [class.down]="m.type === 'SELL'">{{ m.type === 'SELL' ? '−' : '+' }}{{ fmt.formatMoney(m.amountEur) }}</span>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="faint small">Sin movimientos registrados: la posición viene del saldo con el que se dio de alta.</p>
+    }
+  </aside>
+}
+
+@if (assetDraft; as d) {
+  <div class="dialog-backdrop" (click)="assetDraft = null">
+    <form class="dialog" (click)="$event.stopPropagation()" (ngSubmit)="saveAsset()" autocomplete="off">
+      <div class="dialog-head">
+        <h2>{{ d.id ? 'Editar activo' : 'Nuevo activo' }}</h2>
+        <button type="button" class="btn link" (click)="assetDraft = null" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="grid-2">
+        <label class="field">
+          <span>Banco</span>
+          <select name="bank" [(ngModel)]="d.bankId" [disabled]="!!d.id">
+            @for (b of store.banks(); track b.id) { <option [value]="b.id">{{ b.name }}</option> }
+          </select>
+        </label>
+        <label class="field">
+          <span>Tipo</span>
+          <select name="type" [(ngModel)]="d.typeCode" [disabled]="!!d.id">
+            @for (t of store.types(); track t.code) {
+              @if (!t.isLiquidity) { <option [value]="t.code">{{ t.name }}</option> }
+            }
+          </select>
+        </label>
+      </div>
+      <label class="field">
+        <span>Nombre</span>
+        <input name="name" [(ngModel)]="d.name" placeholder="Fidelity MSCI World" />
+      </label>
+      @if (d.typeCode === 'LOANS') {
+        <label class="field">
+          <span>Rentabilidad anual estimada (%)</span>
+          <input type="number" name="rate" step="0.1" [(ngModel)]="d.annualRatePct" [disabled]="!!d.id" />
+          <span class="hint">El valor crece cada día con este % (interés compuesto, intereses reinvertidos). Corrígelo con el saldo real de la plataforma con un <strong>Ajuste</strong> en Movimientos.</span>
+        </label>
+      } @else if (!isLiquidType(d.typeCode)) {
+        <div class="grid-2">
+          <label class="field">
+            <span>Ticker de Yahoo Finance</span>
+            <input name="symbol" [(ngModel)]="d.symbol" placeholder="0P0000XR9M.F" />
+          </label>
+          <label class="field">
+            <span>Moneda</span>
+            <select name="currency" [(ngModel)]="d.currency">
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP (libras)</option>
+            </select>
+          </label>
+        </div>
+        <p class="faint small">{{ symbolHint(d.typeCode) }} Con ticker, el precio se actualiza solo cada noche.</p>
+        @if (!d.id && !d.symbol) {
+          <label class="field">
+            <span>Precio o valor actual (€), si no tiene ticker</span>
+            <input type="number" name="manual" step="any" min="0" [(ngModel)]="d.manualPriceEur" />
+          </label>
+        }
+      }
+      @if (!isLiquidType(d.typeCode)) {
+        <div class="field">
+          <span>Zona geográfica <span class="faint">(% · un fondo puede repartirse en varias)</span></span>
+          <div class="regions">
+            @for (r of regionOptions; track r.code) {
+              <label class="region" [class.set]="(d.regions[r.code] ?? 0) > 0">
+                <span class="dot" [style.background]="r.color"></span>
+                <span class="rname" (click)="setSingleRegion(d, r.code)" title="Poner el 100 % aquí">{{ r.name }}</span>
+                <input type="number" min="0" max="100" step="any" [name]="'reg-' + r.code" [(ngModel)]="d.regions[r.code]" placeholder="0" />
+              </label>
+            }
+          </div>
+          <span class="hint">Pulsa el nombre de una zona para poner el 100 % en ella. Suma: {{ regionTotal(d) }} %{{ regionTotal(d) && regionTotal(d) !== 100 ? ' (se reparte en proporción)' : '' }}</span>
+        </div>
+      }
+      @if (!d.id) {
+        <p class="faint small">Al crearlo se abre directamente la primera compra{{ isLiquidType(d.typeCode) ? ' (ingreso)' : '' }}.</p>
+      } @else {
+        <p class="faint small">Para cambiar el banco: <a href="" (click)="$event.preventDefault(); editBank(d.bankId); assetDraft = null">renombrar {{ bankName(d.bankId) }}</a>.</p>
+      }
+      <div class="dialog-foot">
+        @if (d.id) {
+          <button type="button" class="btn danger" (click)="deleteAsset()" [disabled]="saving()">Eliminar</button>
+          <span class="spacer"></span>
+        }
+        <button type="button" class="btn" (click)="assetDraft = null">Cancelar</button>
+        <button type="submit" class="btn primary" [disabled]="saving()">{{ d.id ? 'Guardar' : 'Crear' }}</button>
+      </div>
+    </form>
+  </div>
+}
+
+@if (bankDraft; as b) {
+  <div class="dialog-backdrop" (click)="bankDraft = null">
+    <form class="dialog" (click)="$event.stopPropagation()" (ngSubmit)="saveBank()" autocomplete="off">
+      <div class="dialog-head">
+        <h2>{{ b.id ? 'Renombrar banco' : 'Nuevo banco' }}</h2>
+        <button type="button" class="btn link" (click)="bankDraft = null" aria-label="Cerrar">✕</button>
+      </div>
+      <label class="field">
+        <span>Nombre</span>
+        <input name="bankName" [(ngModel)]="b.name" placeholder="Indexa, ING, Revolut…" />
+      </label>
+      @if (!b.id) {
+      }
+      <div class="dialog-foot">
+        <button type="button" class="btn" (click)="bankDraft = null">Cancelar</button>
+        <button type="submit" class="btn primary" [disabled]="saving()">Guardar</button>
+      </div>
+    </form>
+  </div>
+}
