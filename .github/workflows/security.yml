@@ -17,7 +17,7 @@ jobs:
     name: Secretos en el historial de Git
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Gitleaks
@@ -33,8 +33,8 @@ jobs:
       matrix:
         dir: [back, front, mobile]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       # Falla si hay vulnerabilidades altas o críticas en lo que se ejecuta en producción.
@@ -49,7 +49,7 @@ jobs:
     # npm audit, arriba. Los resultados quedan en el registro del workflow.
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: OSV-Scanner
         run: |
           docker run --rm -v "$PWD:/src" ghcr.io/google/osv-scanner:v2.2.2 \
