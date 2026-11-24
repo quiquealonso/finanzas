@@ -1,7 +1,7 @@
 import { Express } from "express";
 import AdmZip from "adm-zip";
 import { randomUUID } from "crypto";
-import { base, currentUser, DEFAULT_USER, prisma } from "./prisma";
+import { base, currentUser, DEFAULT_USER, prisma, sharedQuery } from "./prisma";
 import { handler, HttpError } from "./portfolio";
 import { tickerForIsin } from "./bbva-orders";
 import { askGeminiJson, GeminiError, geminiConfigured } from "./gemini";
@@ -24,7 +24,7 @@ import { askGeminiJson, GeminiError, geminiConfigured } from "./gemini";
 // The CNMV site (ASP.NET) answers 500 to the default "Accept-Language: *" of Node: send a real language.
 const UA = { "User-Agent": "finanzas-class-project/1.0", "Accept-Language": "es-ES,es;q=0.9" };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const q = <T = any>(sql: string, ...args: unknown[]) => base.$queryRawUnsafe<T[]>(sql, ...args);
+const q = <T = any>(sql: string, ...args: unknown[]) => sharedQuery<T>(sql, ...args);
 
 export const REGIONS = ["ES", "EU", "US", "JP", "CN", "APAC", "EM", "LATAM"] as const;
 type Region = (typeof REGIONS)[number];

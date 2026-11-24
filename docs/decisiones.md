@@ -5,6 +5,10 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-24 · Prisma 7 por el pooler en modo sesión** — Prisma 7 obliga a un driver adapter; con `pg` y el pooler de
+  Supabase en modo transacción (6543) las consultas se quedan colgadas, en modo sesión (5432) no. Se usa `DIRECT_URL`
+  con un pool pequeño (8 + 3) para no pasar de las 15 conexiones del plan gratis. Primera carga algo más lenta (abre
+  conexiones con TLS); después, las páginas tardan lo mismo. (Seguir en Prisma 6: avisos de seguridad en su CLI.)
 - **2026-11-24 · Repositorio público con datos fuera** — público para poder usar GitHub Pages, como PanGestion. Secretos
   (`.env`, Gmail), copias, correos reales y la configuración de Supabase del móvil quedan fuera (`.gitignore`), y la
   documentación sin cifras ni nombres reales. Se subió primero en privado y se hizo público solo con Gitleaks en verde.

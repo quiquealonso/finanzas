@@ -1,5 +1,5 @@
 import { Express } from "express";
-import { base, prisma } from "./prisma";
+import { base, prisma, sharedQuery } from "./prisma";
 import { handler, HttpError } from "./portfolio";
 import { ensureUniverse } from "./sentiment";
 
@@ -23,7 +23,7 @@ const MIN_CAP = 1e9;
 const MIN_FILERS = 2500;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const dayNum = (iso: string) => Math.round(Date.parse(iso) / 86_400_000);
-const q = <T = any>(sql: string, ...args: unknown[]) => base.$queryRawUnsafe<T[]>(sql, ...args);
+const q = <T = any>(sql: string, ...args: unknown[]) => sharedQuery<T>(sql, ...args);
 
 export const VALUATION_FUNDS: Record<string, string> = {
   sp500: "S&P 500",

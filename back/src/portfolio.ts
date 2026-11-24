@@ -1272,7 +1272,8 @@ export function registerPortfolioRoutes(app: Express): void {
         });
       }
     }
-    sales.sort((a, b) => b.date.localeCompare(a.date));
+    // Same day: stable order (by id), whatever order the database returns them in.
+    sales.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
 
     const byYear = new Map<string, { year: string; gains: number; losses: number; net: number; proceeds: number; count: number }>();
     for (const s of sales) {

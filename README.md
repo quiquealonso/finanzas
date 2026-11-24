@@ -89,7 +89,7 @@ Cada push y cada pull request pasa por GitHub Actions ([detalles](docs/08-reposi
 |---|---|
 | Web | Angular 21 (componentes standalone, signals, router con carga diferida) |
 | API | Node.js + Express + TypeScript |
-| Base de datos | PostgreSQL en Supabase, con Prisma, row level security y `pg_cron` para los precios |
+| Base de datos | PostgreSQL en Supabase, con Prisma 7 (adaptador `pg`), row level security y `pg_cron` para los precios |
 | Login | BCrypt + JWT (HS256) |
 | IA | Google Gemini (plan gratuito) para clasificar noticias y elegir fondos |
 | Datos | CNMV, SEC (XBRL), Yahoo Finance, Google News, Bluesky, RPC públicos de blockchains |

@@ -53,6 +53,21 @@ App móvil (mobile/, Capacitor) ── RPC de solo lectura (mobile.sql), solo el
 - Los scripts (`back/scripts`) y las tareas programadas van directos a la base de datos con su usuario, sin login.
 - Tests: `back/test/auth.test.js` (`npm test`, también en el CI).
 
+## Prisma 7 y la conexión
+
+- Prisma 7.10 con `prisma-client-js` y **driver adapter** `@prisma/adapter-pg` (`pg`): sin motor nativo.
+  Configuración de la CLI en `back/prisma.config.ts` (antes en `package.json` y en el `datasource` del esquema).
+- Cliente: `createClient()` en `src/prisma.ts`; los scripts usan `scripts/prisma-client.js`. Prisma 7 no lee `.env` solo:
+  lo carga `dotenv`.
+- Conexión por `DIRECT_URL`, el pooler de Supabase en **modo sesión** (5432): en modo transacción (6543) Prisma 7 + `pg`
+  se quedan colgados tras unas pocas consultas. Plan gratis: 15 conexiones en modo sesión → la app usa como mucho 8 y
+  cada script 3, y las suelta a los 10 s sin uso.
+- `extra_float_digits`: el pooler lo pone a 0 y los `double precision` llegarían con 15 cifras. Se pide 3 dentro de cada
+  transacción (`scopeSql` para las consultas de usuario, `sharedQuery()` para Sentimiento, Valoraciones y fondos).
+- Transacciones: Prisma 7 corta a los 5 s también las de lote (`$transaction([...])`); se sube a 60 s (Mensual tarda más).
+- Copia antes de la migración: `backups/db_2026-11-24_1937`. Se comprobó que todas las respuestas GET de la API para los dos
+  usuarios son iguales que con Prisma 6, y que crear y borrar banco, activo y compra funciona.
+
 ## Multiusuario
 
 - Tablas con datos personales tienen `"userId"` (por defecto `public.app_user()`), o cuelgan de una que lo tiene.

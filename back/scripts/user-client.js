@@ -1,12 +1,12 @@
 // Prisma client for the scripts, scoped to one user like the app (see src/prisma.ts and supabase/users.sql):
 // every raw query runs as role finanzas_app with app.user_id set, so it only sees and writes that user's rows.
 // User: FINANZAS_USER environment variable, user1 by default (the owner of the news task).
-const { PrismaClient } = require("@prisma/client");
+const { createClient } = require("./prisma-client");
 
 const SCOPE = `select set_config('app.user_id', $1, true), set_config('role', 'finanzas_app', true)`;
 
 function userClient(userId = process.env.FINANZAS_USER || "user1") {
-  const prisma = new PrismaClient();
+  const prisma = createClient();
   const scoped = (query) => prisma.$transaction([prisma.$executeRawUnsafe(SCOPE, userId), query]).then((r) => r[1]);
   return {
     userId,

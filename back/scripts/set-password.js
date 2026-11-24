@@ -9,7 +9,7 @@ const path = require("path");
 const crypto = require("crypto");
 const readline = require("readline");
 const bcrypt = require("bcryptjs");
-const { PrismaClient } = require("@prisma/client");
+const { createClient } = require("./prisma-client");
 
 const ENV = path.join(__dirname, "..", ".env");
 const MIN_LENGTH = 10;
@@ -39,7 +39,7 @@ function ask(question) {
 
 async function main() {
   const userId = process.argv[2];
-  const prisma = new PrismaClient();
+  const prisma = createClient();
   try {
     const users = await prisma.$queryRawUnsafe(`select id, name from users order by id`);
     if (!users.some((u) => u.id === userId)) {

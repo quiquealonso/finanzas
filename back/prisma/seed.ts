@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import { createClient } from "../src/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createClient();
 
 async function main() {
   console.log("Seed sin datos: no se insertan registros iniciales.");

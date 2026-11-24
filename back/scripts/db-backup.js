@@ -11,10 +11,10 @@
 require("dotenv").config({ path: __dirname + "/../.env", quiet: true });
 const fs = require("fs");
 const path = require("path");
-const { PrismaClient } = require("@prisma/client");
+const { createClient } = require("./prisma-client");
 
 async function main() {
-  const prisma = new PrismaClient();
+  const prisma = createClient();
   const stamp = new Date().toLocaleString("sv-SE", { timeZone: "Europe/Madrid" }).slice(0, 16).replace(" ", "_").replace(":", "");
   const dir = path.join(__dirname, "..", "..", "backups", `db_${stamp}`);
   fs.mkdirSync(path.join(dir, "supabase"), { recursive: true });

@@ -35,8 +35,8 @@ No hay "he olvidado mi contraseña": se vuelve a ejecutar el comando.
 
 | Variable | Para qué | Notas |
 |---|---|---|
-| `DATABASE_URL` | Conexión de Prisma (pooler de Supabase, puerto 6543) | Contiene la contraseña: **nunca** mostrarla ni subirla |
-| `DIRECT_URL` | Conexión directa (puerto 5432) para migraciones | Igual |
+| `DIRECT_URL` | **Conexión de la app, los scripts y la CLI de Prisma**: pooler de Supabase en modo sesión (puerto 5432) | Contiene la contraseña: **nunca** mostrarla ni subirla |
+| `DATABASE_URL` | Pooler en modo transacción (puerto 6543). Ya no se usa (solo si falta `DIRECT_URL`): con Prisma 7 se cuelga | Igual |
 | `AUTH_SECRET` | Firma los tokens de sesión del login | Lo crea `npm run set-password`. Si cambia, todos tienen que volver a entrar |
 | `GEMINI_API_KEY` | Clasificador de la página Sentimiento | Clave del **plan gratis** de Google AI Studio (proyecto sin facturación) |
 | `GEMINI_MODEL` | Opcional: modelo de Gemini a probar primero | Por defecto rota entre los gratis |
@@ -53,10 +53,11 @@ En `%USERPROFILE%\.finanzas\` (nunca dentro del proyecto ni en el zip):
 ## Base de datos (Supabase)
 
 - Plan gratis. Los cambios de estructura están en `back/supabase/*.sql`, **re-ejecutables** (idempotentes).
-- Aplicar un SQL (enmascara la contraseña en la salida):
+- Aplicar un SQL:
   ```bash
-  cd back && npx prisma db execute --file supabase/X.sql --url "$(grep '^DIRECT_URL' .env | cut -d'"' -f2)" | sed -E 's#(://[^:]+:)[^@]+@#\1****@#'
+  cd back && npx prisma db execute --file supabase/X.sql
   ```
+  (Prisma 7: la conexión sale de `back/prisma.config.ts` → `DIRECT_URL`; ya no existe `--url` y no se imprime.)
 - **Nunca** `prisma db push`: borraría columnas y tablas que Prisma no conoce (usuarios, RLS…).
 - Si una migración se queda colgada: suele haber sesiones "idle in transaction"; parar el backend y terminarlas.
   Para migraciones largas: `set statement_timeout = 0`.

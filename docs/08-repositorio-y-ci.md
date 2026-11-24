@@ -46,8 +46,8 @@ el mismo comando (`npm run typecheck`, `npm test`, `npx ng build`…).
 - **Dependabot alerts** activadas.
 - El repositorio se creó privado, se pasó Gitleaks a todo el historial y solo entonces se hizo público.
 - Autor de los commits: el correo `noreply` de GitHub (`git config user.email` del repositorio), no el personal.
-- `back/package.json` → `overrides`: fuerza versiones corregidas de `deepmerge-ts`, `effect` y `qs` (dependencias de
-  Prisma 6 y Express 4). Quitar al pasar a Prisma 7.
+- `back/package.json` → `overrides`: fuerza versiones corregidas de `effect` (lo trae la CLI de Prisma 7.10) y `qs`
+  (Express 4). Quitar cuando Prisma y Express traigan versiones sin avisos (`npm audit` sin overrides).
 
 ## Pendiente
 

@@ -1,5 +1,5 @@
 import { Express } from "express";
-import { base } from "./prisma";
+import { base, sharedQuery } from "./prisma";
 import { handler, HttpError } from "./portfolio";
 
 /**
@@ -111,7 +111,7 @@ async function pool<T>(items: T[], n: number, fn: (item: T) => Promise<void>): P
   }));
 }
 
-const q = <T = any>(sql: string, ...args: unknown[]) => base.$queryRawUnsafe<T[]>(sql, ...args);
+const q = <T = any>(sql: string, ...args: unknown[]) => sharedQuery<T>(sql, ...args);
 const x = (sql: string, ...args: unknown[]) => base.$executeRawUnsafe(sql, ...args);
 
 // ---------------------------------------------------------------- job state

@@ -13,7 +13,7 @@
 // EBIT is the last twelve months: the last four quarters (the fiscal fourth quarter = year - other three).
 // Saves the run into magic_formula_runs / magic_formula_picks (see supabase/magic-formula.sql).
 require("dotenv").config({ path: __dirname + "/../.env", quiet: true });
-const { PrismaClient } = require("@prisma/client");
+const { createClient } = require("./prisma-client");
 
 const args = process.argv.slice(2);
 const dry = args.includes("--dry");
@@ -209,7 +209,7 @@ async function main() {
   const runDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date());
 
   if (!dry) {
-    const prisma = new PrismaClient();
+    const prisma = createClient();
     try {
       await prisma.$transaction(async (tx) => {
         await tx.$executeRawUnsafe(`delete from magic_formula_runs where "runDate" = $1::date`, runDate);
