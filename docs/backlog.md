@@ -18,7 +18,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 ## Ideas y peticiones
 
 - [ ] (Repositorio) GitHub Pages: web de presentación y la app (necesita el back desplegado). Prioridad: media
-- [ ] (Back) Pasar a Prisma 7: quita los avisos de seguridad de su CLI (`deepmerge-ts`, `effect`). Prioridad: baja
+- [ ] (Back) Pasar a Prisma 7 y quitar los `overrides` de `back/package.json`. Prioridad: baja
 - [ ] (Presentación) Diseñar la app como para un cliente final (portada, onboarding, perfil de riesgo al empezar…). Prioridad: media
 
 - [ ] (Servidor) Subir la app a Google Cloud (VM e2-micro); el login ya está hecho. Prioridad: alta (proyecto de clase)
