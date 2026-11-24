@@ -3,7 +3,7 @@ import { Component, ElementRef, OnDestroy, OnInit, computed, inject, output, sig
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { PortfolioStore } from '../../core/portfolio.store';
-import { formatDay } from '../../shared/format.utils';
+import { formatDay, MASK, privacy } from '../../shared/format.utils';
 
 type ImportEvent = { n: number; level: 'info' | 'ok' | 'skip' | 'warn' | 'error'; text: string };
 type Status = 'new' | 'exists' | 'maybe' | 'imported' | 'cancelled';
@@ -200,6 +200,7 @@ export class MailImportDialogComponent implements OnInit, OnDestroy {
   }
 
   protected num(v: number | null, d = 2): string {
+    if (privacy() && v != null) return MASK;
     return v == null ? '—' : v.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: d });
   }
 

@@ -31,6 +31,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Hecho
 
+- [x] 2026-11-24 · (Toda la app) Ojo de privacidad en la barra lateral: oculta importes y cantidades, deja los %.
 - [x] 2026-11-24 · (Back) Prisma 7.10 con adaptador `pg`, `prisma.config.ts`, conexión en modo sesión. Respuestas de la API idénticas.
 - [x] 2026-11-24 · (Repositorio) Git + GitHub público, CI, Seguridad (Gitleaks, npm audit, OSV), Dependabot, README.
 - [x] 2026-11-24 · (Toda la app) Login con contraseña (BCrypt + JWT), `npm run set-password`.

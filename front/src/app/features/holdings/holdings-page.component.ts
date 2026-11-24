@@ -14,6 +14,8 @@ import {
   formatQty,
   formatSignedMoney,
   formatSignedPercent,
+  maskMoney,
+  privacy,
   signClass
 } from '../../shared/format.utils';
 
@@ -144,7 +146,9 @@ export class HoldingsPageComponent {
 
   /** USD amount, e.g. 1.980,55 $. */
   protected usd(v: number | null | undefined, decimals = 2): string {
-    return v == null ? '—' : v.toLocaleString('es-ES', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + ' $';
+    if (v == null) return '—';
+    if (privacy()) return maskMoney(v, '$');
+    return v.toLocaleString('es-ES', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + ' $';
   }
 
   private readonly total = computed(() => this.store.overview()?.totalEur ?? 0);

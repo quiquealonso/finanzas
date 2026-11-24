@@ -9,6 +9,10 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
 
 ---
 
+## Barra lateral · `app.html` · act. 2026-11-24
+- Páginas (`app.routes.ts`), **"Ocultar importes"** (ojo de privacidad, tecla H; ver [06](06-diseno.md)), "+ Nuevo
+  movimiento" (tecla N), patrimonio y usuario con "Salir".
+
 ## Entrada (login) · `features/login` · act. 2026-11-24
 - Elegir usuario → contraseña → «Entrar». Guarda el token de sesión (12 h) en el navegador (`finanzas.token`).
 - Usuario sin contraseña: aviso con el comando `npm run set-password -- <usuario>`. Detalles en [02](02-arquitectura.md#login).

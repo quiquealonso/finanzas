@@ -7,7 +7,7 @@ import { isVisible, LAST_PAGE_KEY, PAGES } from './app.routes';
 import { PortfolioStore } from './core/portfolio.store';
 import { ConfirmDialogComponent } from './shared/confirm-dialog.component';
 import { MovementDialogComponent } from './features/movements/movement-dialog.component';
-import { formatMoney0 } from './shared/format.utils';
+import { formatMoney0, privacy, setPrivacy } from './shared/format.utils';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +19,7 @@ import { formatMoney0 } from './shared/format.utils';
 export class App implements OnInit {
   protected readonly store = inject(PortfolioStore);
   protected readonly formatMoney0 = formatMoney0;
+  protected readonly privacy = privacy;
 
   private readonly router = inject(Router);
 
@@ -47,6 +48,10 @@ export class App implements OnInit {
     void this.store.refresh();
   }
 
+  protected togglePrivacy(): void {
+    setPrivacy(!privacy());
+  }
+
   protected switchUser(): void {
     enterAs(null);
   }
@@ -57,6 +62,11 @@ export class App implements OnInit {
     const target = event.target as HTMLElement;
     const typing = ['INPUT', 'SELECT', 'TEXTAREA'].includes(target?.tagName);
     if (event.key === 'Escape' && this.store.movementDialog()) this.store.closeMovement();
+    // "H" hides or shows the amounts (privacy mode).
+    if (!typing && !event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === 'h') {
+      event.preventDefault();
+      this.togglePrivacy();
+    }
     if (!typing && !event.ctrlKey && !event.metaKey && event.key.toLowerCase() === 'n' && !this.store.movementDialog()) {
       event.preventDefault();
       this.store.openMovement();

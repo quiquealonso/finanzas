@@ -51,6 +51,13 @@ segmentados), `.tiles`/`.tile` (tarjetas), `.table-wrap`, `.notice`, `.dialog-ba
 - **No mostrar controles que no hacen nada** (se quitó "Color por" del calendario).
 - Los % de un periodo deben llevar el **mismo signo que los euros** cuando se muestran juntos (o explicar por qué no).
 - Barra lateral: Resumen, Activos, Calendario, Mensual, Distribución, Composición, Movimientos, Ventas, Inmobiliario,
-  Cierres, Objetivos, Noticias, Sentimiento, Valoraciones, Fórmula mágica, Apuestas.
+  Cierres, Objetivos, Perfil de riesgo, Noticias, Sentimiento, Valoraciones, Fórmula mágica, Apuestas; al final el ojo
+  ("Ocultar importes").
+- **Ojo de privacidad** (barra lateral, "Ocultar importes", tecla **H**): tapa con `•••••` todo valor nominal (euros,
+  dólares, títulos/unidades, ejes de las gráficas) y deja a la vista porcentajes y precios de mercado. Se recuerda en el
+  navegador (`finanzas.privacy`). **Regla para código nuevo**: todo importe o cantidad de la cartera se pinta con
+  `formatMoney`, `formatMoney0`, `formatSignedMoney` o `formatQty` (`shared/format.utils.ts`), o comprueba
+  `privacy()` y usa `maskMoney()`/`MASK`. Nunca un número suelto con "€". Los datos públicos (precio de una acción,
+  patrimonio de un fondo, ejemplos del test de riesgo) no se tapan.
 - Textos cortos y en español; explicaciones largas en `title` (tooltip) o en un "¿Cómo funciona?".
 - Páginas de análisis de mercado: aviso visible **"No es una recomendación de inversión"**; tonos (alcista/bajista), nunca "compra/vende".

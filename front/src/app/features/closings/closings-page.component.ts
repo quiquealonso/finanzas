@@ -2,7 +2,7 @@ import { Component, computed, effect, ElementRef, inject, signal, viewChild } fr
 import { PortfolioApi } from '../../core/portfolio-api.service';
 import { ClosingCell, ClosingRow, ClosingSection, ClosingSheet } from '../../core/portfolio.models';
 import { PortfolioStore } from '../../core/portfolio.store';
-import { formatMoney0, formatSignedMoney, formatSignedPercent, signClass } from '../../shared/format.utils';
+import { formatMoney0, formatSignedMoney, formatSignedPercent, MASK, privacy, signClass } from '../../shared/format.utils';
 import { ConfirmService } from '../../shared/confirm-dialog.component';
 
 type DeltaMode = 'pct' | 'eur' | 'none';
@@ -212,6 +212,7 @@ export class ClosingsPageComponent {
   }
 
   protected number(value: number | null): string {
+    if (privacy() && value !== null) return MASK;
     return value === null ? '' : plain.format(value);
   }
 

@@ -1,16 +1,51 @@
+import { signal } from '@angular/core';
+
+// ---------------------------------------------------------------- Privacy mode ("ojo" in the sidebar)
+// Hides every nominal value (euros, dollars, quantities) in the whole app and keeps percentages and market prices.
+// It is a signal: templates and computed() that format money re-render by themselves when it changes.
+const PRIVACY_KEY = 'finanzas.privacy';
+export const MASK = '•••••';
+
+export const privacy = signal(readPrivacy());
+
+function readPrivacy(): boolean {
+  try {
+    return localStorage.getItem(PRIVACY_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function setPrivacy(on: boolean): void {
+  privacy.set(on);
+  try {
+    localStorage.setItem(PRIVACY_KEY, on ? '1' : '0');
+  } catch {
+    // Storage blocked: it lasts until the page is reloaded.
+  }
+}
+
+/** Masked amount, keeping the sign (the colour already tells it) and the currency. */
+export function maskMoney(value = 0, unit = '€', signed = false): string {
+  return `${signed && value > 0 ? '+' : signed && value < 0 ? '−' : ''}${MASK} ${unit}`;
+}
+
 const eur = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
 const eur0 = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 
 export function formatMoney(value: number): string {
+  if (privacy()) return maskMoney();
   return eur.format(value);
 }
 
 /** Whole euros, for big totals. */
 export function formatMoney0(value: number): string {
+  if (privacy()) return maskMoney();
   return eur0.format(value);
 }
 
 export function formatSignedMoney(value: number): string {
+  if (privacy()) return maskMoney(value, '€', true);
   return `${value > 0 ? '+' : value < 0 ? '−' : ''}${eur.format(Math.abs(value))}`;
 }
 
@@ -35,7 +70,9 @@ export function formatPrice(value: number, currency = 'EUR'): string {
   }).format(value);
 }
 
+/** Units of an asset: they give away the size of a position, so the privacy mode hides them too. */
 export function formatQty(value: number): string {
+  if (privacy()) return MASK;
   return new Intl.NumberFormat('es-ES', { maximumFractionDigits: value < 1 ? 8 : 4 }).format(value);
 }
 

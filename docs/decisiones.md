@@ -5,6 +5,10 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-24 · Ojo de privacidad en los formateadores** — un `signal` en `format.utils.ts` que leen `formatMoney` y
+  compañía: toda la app se tapa sin tocar cada plantilla y se repinta sola. Se tapan también las cantidades (dicen el
+  tamaño de la posición) y los ejes de las gráficas; no los porcentajes ni los precios de mercado. (Difuminar con CSS:
+  habría que marcar cada cifra a mano y se puede leer con el inspector.)
 - **2026-11-24 · Prisma 7 por el pooler en modo sesión** — Prisma 7 obliga a un driver adapter; con `pg` y el pooler de
   Supabase en modo transacción (6543) las consultas se quedan colgadas, en modo sesión (5432) no. Se usa `DIRECT_URL`
   con un pool pequeño (8 + 3) para no pasar de las 15 conexiones del plan gratis. Primera carga algo más lenta (abre

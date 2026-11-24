@@ -288,7 +288,7 @@ export class MovementsPageComponent {
   }
 
   protected async deletePlan(plan: RecurringPlan): Promise<void> {
-    if (!(await this.confirmDialog.ask(`¿Eliminar la aportación de ${plan.amountEur} € a ${plan.assetName}? Las compras ya registradas se mantienen.`))) return;
+    if (!(await this.confirmDialog.ask(`¿Eliminar la aportación de ${formatMoney(Number(plan.amountEur))} a ${plan.assetName}? Las compras ya registradas se mantienen.`))) return;
     try {
       this.setRecurring(await this.api.deleteRecurring(plan.id));
       this.showPlanForm = false;

@@ -29,6 +29,8 @@ nav { display: flex; flex-direction: column; gap: 2px; }
 }
 .nav-item:hover { background: var(--surface-2); color: var(--text); }
 .nav-item.on { background: var(--surface-2); color: var(--text); font-weight: 500; }
+.nav-item.eye { margin-top: 8px; border-top: 1px solid var(--border); border-radius: 0 0 var(--radius-sm) var(--radius-sm); padding-top: 10px; }
+.nav-item.eye.on { color: var(--accent-text); background: var(--accent-soft); }
 .nav-item svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .new { margin-top: 14px; }
 .side-foot { margin-top: auto; padding: 0 10px; }

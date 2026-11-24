@@ -3,7 +3,7 @@ import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { PortfolioStore } from '../../core/portfolio.store';
-import { formatDay } from '../../shared/format.utils';
+import { formatDay, formatQty } from '../../shared/format.utils';
 import { ConfirmService } from '../../shared/confirm-dialog.component';
 
 type PendingOrder = {
@@ -53,7 +53,7 @@ const BASE = 'http://localhost:3000/api/v2/pending-orders';
               </div>
               <div class="tile-sub">{{ o.broker }} · {{ o.market }} · {{ o.isin }}{{ o.modified ? ' · modificada' : '' }}</div>
               <div class="tile-big">
-                <strong>{{ o.quantity }} títulos</strong>
+                <strong>{{ fmtQty(o.quantity) }} títulos</strong>
                 <span class="tile-aside">{{ o.limitPrice ? (o.modality?.toLowerCase() + ' ' + o.limitPrice + ' ' + o.currency) : (o.modality?.toLowerCase() ?? '') }}</span>
               </div>
               <div class="tile-sub">Válida {{ o.validFrom ? fmtDay(o.validFrom) : '' }} → {{ o.validTo ? fmtDay(o.validTo) : '' }}</div>
@@ -110,6 +110,7 @@ export class PendingOrdersComponent {
   protected readonly busy = signal<string | null>(null);
   protected drafts: Record<string, Draft> = {};
   protected readonly fmtDay = formatDay;
+  protected readonly fmtQty = formatQty;
 
   constructor() {
     effect(() => {

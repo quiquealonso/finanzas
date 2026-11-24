@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { errorMessage, PortfolioApi } from '../../core/portfolio-api.service';
 import { CalendarDay, CalendarDayDetail, TYPE_COLORS } from '../../core/portfolio.models';
 import { PortfolioStore } from '../../core/portfolio.store';
-import { formatSignedMoney, formatSignedPercent, signClass } from '../../shared/format.utils';
+import { formatSignedMoney, formatSignedPercent, maskMoney, privacy, signClass } from '../../shared/format.utils';
 
 type Mode = 'eur' | 'pct';
 type Cell = { date: string; day: number; data: CalendarDay | null; future: boolean } | null;
@@ -172,6 +172,7 @@ export class CalendarPageComponent {
 
   /** Short money for a cell: +312, −1,2k, +15k. */
   protected short(pnl: number): string {
+    if (privacy()) return maskMoney(pnl, '€', true);
     const v = Math.abs(pnl);
     const s = v >= 10000 ? Math.round(v / 1000) + 'k' : v >= 1000 ? (v / 1000).toLocaleString('es-ES', { maximumFractionDigits: 1 }) + 'k' : Math.round(v).toString();
     return (pnl < 0 ? '−' : '+') + s + ' €';

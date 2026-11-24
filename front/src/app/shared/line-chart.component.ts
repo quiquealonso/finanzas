@@ -1,5 +1,5 @@
 import { Component, computed, input, signal } from '@angular/core';
-import { formatDay, formatMoney0, formatSignedPercent } from './format.utils';
+import { formatDay, formatMoney0, formatSignedPercent, privacy } from './format.utils';
 
 export type ChartPoint = { date: string; value: number; cost?: number; /** Overrides the date in axis and tooltip. */ label?: string };
 
@@ -142,6 +142,8 @@ export class LineChartComponent {
 }
 
 function compact(v: number): string {
+  // Axis labels: the shape of the curve stays, the amounts go.
+  if (privacy()) return '•••';
   if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
   if (Math.abs(v) >= 1_000) return `${Math.round(v / 1_000)}k`;
   return `${Math.round(v)}`;

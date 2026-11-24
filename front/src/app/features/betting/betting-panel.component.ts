@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { formatSignedMoney, signClass } from '../../shared/format.utils';
+import { formatSignedMoney, maskMoney, privacy, signClass } from '../../shared/format.utils';
 import {
   BettingDashboardData,
   BettingTransactionType,
@@ -113,6 +113,7 @@ export class BettingPanelComponent {
   protected readonly signedMoney = formatSignedMoney;
 
   protected money(value: number): string {
+    if (privacy()) return maskMoney();
     return money.format(value);
   }
 
