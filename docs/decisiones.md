@@ -5,6 +5,10 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-25 · Casillas con unidad: la caja dibuja el borde** — en el Simulador la regla global de inputs
+  (`input:not([type="checkbox"]):not([type="radio"])`, más específica) pisaba `.box input`. Se sube la especificidad
+  en el componente (`.box input[type="number"]`) en vez de tocar la regla global, que usan todos los formularios.
+
 - **2026-11-25 · Plantillas de correo como datos, creadas con IA y validadas por la app** — las de MyInvestor y BBVA
   siguen en el código (BBVA lee un PDF). Las nuevas son una búsqueda y una expresión regular por campo en la base de
   datos, compartidas entre usuarios. La IA solo propone; la app las prueba con los correos reales y no se guardan si

@@ -132,6 +132,8 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
   periódicos activos, o lo metido de media el último año si no hay. "Llevar estas cifras" copia valor, aportación y
   rentabilidad esperada a la simulación manual. No llama a ninguna IA: el análisis es local.
 - Gráfica propia (`sim-chart.component.ts`) con tooltip por año; respeta el ojo de privacidad.
+- 2026-11-25: las casillas de número se veían mal (la regla global `input:not(...)` de `styles.css` les ponía borde,
+  relleno y anillo dentro de la caja). Ahora la caja dibuja el borde y el anillo; la casilla va sin borde ni flechas.
 
 ## Perfil de riesgo · `features/risk-profile` · nueva 2026-11-24
 - Cuestionario de 13 preguntas (`risk-questions.ts`), una a una con animación, barra de progreso, teclas 1–5 y
