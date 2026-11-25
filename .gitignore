@@ -1,7 +1,7 @@
 # ---- Secretos y datos personales: NUNCA se suben (el repositorio es público) ----
 # Claves de la base de datos, Gemini, AUTH_SECRET…
 .env
-# Private keys (Enable Banking, certificates): they live in %USERPROFILE%\.finanzas, never here.
+# Claves privadas (Enable Banking, certificados): van en %USERPROFILE%\.finanzas, nunca aquí.
 *.pem
 *.key
 .env.*
