@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { PortfolioStore } from '../../core/portfolio.store';
 import { formatDay, MASK, privacy } from '../../shared/format.utils';
+import { TemplateWizardComponent } from './template-wizard.component';
 
 type ImportEvent = { n: number; level: 'info' | 'ok' | 'skip' | 'warn' | 'error'; text: string };
 type Status = 'new' | 'exists' | 'maybe' | 'imported' | 'cancelled';
@@ -19,7 +20,7 @@ type ImportJob = {
 };
 type Setup = {
   user: { id: string; name: string };
-  banks: Array<{ id: string; name: string; template: string | null }>;
+  banks: Array<{ id: string; name: string; template: string | null; custom?: boolean }>;
   last: { at: string | null; mailDate: string | null; banks: string[] } | null;
   since: string; gmail: boolean;
 };
@@ -35,7 +36,7 @@ const GMAIL = 'http://localhost:3000/api/v2/gmail';
 @Component({
   selector: 'app-mail-import-dialog',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TemplateWizardComponent],
   templateUrl: './mail-import-dialog.component.html',
   styleUrl: './mail-import-dialog.component.css'
 })
@@ -46,6 +47,8 @@ export class MailImportDialogComponent implements OnInit, OnDestroy {
   protected readonly day = formatDay;
 
   protected readonly setup = signal<Setup | null>(null);
+  /** Bank whose template is being created (template-wizard.component.ts). */
+  protected readonly creatingFor = signal<{ id: string; name: string } | null>(null);
   protected readonly gmail = signal<{ configured: boolean; connected: boolean; email: string | null } | null>(null);
   protected readonly picked = signal<string[]>([]);
   protected since = '';
@@ -92,6 +95,13 @@ export class MailImportDialogComponent implements OnInit, OnDestroy {
     } catch {
       this.gmail.set({ configured: false, connected: false, email: null });
     }
+  }
+
+  /** A new template: reload the banks and pick that one. */
+  protected async templateSaved(bankId: string): Promise<void> {
+    this.creatingFor.set(null);
+    await this.load();
+    if (!this.picked().includes(bankId)) this.picked.update((v) => [...v, bankId]);
   }
 
   protected toggleBank(id: string): void {

@@ -58,3 +58,5 @@
 .note { margin-left: 4px; }
 
 .dialog-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.make { margin-left: auto; padding: 0 6px; height: 22px; font-size: 12px; color: #a855f7; font-weight: 600; }

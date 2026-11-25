@@ -38,6 +38,7 @@ se crea con los SQL de `back/supabase/` y se consulta con SQL directo (`$queryRa
 | `wallet_accounts`, `wallet_tokens`, `wallet_balances` | usuario | wallets.sql | Wallets cripto por dirección pública |
 | `pending_orders` | usuario | pending-orders.sql | Órdenes de BBVA leídas del correo, por confirmar |
 | `risk_profiles` | usuario | risk-profile.sql | Resultados del test de perfil de riesgo (respuestas, dimensiones, perfil) |
+| `mail_templates` | compartida | mail-templates.sql | Plantillas de correo creadas por usuarios: búsqueda de Gmail y expresión regular por campo; autor y usos |
 | `saved_funds` | usuario | saved-funds.sql | Fondos guardados de «Analizar mejores opciones», uno por fondo y perfil (foto de los datos) |
 | `mail_import_state` | usuario | mail-import.sql | Última importación del correo (fecha, último correo, bancos elegidos) |
 | `betting_houses`, `betting_transactions` | usuario | (Prisma) | Apuestas (oculto a user2) |

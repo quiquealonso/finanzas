@@ -125,6 +125,31 @@ export async function attachment(messageId: string, attachmentId: string): Promi
 }
 
 /** E-mails matching a Gmail search (e.g. `from:myinvestor after:2026/01/01`), oldest first. */
+/** Up to `max` e-mails of a search, only headers and Gmail's short snippet (to choose some, without downloading them). */
+export async function listMails(query: string, max = 20): Promise<Array<{ id: string; from: string; date: string; subject: string; snippet: string }>> {
+  const user = currentUser() ?? DEFAULT_USER;
+  const r = await gmail(user, `messages?maxResults=${max}&q=${encodeURIComponent(query)}`);
+  const out = [];
+  for (const { id } of r.messages ?? []) {
+    const m = await gmail(user, `messages/${id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`);
+    const header = (name: string) => m.payload?.headers?.find((h: any) => h.name.toLowerCase() === name)?.value ?? "";
+    out.push({ id, from: header("from"), subject: header("subject"), date: new Date(Number(m.internalDate)).toISOString().slice(0, 10), snippet: String(m.snippet ?? "") });
+  }
+  return out;
+}
+
+/** One e-mail, complete. */
+export async function getMail(id: string): Promise<Mail> {
+  const user = currentUser() ?? DEFAULT_USER;
+  const m = await gmail(user, `messages/${encodeURIComponent(id)}?format=full`);
+  const header = (name: string) => m.payload?.headers?.find((h: any) => h.name.toLowerCase() === name)?.value ?? "";
+  return {
+    id, from: header("from"), subject: header("subject"),
+    date: new Date(Number(m.internalDate)).toISOString().slice(0, 10),
+    body: bodyText(m.payload), attachments: attachmentsOf(m.payload),
+  };
+}
+
 export async function searchMails(query: string, onProgress?: (n: number) => void): Promise<Mail[]> {
   const user = currentUser() ?? DEFAULT_USER;
   const ids: string[] = [];

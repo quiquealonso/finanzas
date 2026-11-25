@@ -20,6 +20,7 @@ import { registerSentimentRoutes } from "./sentiment";
 import { registerValuationRoutes } from "./valuations";
 import { registerRiskProfileRoutes } from "./risk-profile";
 import { registerFundFinderRoutes } from "./fund-finder";
+import { registerMailTemplateRoutes } from "./mail-templates";
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ registerSentimentRoutes(app);
 registerValuationRoutes(app);
 registerRiskProfileRoutes(app);
 registerFundFinderRoutes(app);
+registerMailTemplateRoutes(app);
 
 type ApiAssetType = "liquido" | "fondo" | "accion" | "etf" | "cripto" | "inmobiliario";
 type ApiMarketProvider = 'stooq' | 'alphavantage' | 'yahoo';

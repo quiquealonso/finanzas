@@ -5,6 +5,7 @@ import path from "path";
 import { prisma, currentUser, withUser, DEFAULT_USER } from "./prisma";
 import { createMovement, guessRegions, handler, HttpError, refreshSnapshots } from "./portfolio";
 import { attachment, gmailConnected, Mail, searchMails } from "./gmail";
+import { markUsed, MailTemplate, readWithTemplate, userTemplateFor } from "./mail-templates";
 import { BbvaOrder, parseBbvaOrder, pdfText, savePendingOrder, tickerForIsin } from "./bbva-orders";
 
 // Import of broker operations from e-mails, in two steps so nothing is written without the user seeing it:
@@ -151,7 +152,7 @@ function demoMails(): Mail[] {
  * A template reads the e-mails of one bank. The user picks banks of their own (any of them); a bank whose name
  * matches a template is read with it, the others have no template yet (nothing to read).
  */
-type Template = { id: "myinvestor" | "bbva"; label: string; match: RegExp; what: string; query: (since: string) => string };
+type Template = { id: "myinvestor" | "bbva" | "user"; label: string; match: RegExp; what: string; query: (since: string) => string; user?: MailTemplate };
 const TEMPLATES: Template[] = [
   {
     id: "myinvestor", label: "MyInvestor", match: /my\s*investor/i, what: "confirmaciones de operaciones de valores y fondos",
@@ -162,7 +163,16 @@ const TEMPLATES: Template[] = [
     query: (since) => `from:bbva "Orden de compra venta de valores" has:attachment after:${since}`,
   },
 ];
-const templateOf = (bankName: string) => TEMPLATES.find((t) => t.match.test(bankName)) ?? null;
+const builtinOf = (bankName: string) => TEMPLATES.find((t) => t.match.test(bankName)) ?? null;
+
+/** Template of a bank: the ones in the code first, then the ones made by users (mail-templates.ts). */
+async function templateOf(bankName: string): Promise<Template | null> {
+  const builtin = builtinOf(bankName);
+  if (builtin) return builtin;
+  const user = await userTemplateFor(bankName);
+  if (!user) return null;
+  return { id: "user", label: user.label, match: /.^/, what: user.what, query: (since) => `${user.query} after:${since}`, user };
+}
 
 // ---------------------------------------------------------------- Matching with what the user already has
 
@@ -219,7 +229,7 @@ async function findSameOperation(assetId: string, kind: Kind, from: string, to: 
 type Status = "new" | "exists" | "maybe" | "imported" | "cancelled";
 /** One operation or order found in the e-mails, before anything is written. */
 type Candidate = {
-  key: string; template: Template["id"]; bankId: string; bankName: string; type: "operation" | "order";
+  key: string; template: string; bankId: string; bankName: string; type: "operation" | "order";
   kind: Kind; date: string; name: string; quantity: number; price: number | null; currency: string; amount: number | null;
   status: Status; note: string; assetId: string | null; assetName: string; existingOpId: string | null;
   /** Ticked by default in the review (new rows, except old orders). */
@@ -255,11 +265,12 @@ async function scan(job: Job, banks: Array<{ id: string; name: string }>): Promi
     await sleep(300);
     const picked: Array<{ bank: { id: string; name: string }; template: Template | null }> = [];
     for (const bank of banks) {
-      log(job, "info", `Cargando plantillas para ${bank.name}…`);
-      await sleep(450);
-      const template = templateOf(bank.name);
+      log(job, "info", `Buscando la plantilla de ${bank.name}…`);
+      await sleep(250);
+      const template = await templateOf(bank.name);
       picked.push({ bank, template });
-      log(job, "ok", template ? `Plantilla de ${bank.name} lista: ${template.what}.` : `Plantilla de ${bank.name} cargada.`);
+      if (!template) log(job, "skip", `${bank.name} todavía no tiene plantilla: puedes crearla en el paso anterior («✦ Crear plantilla»).`);
+      else log(job, "ok", `Plantilla de ${bank.name}${template.user ? " (creada por un usuario)" : ""}: ${template.what}.`);
     }
     await sleep(250);
     log(job, "info", job.source === "gmail" ? "Conectando con Gmail (solo lectura)…" : "Gmail no está conectado: se usan los correos de ejemplo.");
@@ -268,11 +279,9 @@ async function scan(job: Job, banks: Array<{ id: string; name: string }>): Promi
     // E-mails of each bank with a template, from the chosen day.
     const work: Array<{ bank: { id: string; name: string }; template: Template; mails: Mail[] }> = [];
     for (const { bank, template } of picked) {
-      if (!template) {
-        log(job, "skip", `${bank.name}: todavía no hay correos de este banco que la app sepa leer.`);
-        continue;
-      }
-      if (work.some((w) => w.template.id === template.id)) continue; // two banks with the same template: read once
+      if (!template) continue;
+      // Two banks with the same template: read once.
+      if (work.some((w) => w.template.id === template.id && w.template.user?.id === template.user?.id)) continue;
       log(job, "info", `Buscando correos de ${bank.name} desde el ${job.since.split("-").reverse().join("/")}…`);
       let mails: Mail[] = [];
       if (job.source === "gmail") {
@@ -295,7 +304,13 @@ async function scan(job: Job, banks: Array<{ id: string; name: string }>): Promi
         log(job, "info", `Leyendo correo ${job.processed}/${job.total} · ${bank.name} · ${mail.date.slice(0, 10)}`);
         await sleep(60);
         try {
-          const c = template.id === "myinvestor" ? await operationCandidate(job, bank, mail) : await orderCandidate(job, bank, mail);
+          let c: Candidate | null;
+          if (template.id === "bbva") c = await orderCandidate(job, bank, mail);
+          else {
+            const op = template.user ? readWithTemplate(template.label, template.user.fields, mail).op : parseMyInvestor(mail);
+            if (!op) log(job, "skip", "No es una operación de compra o venta: se ignora.");
+            c = op ? await operationCandidate(job, bank, op, template.user ? `user:${template.user.id}` : "myinvestor") : null;
+          }
           if (!c) { job.skipped++; continue; }
           job.candidates.push(c);
           const label = { new: "nueva", exists: "ya la tienes", maybe: "¿ya la tienes?", imported: "ya importada", cancelled: "anulada" }[c.status];
@@ -306,6 +321,7 @@ async function scan(job: Job, banks: Array<{ id: string; name: string }>): Promi
         }
       }
     }
+    for (const { template } of work) if (template.user) await markUsed(template.user.id);
     await matchSplitOperations(job);
     const count = (s: Status) => job.candidates.filter((c) => c.status === s).length;
     log(job, "ok", `Listo para revisar: ${count("new")} nuevas, ${count("exists")} que ya tienes, ${count("maybe")} dudosas, ${count("imported")} ya importadas.`);
@@ -338,12 +354,7 @@ async function matchSplitOperations(job: Job): Promise<void> {
   }
 }
 
-async function operationCandidate(job: Job, bank: { id: string; name: string }, mail: Mail): Promise<Candidate | null> {
-  const op = parseMyInvestor(mail);
-  if (!op) {
-    log(job, "skip", "No es una operación de compra o venta: se ignora.");
-    return null;
-  }
+async function operationCandidate(job: Job, bank: { id: string; name: string }, op: ParsedOp, template: string): Promise<Candidate | null> {
   const known = INSTRUMENTS.find((i) => i.match.test(op.name.toUpperCase()));
   let symbol = known?.symbol ?? null;
   if (!symbol && op.isin) symbol = (await tickerForIsin(op.isin, "").catch(() => null))?.symbol ?? null;
@@ -355,7 +366,7 @@ async function operationCandidate(job: Job, bank: { id: string; name: string }, 
   }
   const name = known?.name ?? titleCase(op.name);
   const base: Omit<Candidate, "status" | "note" | "assetId" | "assetName" | "existingOpId"> = {
-    key: op.key, template: "myinvestor", bankId: bank.id, bankName: bank.name, type: "operation", kind: op.kind, date: op.date,
+    key: op.key, template, bankId: bank.id, bankName: bank.name, type: "operation", kind: op.kind, date: op.date,
     name, quantity: op.quantity, price: op.price, currency: op.currency, amount: op.amount, op,
   };
   const marked: unknown[] = await prisma.$queryRawUnsafe(
@@ -534,13 +545,17 @@ export function registerMailImportRoutes(app: Express): void {
   app.get("/api/v2/mail-import/setup", handler(async (_req, res) => {
     const userId = currentUser() ?? DEFAULT_USER;
     const [user] = await prisma.$queryRawUnsafe<Array<{ name: string }>>(`select name from users where id = $1`, userId);
-    const banks = await prisma.bank.findMany({ orderBy: { name: "asc" } });
+    // "Reinversión" is the app's own account for money from sales, not a bank with e-mails.
+    const banks = (await prisma.bank.findMany({ orderBy: { name: "asc" } })).filter((b) => b.name !== "Reinversión");
     const [state] = await prisma.$queryRawUnsafe<Array<{ lastImportAt: Date | null; lastMailDate: string | null; banks: string[] }>>(
       `select "lastImportAt", to_char("lastMailDate", 'YYYY-MM-DD') as "lastMailDate", banks from mail_import_state`
     );
     res.json({
       user: { id: userId, name: user?.name ?? userId },
-      banks: banks.map((b) => ({ id: b.id, name: b.name, template: templateOf(b.name)?.label ?? null })),
+      banks: await Promise.all(banks.map(async (b) => {
+        const t = await templateOf(b.name);
+        return { id: b.id, name: b.name, template: t?.label ?? null, custom: !!t?.user };
+      })),
       last: state ? { at: state.lastImportAt, mailDate: state.lastMailDate, banks: state.banks } : null,
       // From the last e-mail imported (it may have had more operations that day), else from 1 January.
       since: state?.lastMailDate ?? `${new Date().getFullYear()}-01-01`,

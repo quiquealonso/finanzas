@@ -89,6 +89,14 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
   3. Revisión: cada operación como **Nueva** (marcada), **¿Ya la tienes?** (mismos títulos, fecha distinta hasta 60 días;
      sin marcar), **Ya la tienes** (mismo activo, lado y títulos, de 10 días antes a 3 después del correo) o
      **Ya importada**. Al importar: crea las marcadas y enlaza al correo las que ya tenías (no se duplican).
+- **Plantillas de usuario** (2026-11-25, `template-wizard.component.ts`, back `mail-templates.ts`, tabla `mail_templates`):
+  un banco sin plantilla muestra «✦ Crear plantilla». Busca en Gmail correos de ese banco que parezcan operaciones
+  (solo cabecera y resumen; se puede afinar por remitente), el usuario elige 1–3 y **da su permiso** para enviarlos a
+  Gemini con los datos personales tapados (nombre tras un saludo, números de cuenta, IBAN, DNI, teléfonos, correos).
+  La IA propone una búsqueda de Gmail y una expresión regular por campo; la app la prueba con los correos **reales** y
+  le pide corregir hasta 3 veces. Se ve qué ha leído de cada correo y solo se guarda si los lee todos. Queda para todos
+  los usuarios con ese banco ("plantilla de usuario"), con quién la creó y cuántas veces se usa; solo su autor la borra.
+  En la demo se explica pero no se crea (no hay correos). La cuenta "Reinversión" no sale (no es un banco).
 - Plantillas: MyInvestor (confirmaciones con todo) y BBVA (órdenes en PDF → "Órdenes por confirmar", 6 por fila, con
   estimación de si se ejecutó, "Confirmar todas", "Descartar improbables"). Otros bancos: "plantilla cargada", sin correos.
 - Marca de "ya importado" **por usuario** (`external_operations`, clave `userX|…`) y última importación en `mail_import_state`.

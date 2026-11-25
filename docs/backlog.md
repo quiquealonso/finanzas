@@ -32,6 +32,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Hecho
 
+- [x] 2026-11-25 · (Movimientos) Plantillas de correo reales para cualquier banco: «✦ Crear plantilla» con IA, validadas con tus correos y compartidas.
 - [x] 2026-11-25 · (Demo) El tour abría Calendario, Movimientos, Noticias, Valoraciones y Fórmula mágica desplazados; cada página nueva empieza arriba.
 - [x] 2026-11-25 · (Calendario, Resumen) El resultado de la semana anterior cambiaba: los perps tomaban el precio actual en los últimos 3 días.
 - [x] 2026-11-25 · (Simulador) Página nueva: simulación manual con interés compuesto y cálculo inteligente con escenarios de la cartera.

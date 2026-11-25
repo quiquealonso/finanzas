@@ -14,7 +14,9 @@
     }
 
     <!-- Step 1: banks and start day -->
-    @if (step() === 'setup') {
+    @if (step() === 'setup' && creatingFor(); as bank) {
+      <app-template-wizard [bank]="bank" (cancel)="creatingFor.set(null)" (done)="templateSaved(bank.id)" />
+    } @else if (step() === 'setup') {
       @if (setup(); as s) {
         <div class="q">
           <h3>¿De dónde quieres importar movimientos?</h3>
@@ -26,7 +28,11 @@
               <label class="bank" [class.on]="picked().includes(b.id)">
                 <input type="checkbox" [checked]="picked().includes(b.id)" (change)="toggleBank(b.id)" />
                 <span class="bank-name">{{ b.name }}</span>
-                @if (b.template) { <span class="tag ok" [title]="'Plantilla de ' + b.template">plantilla</span> }
+                @if (b.template) {
+                  <span class="tag ok" [title]="b.custom ? 'Plantilla creada por un usuario de la app' : 'Plantilla de ' + b.template">{{ b.custom ? 'plantilla de usuario' : 'plantilla' }}</span>
+                } @else {
+                  <button type="button" class="btn sm link make" (click)="$event.preventDefault(); creatingFor.set({ id: b.id, name: b.name })" title="Enseña a la app a leer los correos de este banco">✦ Crear plantilla</button>
+                }
               </label>
             </li>
           }

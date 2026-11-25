@@ -5,6 +5,13 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-25 · Plantillas de correo como datos, creadas con IA y validadas por la app** — las de MyInvestor y BBVA
+  siguen en el código (BBVA lee un PDF). Las nuevas son una búsqueda y una expresión regular por campo en la base de
+  datos, compartidas entre usuarios. La IA solo propone; la app las prueba con los correos reales y no se guardan si
+  no los leen todos. A la IA solo va lo que el usuario elige, con su permiso explícito y sin datos personales.
+  (Plantilla escrita a mano por el usuario marcando campos: más trabajo y más errores. Que la IA lea cada correo en
+  cada importación: más lento, más caro y enviaría todos los correos.) El antiguo "Cargando plantillas para X… cargada"
+  de los bancos sin plantilla era solo decorativo y se ha quitado.
 - **2026-11-25 · Los días pasados de un activo sin cotización no se reescriben** — la sincronización (cada hora y por la
   noche) rehace los últimos 3 días; a los activos sin precio de mercado (perps de Hyperliquid) les ponía el precio de
   ese momento en los 3 días, y el resultado de la semana anterior cambiaba días después. Ahora solo se actualiza el día
