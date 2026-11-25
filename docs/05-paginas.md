@@ -26,7 +26,8 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
   acabes) → resultado, peso en bolsa, «Analizar mejores opciones», Mis fondos → recorrido por todas las páginas →
   ojo de privacidad, nuevo movimiento → fin (seguir explorando, repetir, salir). Foco morado sobre el elemento
   (`data-tour="…"` en las plantillas), burbuja con capítulo y progreso; la página sigue funcionando debajo; si se abre
-  un diálogo, el tour se queda en pausa. Se puede repetir con «Tutorial» en la barra lateral.
+  un diálogo, el tour se queda en pausa. Bloques grandes (tablas, calendario): si ya empiezan en la mitad de arriba
+  no se desplaza nada; si no, su cabecera va arriba de la pantalla. El foco marca solo la parte visible. Se puede repetir con «Tutorial» en la barra lateral.
 - En demo se oculta Apuestas. Límites: detalle de calendario desde 2025, fichas solo de las ~60 empresas más grandes,
   Noticias vacía.
 - **Regenerar** (con el back en marcha): `node back/scripts/demo-seed.js --reset` y `node back/scripts/demo-fixtures.js`.

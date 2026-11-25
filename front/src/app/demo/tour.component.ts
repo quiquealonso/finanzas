@@ -2,6 +2,8 @@ import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '
 import { TourService } from './tour.service';
 
 type Rect = { top: number; left: number; width: number; height: number };
+/** Share of the screen height from which an element counts as big (scrolled to the top, bubble in a corner). */
+const TALL = 0.55;
 
 /**
  * The tour on screen: a soft spotlight around the element of the step (data-tour="…"), a bubble with the text, and
@@ -112,7 +114,7 @@ export class TourComponent implements OnInit, OnDestroy {
   /** Tall elements (whole tables): the bubble goes to a corner instead of above or below. */
   protected readonly corner = computed(() => {
     const r = this.rect();
-    return this.mode() === 'spot' && !!r && r.height > window.innerHeight * 0.55;
+    return this.mode() === 'spot' && !!r && r.height > window.innerHeight * TALL;
   });
 
   protected readonly bubblePos = computed(() => {
@@ -158,10 +160,22 @@ export class TourComponent implements OnInit, OnDestroy {
     }
     if (this.scrolledFor !== this.tour.index()) {
       this.scrolledFor = this.tour.index();
-      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      // Big blocks (tables, the whole calendar): their top goes to the top of the screen; small ones are centred.
+      const box = el.getBoundingClientRect();
+      if (box.height > window.innerHeight * TALL) {
+        // Already starting in the upper half (e.g. right under the page title): leave the page as it opened.
+        if (box.top < 0 || box.top > window.innerHeight * 0.5) {
+          window.scrollTo({ top: Math.max(0, box.top + window.scrollY - 16), behavior: 'smooth' });
+        }
+      } else {
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
     }
+    // Spotlight only on the visible part of the element.
     const b = el.getBoundingClientRect();
-    const r = { top: b.top, left: b.left, width: b.width, height: Math.min(b.height, window.innerHeight - 24) };
+    const top = Math.max(b.top, 8);
+    const bottom = Math.min(b.bottom, window.innerHeight - 8);
+    const r = { top, left: b.left, width: b.width, height: Math.max(0, bottom - top) };
     const old = this.rect();
     if (!old || Math.abs(old.top - r.top) > 0.5 || Math.abs(old.left - r.left) > 0.5 || Math.abs(old.width - r.width) > 0.5 || Math.abs(old.height - r.height) > 0.5) {
       this.rect.set(r);
