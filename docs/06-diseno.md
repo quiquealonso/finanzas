@@ -38,6 +38,8 @@ segmentados), `.tiles`/`.tile` (tarjetas), `.table-wrap`, `.notice`, `.dialog-ba
 
 ## Reglas acordadas con el usuario
 
+- **Móvil en pausa** (decidido 2026-11-25): no se adapta nada a móvil, ni la web (diseño para pantallas pequeñas) ni la
+  app `mobile/`. Lo que ya existe se queda como está, sin mantenerlo.
 - **Tarjetas o tabla** en todas las listas, con el selector `app-view-toggle` junto a "Ordenar por".
 - **6 tarjetas por fila** en pantalla normal (menos al estrechar). Tarjetas de activos sin cambio del día.
 - **Filtros** como desplegables con selección múltiple, no como chips (decidido 2026-11-23).

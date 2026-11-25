@@ -23,7 +23,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 - [ ] (Servidor) Subir la app a Google Cloud (VM e2-micro); el login ya está hecho. Prioridad: alta (proyecto de clase)
 - [ ] (Compartir) Regenerar `finanzas-para-compartir.zip` con lo nuevo (multiusuario, correo, sentimiento, valoraciones). Prioridad: media
-- [ ] (Móvil) Adaptar la app móvil a dos usuarios. Prioridad: baja
+- [ ] (Móvil) **En pausa por decisión del usuario (2026-11-25)**: no se toca la app móvil (`mobile/`) ni se adapta la web a móvil. Cuando se retome: adaptar la app móvil a dos usuarios. Prioridad: en pausa
 - [ ] (Movimientos) Importar WeCity desde el correo (solo hay correos de "Ingreso recibido" y amortizaciones). Prioridad: baja
 - [ ] (Sentimiento) Reddit: requiere que el usuario cree una app gratis en reddit.com/prefs/apps. Prioridad: baja
 - [ ] (Sentimiento) Encuesta AAII como indicador del termómetro. Prioridad: baja

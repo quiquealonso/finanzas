@@ -5,6 +5,9 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-25 · Móvil en pausa** — el usuario no quiere trabajar ahora la app móvil (`mobile/`) ni adaptar páginas a
+  móvil. No se borra nada: el código de `mobile/` y los estilos para pantallas pequeñas que ya hay se quedan. Ver backlog.
+
 - **2026-11-25 · Comparar solo lo invertido** — a petición del usuario: la liquidez de cada banco bajaba su
   rentabilidad sin que fuera culpa de lo que eligió. Alternativa descartada: dejarlo como el filtro del Resumen (con
   liquidez). El eje de días sale de lo invertido para no marcar "desde el …" por un día de diferencia.
