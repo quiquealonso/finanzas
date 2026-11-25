@@ -110,6 +110,20 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
   el valor y se podía mover sin fin). Debajo, marca "Tus planes · X €" con la suma de las aportaciones periódicas
   activas; pulsarla vuelve a esa cantidad. "Guardar" fija la prueba en el objetivo, "Deshacer" la quita.
 
+## Simulador · `features/simulator` · nueva 2026-11-25
+- **Simula tu inversión** (manual): aportación inicial, mensual, años y rentabilidad anual esperada (casilla + barra:
+  0–500.000 €, 0–5.000 €/mes, 1–50 años, −5 a 15 %). Interés compuesto mes a mes (la aportación entra al principio del
+  mes y todo crece a (1+r)^(1/12)). Una línea frente a lo aportado; caja con el total, lo aportado, la ganancia y "cada
+  euro se convierte en…". Se recuerda en el navegador (`finanzas.simulator`).
+- **✦ Cálculo inteligente con tu cartera**: botón que muestra un análisis paso a paso (activos y bancos, reparto,
+  rentabilidad de la historia, volatilidad y peor caída, rentabilidad esperada, aportaciones periódicas, 2.000 futuros)
+  con las **cifras reales** de la cartera, y luego tres escenarios (pesimista = 10 %, intermedio = 50 %, optimista = 90 %
+  de los futuros) con su rentabilidad anual equivalente, frente a lo aportado. Horizonte 5–30 años. Mismos supuestos
+  que Objetivos (`goals.engine.ts` → `portfolioStats`, `simulate`, `requiredReturn`). Aportación mensual = planes
+  periódicos activos, o lo metido de media el último año si no hay. "Llevar estas cifras" copia valor, aportación y
+  rentabilidad esperada a la simulación manual. No llama a ninguna IA: el análisis es local.
+- Gráfica propia (`sim-chart.component.ts`) con tooltip por año; respeta el ojo de privacidad.
+
 ## Perfil de riesgo · `features/risk-profile` · nueva 2026-11-24
 - Cuestionario de 13 preguntas (`risk-questions.ts`), una a una con animación, barra de progreso, teclas 1–5 y
   "Anterior". Tres dimensiones: **capacidad** (edad, horizonte, colchón, ingresos, peso del dinero), **tolerancia**

@@ -51,7 +51,7 @@ segmentados), `.tiles`/`.tile` (tarjetas), `.table-wrap`, `.notice`, `.dialog-ba
 - **No mostrar controles que no hacen nada** (se quitó "Color por" del calendario).
 - Los % de un periodo deben llevar el **mismo signo que los euros** cuando se muestran juntos (o explicar por qué no).
 - Barra lateral: Resumen, Activos, Calendario, Mensual, Distribución, Composición, Movimientos, Ventas, Inmobiliario,
-  Cierres, Objetivos, Perfil de riesgo, Noticias, Sentimiento, Valoraciones, Fórmula mágica, Apuestas; al final el ojo
+  Cierres, Objetivos, Simulador, Perfil de riesgo, Noticias, Sentimiento, Valoraciones, Fórmula mágica, Apuestas; al final el ojo
   ("Ocultar importes").
 - **Ojo de privacidad** (barra lateral, "Ocultar importes", tecla **H**): tapa con `•••••` todo valor nominal (euros,
   dólares, títulos/unidades, ejes de las gráficas) y deja a la vista porcentajes y precios de mercado. Se recuerda en el

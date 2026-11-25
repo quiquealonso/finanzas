@@ -32,6 +32,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Hecho
 
+- [x] 2026-11-25 · (Simulador) Página nueva: simulación manual con interés compuesto y cálculo inteligente con escenarios de la cartera.
 - [x] 2026-11-25 · (Toda la app) Demo guiada con tutorial de 36 pasos, empezando por el test de perfil; publicada en GitHub Pages.
 - [x] 2026-11-25 · (Perfil de riesgo) Nombres de fondos de la CNMV con "&amp;" → "&".
 - [x] 2026-11-24 · (Toda la app) Ojo de privacidad en la barra lateral: oculta importes y cantidades, deja los %.

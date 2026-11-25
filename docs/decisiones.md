@@ -5,6 +5,10 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-25 · Simulador en dos partes** — primero una cuenta manual sencilla (una línea, interés compuesto), y aparte
+  el "cálculo inteligente" con la cartera real y tres escenarios. Se descartó la versión con carteras modelo de fondos
+  indexados y precios históricos de Yahoo: el usuario la quiso más simple de momento. El cálculo inteligente reutiliza
+  el motor de Objetivos para que las cifras cuadren entre páginas.
 - **2026-11-25 · Demo con respuestas guardadas, no con datos falsos en el código** — como Stockly y Gestor de campos
   (demo en el navegador, sin servidor), pero los datos salen de un usuario `demo` real en la base de datos: todas las
   cifras (TTWROR, calendario, series) las calcula el back de verdad y cuadran entre sí. (Reescribir los cálculos en el

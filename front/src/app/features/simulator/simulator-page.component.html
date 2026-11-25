@@ -1,0 +1,123 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Simulador</h1>
+      <p>Cuánto puede crecer tu dinero con el tiempo: haz tus propias cuentas o deja que la app las haga con tu cartera.</p>
+    </div>
+  </div>
+
+  <!-- 1. Manual: the user types everything; compound interest, one line. -->
+  @let r = manual();
+  <section class="card sim" data-tour="sim-manual">
+    <div class="card-head"><h2>Simula tu inversión</h2><span class="faint small">Interés compuesto, sin sustos: la rentabilidad que pongas, todos los años igual.</span></div>
+
+    <div class="inputs">
+      <label class="field">
+        <span>¿Cuál será tu aportación inicial?</span>
+        <span class="box"><input type="number" min="0" step="500" [ngModel]="m().initial" (ngModelChange)="set('initial', $event)" /><em>€</em></span>
+        <input type="range" min="0" [max]="LIMITS.initial" step="500" [value]="m().initial" (input)="set('initial', $any($event.target).value)" />
+      </label>
+      <label class="field">
+        <span>¿Y cada mes?</span>
+        <span class="box"><input type="number" min="0" step="50" [ngModel]="m().monthly" (ngModelChange)="set('monthly', $event)" /><em>€/mes</em></span>
+        <input type="range" min="0" [max]="LIMITS.monthly" step="25" [value]="m().monthly" (input)="set('monthly', $any($event.target).value)" />
+      </label>
+      <label class="field">
+        <span>¿Cuántos años?</span>
+        <span class="box"><input type="number" min="1" [max]="LIMITS.years" step="1" [ngModel]="m().years" (ngModelChange)="set('years', $event)" /><em>años</em></span>
+        <input type="range" min="1" [max]="LIMITS.years" step="1" [value]="m().years" (input)="set('years', $any($event.target).value)" />
+      </label>
+      <label class="field">
+        <span>¿Qué rentabilidad esperas?</span>
+        <span class="box"><input type="number" step="0.5" [ngModel]="m().rate" (ngModelChange)="set('rate', $event)" /><em>% al año</em></span>
+        <input type="range" [min]="LIMITS.rateMin" [max]="LIMITS.rateMax" step="0.5" [value]="m().rate" (input)="set('rate', $any($event.target).value)" />
+      </label>
+
+      <div class="result">
+        <div class="in">En <strong>{{ m().years }} {{ m().years === 1 ? 'año' : 'años' }}</strong> tendrías</div>
+        <div class="big num">{{ money(r.final) }}</div>
+        <div class="split">
+          <div><span class="faint small">Tu aportación</span><strong class="num">{{ money(r.put) }}</strong></div>
+          <div><span class="faint small">Ganancia</span><strong class="num" [class.up]="r.gain > 0" [class.down]="r.gain < 0">{{ money(r.gain) }}</strong></div>
+        </div>
+        @if (r.put > 0) { <div class="faint small">Cada euro que pones se convierte en {{ (r.final / r.put).toLocaleString('es-ES', { maximumFractionDigits: 2 }) }} €.</div> }
+      </div>
+    </div>
+
+    <app-sim-chart [lines]="r.lines" [paid]="r.paid" [startYear]="year" />
+    <div class="legend small"><span><i style="background:#6366f1"></i>Tu inversión</span><span><i class="paid"></i>Tu aportación</span></div>
+    <p class="faint small formula">Cada mes se suma la aportación y todo crece al {{ m().rate.toLocaleString('es-ES') }} % anual (≈ {{ monthlyRate() }} % al mes). En la realidad la rentabilidad sube y baja cada año: para eso está el cálculo inteligente de abajo.</p>
+  </section>
+
+  <!-- 2. Cálculo inteligente: the real portfolio, several scenarios. -->
+  <section class="card smart" data-tour="sim-smart">
+    <div class="card-head wrap">
+      <div>
+        <h2><span class="ai-badge">✦</span> Cálculo inteligente con tu cartera</h2>
+        <p class="faint small">Analiza lo que tienes de verdad (cuánto vale, qué tipo de activos, cuánto ha rendido, cuánto se mueve y lo que aportas cada mes) y simula miles de futuros posibles.</p>
+      </div>
+      <div class="horizon">
+        <span class="faint small">Horizonte</span>
+        <div class="seg">
+          @for (y of HORIZONS; track y) { <button type="button" [class.on]="smartYears() === y" (click)="smartYears.set(y)">{{ y }} años</button> }
+        </div>
+      </div>
+    </div>
+
+    @switch (phase()) {
+      @case ('idle') {
+        <div class="start">
+          <button type="button" class="btn ai-btn" (click)="runSmart()">✦ Calcular con mi cartera</button>
+          <span class="faint small">Tarda unos segundos. No cambia nada de tu cartera.</span>
+        </div>
+      }
+      @case ('running') {
+        <div class="thinking">
+          <div class="orb"><span></span><span></span><span></span></div>
+          <strong>Analizando tu cartera…</strong>
+        </div>
+        <ol class="log">
+          @for (l of log(); track $index) {
+            <li [class.done]="l.done"><span class="icon">{{ l.done ? '✓' : '›' }}</span>{{ l.text }}</li>
+          }
+        </ol>
+      }
+      @case ('done') {
+        @if (smart(); as s) {
+          <div class="scenarios">
+            @for (sc of s.scenarios; track sc.label) {
+              <div class="scn" [style.--c]="sc.color">
+                <span class="scn-name">{{ sc.label }}</span>
+                <strong class="num">{{ money(sc.final) }}</strong>
+                <span class="faint small">≈ {{ sc.yearly === null ? '—' : pct(sc.yearly, 1) }}/año · {{ sc.note }}</span>
+              </div>
+            }
+            <div class="scn paid-card">
+              <span class="scn-name">Tu aportación</span>
+              <strong class="num">{{ money(s.put) }}</strong>
+              <span class="faint small">{{ money(s.value) }} de hoy + {{ money(s.monthly) }}/mes</span>
+            </div>
+          </div>
+          <app-sim-chart [lines]="s.lines" [paid]="s.paid" [startYear]="year" />
+          <div class="legend small">
+            @for (sc of s.scenarios; track sc.label) { <span><i [style.background]="sc.color"></i>{{ sc.label }}</span> }
+            <span><i class="paid"></i>Tu aportación</span>
+          </div>
+          <details class="how">
+            <summary class="small">Cómo se ha calculado</summary>
+            <ol class="log short">
+              @for (l of log(); track $index) { <li class="done"><span class="icon">✓</span>{{ l.text }}</li> }
+            </ol>
+            <p class="faint small">Rentabilidad esperada {{ pct(s.mu, 1) }}/año y volatilidad {{ (s.vol * 100).toFixed(1).replace('.', ',') }} %/año (los mismos supuestos que Objetivos). Cada futuro es un camino mes a mes con subidas y bajadas al azar; los escenarios son el 10 %, el 50 % y el 90 % de los 2.000.</p>
+          </details>
+          <div class="foot">
+            <button type="button" class="btn" (click)="runSmart()">Volver a calcular</button>
+            <button type="button" class="btn" (click)="useInManual()">Llevar estas cifras a la simulación de arriba</button>
+            <span class="spacer"></span>
+            <span class="faint small">Orientativo: rentabilidades pasadas no garantizan las futuras. No es una recomendación de inversión.</span>
+          </div>
+        }
+      }
+    }
+  </section>
+</div>

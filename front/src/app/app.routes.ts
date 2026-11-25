@@ -36,6 +36,8 @@ export const PAGES: PageDef[] = [
     load: () => import('./features/closings/closings-page.component').then((m) => m.ClosingsPageComponent) },
   { path: 'objetivos', label: 'Objetivos', icon: 'M12 21a9 9 0 100-18 9 9 0 000 18zM12 16a4 4 0 100-8 4 4 0 000 8zM12 12h0',
     load: () => import('./features/goals/goals-page.component').then((m) => m.GoalsPageComponent) },
+  { path: 'simulador', label: 'Simulador', icon: 'M5 3h14v18H5zM8 7h8M8 11h2M12 11h2M16 11v6M8 14h2M12 14h2M8 17h2M12 17h2',
+    load: () => import('./features/simulator/simulator-page.component').then((m) => m.SimulatorPageComponent) },
   { path: 'perfil-riesgo', label: 'Perfil de riesgo', icon: 'M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6zM9 12l2 2 4-4',
     load: () => import('./features/risk-profile/risk-profile-page.component').then((m) => m.RiskProfilePageComponent) },
   { path: 'noticias', label: 'Noticias', icon: 'M4 5h13v14H6a2 2 0 01-2-2zM17 9h3v8a2 2 0 01-2 2M7 9h7M7 13h7M7 16h4',

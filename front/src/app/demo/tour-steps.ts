@@ -191,6 +191,18 @@ export const TOUR: TourStep[] = [
     text: 'Mueve la barra para probar otra aportación mensual y ver al momento cómo cambia la probabilidad.',
   },
   {
+    id: 'sim-manual', chapter: 'Simulador', route: '/simulador', target: 'sim-manual',
+    title: 'Simula tu inversión',
+    text: 'Haz tus cuentas: pon lo que tienes, lo que aportarás cada mes, los años y la rentabilidad que esperas, y verás '
+      + 'cuánto tendrías con interés compuesto. Mueve las barras y mira cómo cambia la línea.',
+  },
+  {
+    id: 'sim-smart', chapter: 'Simulador', route: '/simulador', target: 'sim-smart',
+    title: 'Cálculo inteligente',
+    text: 'Pulsa <strong>✦ Calcular con mi cartera</strong>: la app analiza lo que tienes de verdad (valor, tipos de activo, '
+      + 'rentabilidad, riesgo y aportaciones) y simula miles de futuros. Verás tres escenarios: pesimista, intermedio y optimista.',
+  },
+  {
     id: 'news', chapter: 'Noticias', route: '/noticias',
     title: 'Noticias',
     text: 'Cada semana, un resumen de las noticias de las empresas y fondos que tienes. En la demo está vacío: se '
