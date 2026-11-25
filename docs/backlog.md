@@ -32,6 +32,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Hecho
 
+- [x] 2026-11-25 · (Comparar, Simulador) Letras y fechas de las gráficas estiradas; eje con números raros; ganancia en € y rentab. de tu dinero en Comparar.
 - [x] 2026-11-25 · (Comparar) Nueva página: cartera, banco o tipo de activo frente a los índices más conocidos.
 - [x] 2026-11-25 · (Dependencias) Electron 41 → 42.11.18: cierra 8 avisos de Dependabot (1 alto).
 - [x] 2026-11-25 · (Simulador) Las casillas de número se veían mal: la regla global de inputs pisaba la caja.

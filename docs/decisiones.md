@@ -5,6 +5,12 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-25 · Comparar enseña también ganancia en € y rentab. de tu dinero** — un banco salía con −90 % de TTWROR
+  (meses con poco dinero en una acción que se hundió; las compras grandes llegaron después). La TTWROR es la correcta
+  para comparar con un índice y se mantiene, pero sola confunde. Alternativa descartada: cambiar a Modified Dietz (no se
+  puede poner al lado de un índice). Gráficas SVG con texto: ancho real medido en vez de `preserveAspectRatio="none"`,
+  que estiraba las letras.
+
 - **2026-11-25 · Comparar: ETFs en euros como índices y TTWROR para lo tuyo** — los índices "de verdad" (^GSPC…) van
   en dólares y sin dividendos; un ETF de acumulación que cotiza en euros (iShares en Xetra) da lo que habría ganado un
   inversor español, con dividendos y divisa, y Yahoo lo tiene gratis. Lo tuyo con TTWROR porque meter o sacar dinero no

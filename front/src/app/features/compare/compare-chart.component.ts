@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterNextRender, computed, inject, input, signal } from '@angular/core';
 import { formatDay, formatSignedPercent } from '../../shared/format.utils';
 
 export type CompareLine = { id: string; label: string; color: string; values: number[]; dashed?: boolean; bold?: boolean };
@@ -16,9 +16,9 @@ const PAD = { left: 48, right: 14, top: 14, bottom: 28 };
   standalone: true,
   template: `
     <div class="wrap" (mouseleave)="hover.set(null)">
-      <svg [attr.viewBox]="'0 0 ' + W + ' ' + H" preserveAspectRatio="none" (mousemove)="onMove($event)">
+      <svg [attr.viewBox]="'0 0 ' + W() + ' ' + H" (mousemove)="onMove($event)">
         @for (t of geo().ticks; track t.y) {
-          <line class="grid" [class.zero]="t.zero" [attr.x1]="PAD.left" [attr.x2]="W - PAD.right" [attr.y1]="t.y" [attr.y2]="t.y" />
+          <line class="grid" [class.zero]="t.zero" [attr.x1]="PAD.left" [attr.x2]="W() - PAD.right" [attr.y1]="t.y" [attr.y2]="t.y" />
           <text class="ylab" [attr.x]="PAD.left - 6" [attr.y]="t.y + 4">{{ t.label }}</text>
         }
         @for (x of geo().xs; track x.x) { <text class="xlab" [attr.x]="x.x" [attr.y]="H - 8">{{ x.label }}</text> }
@@ -33,7 +33,7 @@ const PAD = { left: 48, right: 14, top: 14, bottom: 28 };
         }
       </svg>
       @if (hover() !== null) {
-        <div class="tip" [style.left.%]="(geo().x(hover()!) / W) * 100" [class.flip]="hover()! > axis().length / 2">
+        <div class="tip" [style.left.%]="(geo().x(hover()!) / W()) * 100" [class.flip]="hover()! > axis().length / 2">
           <div class="faint small">{{ day(axis()[hover()!]) }}</div>
           @for (r of tipRows(); track r.id) {
             <div class="row"><span class="dot" [style.background]="r.color"></span><span class="name">{{ r.label }}</span><strong>{{ pct(r.value) }}</strong></div>
@@ -70,7 +70,15 @@ export class CompareChartComponent {
   readonly lines = input.required<CompareLine[]>();
   readonly axis = input.required<string[]>();
   protected readonly hover = signal<number | null>(null);
-  protected readonly W = W;
+  /** Real width in pixels: the drawing is redone at that width, so the text is never stretched. */
+  protected readonly W = signal(W);
+  private readonly el = inject(ElementRef<HTMLElement>);
+  private readonly resize = new ResizeObserver(([e]) => this.W.set(Math.max(200, Math.round(e.contentRect.width))));
+
+  constructor() {
+    afterNextRender(() => this.resize.observe(this.el.nativeElement.querySelector('.wrap')));
+    inject(DestroyRef).onDestroy(() => this.resize.disconnect());
+  }
   protected readonly H = H;
   protected readonly PAD = PAD;
   protected readonly pct = (v: number) => formatSignedPercent(v, 1);
@@ -79,8 +87,8 @@ export class CompareChartComponent {
   protected readonly geo = computed(() => {
     const n = this.axis().length;
     const vals = this.lines().flatMap((l) => l.values).map((v) => v - 1);
-    const [lo, hi] = niceRange(Math.min(0, ...vals), Math.max(0, ...vals));
-    const x = (i: number) => PAD.left + (n > 1 ? (i / (n - 1)) * (W - PAD.left - PAD.right) : 0);
+    const [lo, hi, stepSize] = niceRange(Math.min(0, ...vals), Math.max(0, ...vals));
+    const x = (i: number) => PAD.left + (n > 1 ? (i / (n - 1)) * (this.W() - PAD.left - PAD.right) : 0);
     const y = (g: number) => PAD.top + (1 - (g - 1 - lo) / (hi - lo || 1)) * (H - PAD.top - PAD.bottom);
     // Long periods: one point every few days is enough for the drawing (hover still has every day).
     const step = Math.max(1, Math.floor(n / 600));
@@ -90,10 +98,14 @@ export class CompareChartComponent {
       if ((n - 1) % step) d += `L${x(n - 1).toFixed(1)},${y(v[n - 1]).toFixed(1)}`;
       return d;
     };
-    const ticks = Array.from({ length: 5 }, (_, k) => lo + (k / 4) * (hi - lo)).map((v) => ({
-      y: y(v + 1), label: `${(v * 100).toLocaleString('es-ES', { maximumFractionDigits: Math.abs(hi - lo) < 0.1 ? 1 : 0 })} %`, zero: Math.abs(v) < 1e-9,
-    }));
-    if (lo < 0 && hi > 0 && !ticks.some((t) => t.zero)) ticks.push({ y: y(1), label: '0 %', zero: true });
+    // One tick per step (round numbers: 5 %, 10 %, 25 %…), 0 % always among them.
+    const ticks: Array<{ y: number; label: string; zero: boolean }> = [];
+    const decimals = stepSize < 0.01 ? 1 : 0;
+    for (let k = Math.round(lo / stepSize); k <= Math.round(hi / stepSize); k++) {
+      const v = k * stepSize;
+      const txt = Math.abs(v * 100).toLocaleString('es-ES', { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
+      ticks.push({ y: y(v + 1), label: `${v < -1e-9 ? '−' : ''}${txt} %`, zero: k === 0 });
+    }
     return { lines: this.lines().map((l) => ({ ...l, d: path(l.values) })), x, y, ticks, xs: xLabels(this.axis(), x) };
   });
 
@@ -105,19 +117,20 @@ export class CompareChartComponent {
 
   protected onMove(e: MouseEvent): void {
     const r = (e.currentTarget as SVGElement).getBoundingClientRect();
-    const px = ((e.clientX - r.left) / r.width) * W;
+    const px = ((e.clientX - r.left) / r.width) * this.W();
     const n = this.axis().length;
-    const i = Math.round(((px - PAD.left) / (W - PAD.left - PAD.right)) * (n - 1));
+    const i = Math.round(((px - PAD.left) / (this.W() - PAD.left - PAD.right)) * (n - 1));
     this.hover.set(n ? Math.max(0, Math.min(n - 1, i)) : null);
   }
 }
 
-function niceRange(lo: number, hi: number): [number, number] {
+/** Axis from a round step (about 4–6 ticks) that covers lo..hi: [from, to, step]. */
+function niceRange(lo: number, hi: number): [number, number, number] {
   const span = hi - lo || 0.01;
-  const raw = span / 4;
+  const raw = span / 5;
   const p = 10 ** Math.floor(Math.log10(raw));
   const stepSize = [1, 2, 2.5, 5, 10].map((m) => m * p).find((s) => s >= raw) ?? raw;
-  return [Math.floor(lo / stepSize) * stepSize, Math.ceil(hi / stepSize) * stepSize];
+  return [Math.floor(lo / stepSize) * stepSize, Math.ceil(hi / stepSize) * stepSize, stepSize];
 }
 
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];

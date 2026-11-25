@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterNextRender, computed, inject, input, signal } from '@angular/core';
 import { formatMoney0, privacy } from '../../shared/format.utils';
 
 export type SimLine = { label: string; color: string; values: number[] };
@@ -16,9 +16,9 @@ const PAD = { left: 52, right: 16, top: 14, bottom: 28 };
   standalone: true,
   template: `
     <div class="wrap" (mouseleave)="hover.set(null)">
-      <svg [attr.viewBox]="'0 0 ' + W + ' ' + H" preserveAspectRatio="none" (mousemove)="onMove($event)">
+      <svg [attr.viewBox]="'0 0 ' + W() + ' ' + H" (mousemove)="onMove($event)">
         @for (t of geo().ticks; track t.y) {
-          <line class="grid" [attr.x1]="PAD.left" [attr.x2]="W - PAD.right" [attr.y1]="t.y" [attr.y2]="t.y" />
+          <line class="grid" [attr.x1]="PAD.left" [attr.x2]="W() - PAD.right" [attr.y1]="t.y" [attr.y2]="t.y" />
           <text class="ylab" [attr.x]="PAD.left - 6" [attr.y]="t.y + 4">{{ t.label }}</text>
         }
         <path class="paid" [attr.d]="geo().paidArea" />
@@ -36,7 +36,7 @@ const PAD = { left: 52, right: 16, top: 14, bottom: 28 };
         }
       </svg>
       @if (hover() !== null) {
-        <div class="tip" [style.left.%]="(geo().xs[hover()!].x / W) * 100" [class.flip]="hover()! > years() / 2">
+        <div class="tip" [style.left.%]="(geo().xs[hover()!].x / W()) * 100" [class.flip]="hover()! > years() / 2">
           <div class="faint small">{{ hover() === 0 ? 'Hoy' : hover() + (hover() === 1 ? ' año' : ' años') }} · {{ startYear() + hover()! }}</div>
           @for (l of lines(); track l.label) {
             <div class="row"><span class="dot" [style.background]="l.color"></span>{{ l.label }}: <strong>{{ money(l.values[hover()!]) }}</strong></div>
@@ -73,7 +73,15 @@ export class SimChartComponent {
   readonly paid = input.required<number[]>();
   readonly startYear = input(new Date().getFullYear());
   protected readonly hover = signal<number | null>(null);
-  protected readonly W = W;
+  /** Real width in pixels: the drawing is redone at that width, so the text is never stretched. */
+  protected readonly W = signal(W);
+  private readonly el = inject(ElementRef<HTMLElement>);
+  private readonly resize = new ResizeObserver(([e]) => this.W.set(Math.max(200, Math.round(e.contentRect.width))));
+
+  constructor() {
+    afterNextRender(() => this.resize.observe(this.el.nativeElement.querySelector('.wrap')));
+    inject(DestroyRef).onDestroy(() => this.resize.disconnect());
+  }
   protected readonly H = H;
   protected readonly PAD = PAD;
   protected readonly years = computed(() => this.paid().length - 1);
@@ -83,7 +91,7 @@ export class SimChartComponent {
     const all = [...this.paid(), ...this.lines().flatMap((l) => l.values)];
     const max = niceMax(Math.max(1, ...all));
     const min = Math.min(0, ...all);
-    const x = (i: number) => PAD.left + (n > 1 ? (i / (n - 1)) * (W - PAD.left - PAD.right) : 0);
+    const x = (i: number) => PAD.left + (n > 1 ? (i / (n - 1)) * (this.W() - PAD.left - PAD.right) : 0);
     const y = (v: number) => PAD.top + (1 - (v - min) / (max - min)) * (H - PAD.top - PAD.bottom);
     const path = (vals: number[]) => vals.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
     const bottom = y(Math.max(0, min));
@@ -101,9 +109,9 @@ export class SimChartComponent {
   protected onMove(e: MouseEvent): void {
     const svg = e.currentTarget as SVGElement;
     const r = svg.getBoundingClientRect();
-    const px = ((e.clientX - r.left) / r.width) * W;
+    const px = ((e.clientX - r.left) / r.width) * this.W();
     const n = this.paid().length;
-    const i = Math.round(((px - PAD.left) / (W - PAD.left - PAD.right)) * (n - 1));
+    const i = Math.round(((px - PAD.left) / (this.W() - PAD.left - PAD.right)) * (n - 1));
     this.hover.set(Math.max(0, Math.min(n - 1, i)));
   }
 

@@ -46,6 +46,9 @@ no cuadra con otra, es un fallo.
   semanales (contadas hacia atrás desde el último día) × √52, con ≥ 8 semanas. **Peor caída** = mínimo de valor/máximo − 1.
 - **Mismo dinero**: el valor al empezar compra índice ese día; cada flujo (Δvalor − ganancia del día) compra o vende
   índice al cierre de su día (nunca por debajo de 0 participaciones). Lo tendrías = participaciones × último cierre.
+- **Ganancia y rentab. de tu dinero** (solo lo tuyo): `moneyResult`, la misma cuenta que `periodStats` del Resumen.
+  La TTWROR encadena el % de cada día sin mirar cuánto dinero había: meses con 300 € en una acción que cae un 90 %
+  pesan igual que meses con 5.000 €. Si TTWROR y rentab. de tu dinero difieren mucho, es por eso.
 - Código: `front/src/app/features/compare/compare.engine.ts`.
 
 ## Calendario

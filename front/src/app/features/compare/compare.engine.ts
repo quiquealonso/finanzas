@@ -141,3 +141,26 @@ export function sameMoney(series: SeriesPoint[], closes: Closes, axis: string[])
 
 /** Difference of two returns in percentage points (+ = the first one did better). */
 export const pointsAhead = (a: number, b: number) => (a - b) * 100;
+
+export type MoneyResult = { gain: number; pct: number };
+
+/**
+ * Gain in euros and "rentabilidad de tu dinero" (Modified Dietz) from the day `from` (the point before it is the
+ * start) to the end: the same as periodStats of the Resumen, so both pages agree. Unlike TTWROR it weighs each day
+ * by the money that was in: months with little money in a stock that fell count little.
+ */
+export function moneyResult(series: SeriesPoint[], from: string): MoneyResult | null {
+  const start = lastBefore(series, from);
+  const points = [start ?? series[0], ...series.filter((p) => p.date.slice(0, 10) > (start ?? series[0]).date.slice(0, 10))];
+  if (points.length < 2) return null;
+  const end = points[points.length - 1];
+  const span = Math.max(1, dayNum(end.date) - dayNum(points[0].date));
+  let base = points[0].value;
+  for (let i = 1; i < points.length; i++) {
+    const flow = points[i].value - points[i - 1].value - (points[i].result - points[i - 1].result);
+    const open = points[i].opening ?? 0;
+    base += open + (flow - open) * Math.max(0, (dayNum(end.date) - dayNum(points[i].date)) / span);
+  }
+  const gain = end.result - points[0].result;
+  return { gain, pct: base > 0 ? gain / base : 0 };
+}

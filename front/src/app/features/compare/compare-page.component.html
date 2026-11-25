@@ -92,22 +92,27 @@
 
     <!-- Table -->
     <section class="card" data-tour="cmp-table">
-      <div class="card-head"><h2>Resultados del periodo</h2></div>
+      <div class="card-head">
+        <h2>Resultados del periodo</h2>
+        <span class="faint small">«Rentabilidad» (TTWROR) mide cómo lo hizo cada euro, días con poco dinero incluidos; «Rentab. de tu dinero» pesa cada día por el dinero que había. Si difieren mucho, algo fue muy bien o muy mal cuando tenías poco dentro.</span>
+      </div>
       <div class="table-wrap">
         <table class="cmp">
           <thead>
             <tr>
               <th></th>
-              <th class="r" title="TTWROR en lo tuyo; en los índices, lo que subió su precio en euros (dividendos incluidos)">Rentabilidad</th>
+              <th class="r" title="TTWROR en lo tuyo (el % de cada día encadenado, sin importar cuánto dinero había); en los índices, lo que subió su precio en euros (dividendos incluidos). Es la que se compara con un índice">Rentabilidad</th>
               <th class="r" title="Al año (solo con un año o más)">Anual</th>
               <th class="r" title="Cuánto se mueve: desviación de las rentabilidades semanales, anualizada. Más alta = más sustos">Volatilidad</th>
               <th class="r" title="La mayor caída desde un máximo dentro del periodo">Peor caída</th>
+              <th class="r" title="Ganancia en euros en el periodo (solo movimiento de precios), como en el Resumen">Ganancia</th>
+              <th class="r" title="La ganancia sobre el dinero que de verdad estuvo invertido (Modified Dietz), como en el Resumen. Pesa cada día por el dinero que había: si tuviste poco dinero en algo que cayó mucho, cuenta poco">Rentab. de tu dinero</th>
               <th class="r" [title]="'Diferencia con ' + (refRow()?.label ?? 'la referencia') + ' en puntos porcentuales, en los mismos días (si un banco o tipo empezó más tarde, el índice también cuenta desde ese día)'">vs. {{ refRow()?.label ?? '—' }}</th>
             </tr>
           </thead>
           <tbody>
             @for (r of rows(); track r.id) {
-              @if (r.kind === 'index' && $index > 0 && rows()[$index - 1].kind === 'mine') { <tr class="sep"><td colspan="6">Índices</td></tr> }
+              @if (r.kind === 'index' && $index > 0 && rows()[$index - 1].kind === 'mine') { <tr class="sep"><td colspan="8">Índices</td></tr> }
               <tr [class.main]="r.id === 'all'">
                 <td>
                   <span class="name"><i [class.dash]="r.kind === 'index'" [style.--c]="r.color"></i>{{ r.label }}</span>
@@ -118,6 +123,8 @@
                 <td class="r num" [class]="sign(r.stats.annual ?? 0)">{{ pct(r.stats.annual) }}</td>
                 <td class="r num">{{ plain(r.stats.volatility) }}</td>
                 <td class="r num down">{{ r.stats.maxDrawdown < -0.0005 ? pct(r.stats.maxDrawdown) : '—' }}</td>
+                <td class="r num" [class]="r.money ? sign(r.money.gain) : ''">{{ r.money ? signedMoney(r.money.gain) : '—' }}</td>
+                <td class="r num" [class]="r.money ? sign(r.money.pct) : ''">{{ r.money ? pct(r.money.pct) : '—' }}</td>
                 @let d = vs(r);
                 <td class="r num" [class]="d === null ? '' : sign(d)">{{ d === null ? '—' : pp(d) }}</td>
               </tr>

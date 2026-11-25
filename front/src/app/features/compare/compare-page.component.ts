@@ -5,7 +5,7 @@ import { BenchmarkData, TYPE_COLORS } from '../../core/portfolio.models';
 import { MultiSelectComponent, MultiOption } from '../../shared/multi-select.component';
 import { formatDay, formatMoney0, formatSignedMoney, formatSignedPercent, signClass } from '../../shared/format.utils';
 import { CompareChartComponent, CompareLine } from './compare-chart.component';
-import { addDays, axisOf, indexCurve, portfolioCurve, SameMoney, sameMoney, SeriesPoint, Stats, statsOf } from './compare.engine';
+import { addDays, axisOf, indexCurve, moneyResult, MoneyResult, portfolioCurve, SameMoney, sameMoney, SeriesPoint, Stats, statsOf } from './compare.engine';
 
 type Mode = 'all' | 'bank' | 'type';
 type Period = '1M' | '3M' | 'YTD' | '1A' | '3A' | '5A' | 'ALL';
@@ -31,6 +31,8 @@ type Row = {
   since?: string;
   /** Index in the axis where its figures start (the day before `since`, or 0): indexes are compared from there too. */
   startIdx: number;
+  /** Only for the portfolio: gain in euros and return of the money (Modified Dietz), like the Resumen. */
+  money?: MoneyResult | null;
 };
 
 /**
@@ -204,6 +206,7 @@ export class ComparePageComponent {
       mine.push({
         id: s.key, label: s.label, color: s.color, kind: 'mine', curve, since, startIdx,
         stats: statsOf(curve.slice(startIdx), axis.slice(startIdx)),
+        money: moneyResult(points, addDays(axis[0], 1)),
       });
     }
     const indexes: Row[] = [];

@@ -84,8 +84,12 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
 - **Titular**: tu cartera vs. la referencia en el periodo, cuántos puntos le sacas (o te saca) y cuántos índices bates.
 - **Gráfica**: rentabilidad acumulada desde 0 % (lo tuyo continuo, índices discontinuo, "Toda la cartera" más gruesa);
   pulsar en la leyenda oculta una línea; tooltip con todas, de mejor a peor.
-- **Tabla**: rentabilidad, anual (con ≥ 1 año), volatilidad, peor caída y "vs." la referencia en p.p. Un banco o tipo
-  que empezó dentro del periodo dice "desde el …" y se compara con el índice desde ese mismo día.
+- **Tabla**: rentabilidad (TTWROR), anual (con ≥ 1 año), volatilidad, peor caída, **ganancia en €** y **rentab. de tu
+  dinero** (Modified Dietz, como el Resumen; solo lo tuyo) y "vs." la referencia en p.p. Un banco o tipo que empezó
+  dentro del periodo dice "desde el …" y se compara con el índice desde ese mismo día. (2026-11-25: se añadieron € y
+  rentab. de tu dinero porque un banco con poco dinero en una acción que se hundió salía con −90 % de TTWROR.)
+- Las gráficas de Comparar y del Simulador se dibujan al ancho real (ResizeObserver): antes el SVG se estiraba y las
+  letras y fechas salían deformadas. Eje Y en pasos redondos (5 %, 10 %, 25 %…).
 - **¿Y si lo hubieras metido en un índice?**: con el mismo dinero, los mismos días (de toda la cartera o de un banco/tipo).
 - Índices: ETFs de acumulación en euros (S&P 500, MSCI World, MSCI ACWI, Nasdaq 100, MSCI Emergentes, Euro Stoxx 50),
   IBEX 35 (sin dividendos), bonos globales, oro, bitcoin y una cartera 60/40. Cálculos en [04](04-calculos.md#comparar).
