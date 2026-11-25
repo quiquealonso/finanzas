@@ -1,7 +1,7 @@
 # 05 · Páginas
 
 Orden de la barra lateral. Para cada página: qué hace, de dónde saca los datos, y límites o ideas conocidas.
-**URLs** (router de Angular, `app.routes.ts`): `/resumen`, `/activos`, `/calendario`, `/mensual`, `/distribucion`,
+**URLs** (router de Angular, `app.routes.ts`): `/resumen`, `/gastos`, `/activos`, `/calendario`, `/mensual`, `/distribucion`,
 `/composicion`, `/comparar`, `/movimientos`, `/ventas`, `/inmobiliario`, `/cierres`, `/objetivos`, `/perfil-riesgo`, `/noticias`,
 `/sentimiento`, `/valoraciones`, `/formula-magica`, `/apuestas`. `/` abre la última página usada; una URL desconocida
 u oculta para el usuario lleva a `/resumen`. Cada página se descarga al abrirla.
@@ -49,6 +49,25 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
 - **Reparto por tipo** y **Por banco**: gráfico circular + leyenda (euros, %, y ganancia por banco).
 - Datos: `GET /api/v2/overview`, `/api/v2/series?banks=&types=` (filtrado), `/api/v2/intraday` (1D).
 - Límite: "Pendiente de reinvertir" no se filtra.
+
+## Gastos · `features/spending` · nueva 2026-11-25
+- **Para qué**: como Fintonic. Cuentas del día a día (BBVA, Trade Republic) leídas con **Open Banking** (PSD2, solo
+  lectura) a través de Enable Banking: efectivo disponible, ingresos, gastos, ahorro y en qué se va el dinero.
+- **Conectar**: «+ Conectar banco» → web/app del banco (allí se da el permiso, ~180 días; la app no ve la contraseña ni
+  puede pagar) → vuelve a `/api/banking/callback` → lee **los movimientos de este año** en ese momento (muchos bancos
+  solo dan más de 90 días en la primera hora). Si falta configurar, la página explica los pasos (aplicación en Enable
+  Banking, clave en `~/.finanzas/enablebanking.pem`, `EB_APP_ID`).
+- **Tarjetas de bancos**: cuentas con saldo, días de permiso (aviso con < 15), última lectura, «Desconectar» (cierra la
+  sesión; los movimientos se quedan) y «Renovar permiso». «Actualizar» lee lo nuevo (desde una semana antes del último).
+- **Mes o año**: KPIs (efectivo hoy, ingresos, gastos, ahorro y %), barras ingresos/gastos por mes, gráfico de
+  categorías con % frente a la media mensual del año, **recibos y suscripciones** (pagos ≥ 3 meses, ~1 al mes, importe
+  parecido) y tabla de movimientos (buscar, filtrar por categoría, ver traspasos).
+- **Categorías** (`banking.ts → CATEGORIES`): reglas del usuario → traspaso a una cuenta propia (IBAN) → reglas por
+  comercio → «Otros». Cambiar una en la tabla pregunta si recordarla para todos los que contengan ese texto
+  (`spend_rules`, reclasifica todo lo no puesto a mano). Traspasos e inversión (MyInvestor, Trade Republic, Binance…)
+  **no cuentan** como gasto ni ingreso.
+- Demo: 325 movimientos inventados (`node back/scripts/demo-banking.js`); conectar un banco real no está disponible.
+- Pendiente: clasificar con IA lo que quede en «Otros» (con datos tapados), lectura automática diaria.
 
 ## Activos · `features/holdings`
 - KPIs arriba (valor, invertido, resultado, hoy). Filtro Banco/Tipo + buscador, agrupar por banco, sin saldo.

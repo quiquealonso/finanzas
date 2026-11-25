@@ -147,6 +147,13 @@ export const TOUR: TourStep[] = [
       + 'comprar de cada cosa para volver al plan.',
   },
   {
+    id: 'spend', chapter: 'Gastos', route: '/gastos', target: 'spend-cats',
+    title: '¿En qué se te va el dinero?',
+    text: 'Como Fintonic: conectas tus cuentas con Open Banking (solo lectura, el permiso lo das en tu banco) y la app '
+      + 'clasifica cada movimiento. Ves ingresos, gastos, cuánto ahorras y tus recibos. Si cambias una categoría, la '
+      + 'recuerda para los siguientes. Aquí los movimientos son inventados.',
+  },
+  {
     id: 'cmp-chart', chapter: 'Comparar', route: '/comparar', target: 'cmp-chart',
     title: '¿Lo haces mejor que un índice?',
     text: 'Tu cartera frente al S&amp;P 500, el MSCI World y otros índices, medidos igual. Arriba puedes comparar '

@@ -1,6 +1,9 @@
 # ---- Secretos y datos personales: NUNCA se suben (el repositorio es público) ----
 # Claves de la base de datos, Gemini, AUTH_SECRET…
 .env
+# Private keys (Enable Banking, certificates): they live in %USERPROFILE%\.finanzas, never here.
+*.pem
+*.key
 .env.*
 !.env.example
 # Copias de la base de datos (node back/scripts/db-backup.js)

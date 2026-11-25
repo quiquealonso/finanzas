@@ -22,6 +22,7 @@ import { registerRiskProfileRoutes } from "./risk-profile";
 import { registerFundFinderRoutes } from "./fund-finder";
 import { registerMailTemplateRoutes } from "./mail-templates";
 import { registerBenchmarkRoutes } from "./benchmarks";
+import { registerBankingCallback, registerBankingRoutes } from "./banking";
 
 dotenv.config();
 
@@ -36,6 +37,8 @@ registerAuthRoutes(app);
 
 // Google redirects here after the consent screen (no user header: the user travels in the state).
 registerGmailCallback(app);
+// The bank sends the user back here after the Open Banking consent (page Gastos, src/banking.ts).
+registerBankingCallback(app);
 
 // Everything else needs a valid session token; the request runs as its user (row level security does the rest).
 app.use(requireUser);
@@ -58,6 +61,7 @@ registerRiskProfileRoutes(app);
 registerFundFinderRoutes(app);
 registerMailTemplateRoutes(app);
 registerBenchmarkRoutes(app);
+registerBankingRoutes(app);
 
 type ApiAssetType = "liquido" | "fondo" | "accion" | "etf" | "cripto" | "inmobiliario";
 type ApiMarketProvider = 'stooq' | 'alphavantage' | 'yahoo';

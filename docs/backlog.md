@@ -17,6 +17,8 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Ideas y peticiones
 
+- [ ] (Gastos) Conectar BBVA y Trade Republic de verdad: el usuario crea la aplicación en Enable Banking y pone la clave. Prioridad: alta
+- [ ] (Gastos) Clasificar con IA (datos tapados) lo que quede en «Otros»; lectura automática diaria; presupuestos por categoría. Prioridad: media
 - [ ] (Resumen) "Pendiente de reinvertir" suma toda la liquidez (cuentas de los bancos incluidas), no solo la cuenta de
   reinversión. ¿Debería ser solo lo que queda de las ventas? Prioridad: media
 - [ ] (Presentación) Diseñar la app como para un cliente final (portada, onboarding, perfil de riesgo al empezar…). Prioridad: media
@@ -32,6 +34,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Hecho
 
+- [x] 2026-11-25 · (Gastos) Nueva página tipo Fintonic: BBVA y Trade Republic por Open Banking, categorías, ahorro, recibos.
 - [x] 2026-11-25 · (Comparar) Solo lo invertido, sin liquidez; tarjetas de «¿Y si lo hubieras metido en un índice?» rehechas.
 - [x] 2026-11-25 · (Comparar, Simulador) Letras y fechas de las gráficas estiradas; eje con números raros; ganancia en € y rentab. de tu dinero en Comparar.
 - [x] 2026-11-25 · (Comparar) Nueva página: cartera, banco o tipo de activo frente a los índices más conocidos.

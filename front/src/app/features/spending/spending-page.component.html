@@ -1,0 +1,222 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Gastos</h1>
+      <p>Tus cuentas del día a día, leídas con Open Banking (solo lectura): cuánto entra, cuánto sale y en qué se va.</p>
+    </div>
+    @if (status()?.configured) {
+      <div class="head-actions">
+        @if (status()!.links.length) {
+          <button type="button" class="btn" (click)="sync()" [disabled]="syncing()">{{ syncing() ? 'Actualizando…' : 'Actualizar' }}</button>
+        }
+        <button type="button" class="btn primary" (click)="openConnect()">+ Conectar banco</button>
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <section class="card empty"><span class="faint">Cargando…</span></section>
+  } @else if (status(); as s) {
+    @if (!s.configured) {
+      <!-- First time: what the user has to do in Enable Banking -->
+      <section class="card setup">
+        <h2>Conectar tus bancos con Open Banking</h2>
+        <p class="muted">La ley europea (PSD2) obliga a los bancos a dejar <strong>leer</strong> tus cuentas a empresas autorizadas si tú das permiso en la app de tu banco. La app usa <strong>Enable Banking</strong>, gratis para quien conecta solo sus propias cuentas. Nunca ve tu contraseña y no puede mover dinero.</p>
+        <ol>
+          <li>Entra en <strong>enablebanking.com</strong> (te manda un enlace al correo) → <em>API applications</em> → <em>Add a new application</em>.</li>
+          <li>Entorno <strong>Production</strong>, un nombre (p. ej. «Finanzas personal») y como URL de vuelta:
+            <span class="code">{{ s.redirectUrl }} <button type="button" class="btn sm link" (click)="copy(s.redirectUrl)">Copiar</button></span>
+          </li>
+          <li>Al registrarla se descarga una clave <span class="code">&lt;id&gt;.pem</span>. Guárdala como <span class="code">%USERPROFILE%\.finanzas\enablebanking.pem</span> (nunca en el proyecto).</li>
+          <li>En <span class="code">back/.env</span> añade <span class="code">EB_APP_ID=&lt;id de la aplicación&gt;</span> y reinicia el back.</li>
+          <li>En el panel de Enable Banking pulsa <em>Activate by linking accounts</em> y enlaza <strong>BBVA</strong> y <strong>Trade Republic</strong> (modo restringido: solo tus cuentas).</li>
+          <li>Vuelve aquí y pulsa «+ Conectar banco».</li>
+        </ol>
+      </section>
+    } @else if (!s.links.length) {
+      <section class="card empty">
+        <p>Todavía no has conectado ningún banco.</p>
+        <button type="button" class="btn primary" (click)="openConnect()">+ Conectar banco</button>
+      </section>
+    }
+
+    @if (s.links.length) {
+      <!-- Connected banks -->
+      <section class="links">
+        @for (l of s.links; track l.id) {
+          @let left = daysLeft(l.validUntil);
+          <div class="card link" [class.warn]="l.status !== 'active' || left < 15">
+            <div class="link-head">
+              <strong>{{ l.aspsp }}</strong>
+              @if (l.status === 'expired' || left < 0) {
+                <span class="tag bad">Permiso caducado</span>
+              } @else {
+                <span class="tag" [class.soon]="left < 15" [title]="'Permiso hasta el ' + day(l.validUntil.slice(0, 10))">{{ left }} días de permiso</span>
+              }
+              <span class="spacer"></span>
+              <button type="button" class="btn sm link" (click)="revoke(l.id, l.aspsp)">Desconectar</button>
+            </div>
+            @for (a of l.accounts; track a.id) {
+              <div class="acc">
+                <span><span class="acc-name">{{ a.name }}</span> <span class="faint small">{{ a.iban }}</span></span>
+                <strong class="num">{{ a.balance === null ? '—' : money(a.balance) }}</strong>
+              </div>
+            }
+            <div class="faint small">
+              @if (l.lastSyncAt) { Leído el {{ day(l.lastSyncAt.slice(0, 10)) }} a las {{ l.lastSyncAt.slice(11, 16) }} } @else { Sin leer todavía }
+              @if (l.status === 'expired' || left < 15) { · <button type="button" class="btn sm link" (click)="openConnect()">Renovar permiso</button> }
+            </div>
+            @if (l.lastError) { <div class="err small">{{ l.lastError }}</div> }
+          </div>
+        }
+      </section>
+
+      <!-- Period -->
+      <section class="card period">
+        <div class="seg months">
+          @for (m of byMonth(); track m.m) {
+            <button type="button" [class.on]="month() === m.m" (click)="month.set(m.m)">{{ m.name }}</button>
+          }
+          <button type="button" [class.on]="month() === null" (click)="month.set(null)">{{ year }}</button>
+        </div>
+      </section>
+
+      <!-- KPIs -->
+      @let k = kpis();
+      <section class="kpis">
+        <div class="card kpi"><span class="faint small">Efectivo en tus cuentas</span><strong class="num">{{ money(cash().total) }}</strong><span class="faint small">{{ cash().accounts }} cuenta(s), hoy</span></div>
+        <div class="card kpi"><span class="faint small">Ingresos · {{ month() === null ? year : MONTHS[month()!] }}</span><strong class="num up">{{ money(k.income) }}</strong></div>
+        <div class="card kpi"><span class="faint small">Gastos</span><strong class="num down">{{ money(k.spent) }}</strong></div>
+        <div class="card kpi">
+          <span class="faint small">Ahorro</span>
+          <strong class="num" [class]="sign(k.saved)">{{ signed(k.saved) }}</strong>
+          <span class="faint small">{{ k.rate === null ? 'sin ingresos' : (k.rate * 100).toLocaleString('es-ES', { maximumFractionDigits: 0 }) + ' % de lo que entró' }}</span>
+        </div>
+      </section>
+
+      <div class="grid2">
+        <!-- Income vs spending by month -->
+        <section class="card">
+          <div class="card-head"><h2>Ingresos y gastos por mes</h2></div>
+          <div class="bars">
+            @for (m of byMonth(); track m.m) {
+              <button type="button" class="bar-col" [class.on]="month() === m.m" (click)="month.set(m.m)"
+                      [title]="m.name + ': entra ' + money0(m.income) + ', sale ' + money0(m.spent)">
+                <span class="bar-pair">
+                  <span class="bar in" [style.height.%]="m.hIn"></span>
+                  <span class="bar out" [style.height.%]="m.hOut"></span>
+                </span>
+                <span class="faint small">{{ m.name }}</span>
+              </button>
+            }
+          </div>
+          <div class="legend small"><span><i class="in"></i>Ingresos</span><span><i class="out"></i>Gastos</span><span class="faint">Sin traspasos entre tus cuentas ni inversiones.</span></div>
+        </section>
+
+        <!-- Spending by category -->
+        <section class="card" data-tour="spend-cats">
+          <div class="card-head"><h2>¿En qué se va?</h2></div>
+          @if (byCategory().length) {
+            <app-donut-chart [segments]="donut()" title="" centerLabel="Gastos" />
+            <p class="faint small">El % de color compara el mes con tu media mensual del año (rojo: gastas más de lo normal). Para ver sus movimientos, elige la categoría en la tabla de abajo.</p>
+          } @else {
+            <p class="faint">Sin gastos en este periodo.</p>
+          }
+        </section>
+      </div>
+
+      @if (recurring().length) {
+        <section class="card">
+          <div class="card-head"><h2>Recibos y suscripciones</h2><span class="faint small">Pagos que se repiten al menos 3 meses con un importe parecido.</span></div>
+          <div class="recur">
+            @for (r of recurring(); track r.name) {
+              <div class="recur-item">
+                <span class="dot" [style.background]="r.category?.color ?? '#94a3b8'"></span>
+                <span class="recur-name">{{ r.name }}</span>
+                <strong class="num">{{ money(r.amount) }}</strong>
+                <span class="faint small">{{ r.months }} meses</span>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- Movements -->
+      <section class="card">
+        <div class="card-head wrap">
+          <h2>Movimientos</h2>
+          <div class="filters">
+            <input type="search" placeholder="Buscar…" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+            <select [ngModel]="filterCat()" (ngModelChange)="filterCat.set($event)">
+              <option value="">Todas las categorías</option>
+              @for (c of categories(); track c.code) { <option [value]="c.code">{{ c.name }}</option> }
+            </select>
+            <label class="check small"><input type="checkbox" [checked]="showInternal()" (change)="showInternal.set(!showInternal())" /> Ver traspasos e inversión</label>
+          </div>
+        </div>
+
+        @if (learn(); as l) {
+          <div class="notice learn">
+            <span>¿Poner en <strong>{{ cat(l.category)?.name }}</strong> todos los movimientos que contengan</span>
+            <input type="text" [ngModel]="l.pattern" (ngModelChange)="setLearnPattern($event)" />
+            <span>(también los que lleguen)?</span>
+            <button type="button" class="btn sm primary" (click)="remember()">Sí, recordar</button>
+            <button type="button" class="btn sm link" (click)="learn.set(null)">No, solo este</button>
+          </div>
+        }
+
+        <div class="table-wrap">
+          <table class="tx">
+            <thead><tr><th>Fecha</th><th>Concepto</th><th>Cuenta</th><th>Categoría</th><th class="r">Importe</th></tr></thead>
+            <tbody>
+              @for (t of rows(); track t.id) {
+                <tr [class.internal]="t.internal">
+                  <td class="nowrap">{{ day(t.date) }}</td>
+                  <td>
+                    <div class="desc">{{ t.counterparty || t.description }}</div>
+                    @if (t.counterparty && t.description && t.description !== t.counterparty) { <div class="faint small desc">{{ t.description }}</div> }
+                  </td>
+                  <td class="faint small nowrap">{{ t.bank }}</td>
+                  <td>
+                    <select class="cat-sel" [class.auto]="t.categorySource !== 'user'" [ngModel]="t.category ?? ''" (ngModelChange)="setCategory(t, $event)"
+                            [style.border-left-color]="cat(t.category)?.color ?? 'var(--border)'"
+                            [title]="t.categorySource === 'user' ? 'Puesta por ti' : t.categorySource === 'learned' ? 'Por una regla tuya' : 'Automática: cámbiala si no es'">
+                      @for (c of categories(); track c.code) { <option [value]="c.code">{{ c.name }}</option> }
+                    </select>
+                  </td>
+                  <td class="r num nowrap" [class]="t.internal ? 'faint' : sign(t.amount)">{{ signed(t.amount) }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="5" class="faint">Sin movimientos.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+</div>
+
+<!-- Connect a bank -->
+@if (connectOpen()) {
+  <div class="dialog-backdrop" (click)="connectOpen.set(false)">
+    <div class="dialog connect" (click)="$event.stopPropagation()">
+      <h2>Conectar un banco</h2>
+      <p class="muted small">Te llevamos a la web o app de tu banco. Allí entras como siempre y aceptas que se puedan <strong>leer</strong> tus cuentas (unos 180 días). Puedes quitar el permiso cuando quieras. La app no ve tu contraseña ni puede hacer pagos.</p>
+      <input type="search" placeholder="Busca otro banco…" [ngModel]="bankQuery()" (ngModelChange)="bankQuery.set($event)" />
+      <div class="bank-list">
+        @for (b of bankList(); track b.name + b.country) {
+          <button type="button" class="bank" (click)="connect(b)" [disabled]="!!connecting()">
+            @if (b.logo) { <img [src]="b.logo" alt="" /> } @else { <span class="logo-ph">{{ b.name[0] }}</span> }
+            <span class="bank-name">{{ b.name }}</span>
+            <span class="faint small">{{ b.country }}{{ b.beta ? ' · beta' : '' }}</span>
+            @if (connecting() === b.name + '|' + b.country) { <span class="small">Abriendo…</span> }
+          </button>
+        } @empty {
+          <p class="faint small">{{ banks().length ? 'No hay bancos con ese nombre.' : 'Cargando bancos…' }}</p>
+        }
+      </div>
+      <div class="dialog-actions"><button type="button" class="btn" (click)="connectOpen.set(false)">Cerrar</button></div>
+    </div>
+  </div>
+}

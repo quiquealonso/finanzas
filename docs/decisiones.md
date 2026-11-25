@@ -5,6 +5,15 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-25 · Gastos con Open Banking (Enable Banking)** — el usuario lo había descartado por desconfianza y ahora lo
+  acepta. Solo se pide información de cuentas (AIS), nunca pagos; el permiso se da en el banco y se puede revocar. Enable
+  Banking porque es gratis para cuentas propias (modo restringido); GoCardless/Nordigen ya no admite altas nuevas y
+  Tink es de pago. Alternativas: extractos CSV/Excel a mano (sin terceros, no automático) y correos de cada pago
+  (incompletos). Clasificación por reglas propias + aprendidas en vez de IA desde el principio: gratis, instantánea y
+  sin mandar movimientos fuera; la IA queda para lo que sobre. Traspasos a cuentas propias e inversión se marcan
+  `internal` para no contarlos como gasto. Solo movimientos contabilizados (BOOK): los pendientes cambian de referencia
+  al contabilizarse y se duplicarían.
+
 - **2026-11-25 · Móvil en pausa** — el usuario no quiere trabajar ahora la app móvil (`mobile/`) ni adaptar páginas a
   móvil. No se borra nada: el código de `mobile/` y los estilos para pantallas pequeñas que ya hay se quedan. Ver backlog.
 

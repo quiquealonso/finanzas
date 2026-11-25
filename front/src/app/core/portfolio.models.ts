@@ -444,3 +444,14 @@ export interface BenchmarkData {
   first: string | null;
   closes: Array<[string, number]>;
 }
+
+/** Page Gastos (Open Banking, read only). */
+export interface SpendCategory { code: string; name: string; kind: 'expense' | 'income' | 'internal'; color: string }
+export interface BankingAccount { id: string; linkId: string; name: string; iban: string | null; currency: string; balance: number | null; balanceAt: string | null; hidden: boolean; movements: number }
+export interface BankingLink { id: string; aspsp: string; country: string; validUntil: string; status: 'active' | 'expired'; lastSyncAt: string | null; lastError: string | null; createdAt: string; accounts: BankingAccount[] }
+export interface BankingStatus { configured: boolean; redirectUrl: string; categories: SpendCategory[]; links: BankingLink[] }
+export interface BankingBank { name: string; country: string; logo: string | null; beta: boolean; days: number | null }
+export interface BankTx {
+  id: string; date: string; amount: number; currency: string; description: string; counterparty: string | null;
+  category: string | null; categorySource: string | null; internal: boolean; note: string | null; account: string; bank: string;
+}

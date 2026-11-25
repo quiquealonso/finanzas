@@ -16,6 +16,8 @@ export type PageDef = {
 export const PAGES: PageDef[] = [
   { path: 'resumen', label: 'Resumen', icon: 'M3 17l5-5 4 4 8-8M14 8h6v6',
     load: () => import('./features/overview/overview-page.component').then((m) => m.OverviewPageComponent) },
+  { path: 'gastos', label: 'Gastos', icon: 'M3 6h18v12H3zM3 10h18M7 15h4',
+    load: () => import('./features/spending/spending-page.component').then((m) => m.SpendingPageComponent) },
   { path: 'activos', label: 'Activos', icon: 'M3 7h18v12H3zM3 7l2-3h14l2 3M8 12h8',
     load: () => import('./features/holdings/holdings-page.component').then((m) => m.HoldingsPageComponent) },
   { path: 'calendario', label: 'Calendario', icon: 'M4 6h16v14H4zM4 10h16M8 3v5M16 3v5M8 14h2M12 14h2M16 14h0M8 17h2M12 17h2',

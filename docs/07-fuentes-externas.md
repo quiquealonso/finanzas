@@ -19,6 +19,7 @@ Si una web bloquea a los clientes automáticos (Cloudflare, "Just a moment…"),
 | Hyperliquid API | Perpetuos del usuario y funding de BTC | — |
 | RPC públicos (Solana, Sui GraphQL, EVM) | Saldos de wallets por dirección pública | Sui JSON-RPC público obsoleto → GraphQL |
 | Gmail API (OAuth, `gmail.readonly`) | Importar operaciones de MyInvestor y órdenes de BBVA | Solo lectura. Token caduca cada 7 días (app en "testing"). PDFs de BBVA se leen con `pdftotext` y no se guardan |
+| Enable Banking (`api.enablebanking.com`) | Open Banking (PSD2, **solo información de cuentas**): saldos y movimientos de BBVA y Trade Republic (página Gastos) | Gratis en modo restringido (solo cuentas propias enlazadas en su panel). JWT RS256 firmado con la clave de `~/.finanzas`. Permiso ~180 días; pocas lecturas al día por banco. Aceptado por el usuario el 2026-11-25 (antes descartado) |
 | Gemini API (Google AI Studio, plan gratis) | Clasificar publicaciones en Sentimiento | Clave de un proyecto **sin facturación**. Modelos antiguos no disponibles para claves nuevas. Saturación (503) frecuente → rota modelos y usa la lista de palabras |
 
 ## Descartadas (y por qué)
@@ -29,7 +30,6 @@ Si una web bloquea a los clientes automáticos (Cloudflare, "Just a moment…"),
 | StockTwits | Bloqueo antibots de Cloudflare |
 | CNN Fear & Greed | Bloquea clientes automáticos (418) |
 | Reddit | Bloquea sin clave; necesitaría que el usuario cree una app gratis (pendiente de decidir) |
-| Open Banking (Enable Banking…) | El usuario no quiere dar acceso a sus bancos a terceros |
 | Modelo local (Ollama) | El servidor previsto (e2-micro, 1 GB) no puede; en el PC sí, pero se eligió Gemini gratis |
 | Fundamentales de empresas españolas | No hay fuente gratis |
 | AAII (encuesta de sentimiento) | Excel binario; no se ha integrado todavía |

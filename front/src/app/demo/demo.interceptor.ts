@@ -144,6 +144,10 @@ async function answer(req: HttpRequest<unknown>, toast: (text: string) => void):
   if (path === 'v2/gmail/status') return { configured: true, connected: true, email: 'demo@ejemplo.com' };
   if (path === 'v2/users') return { users: [] };
 
+  // --- Gastos: no real banks in the demo
+  if (path === 'v2/banking/connect') throw missing('En la demo no se conectan bancos de verdad: los movimientos de BBVA y Trade Republic que ves son inventados.');
+  if (path === 'v2/banking/sync') return { added: 0, accounts: 2, errors: [] };
+
   // --- every other change: accepted and forgotten
   if (method !== 'GET') {
     toast('Demo: los cambios no se guardan. Prueba lo que quieras.');

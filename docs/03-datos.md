@@ -41,6 +41,10 @@ se crea con los SQL de `back/supabase/` y se consulta con SQL directo (`$queryRa
 | `mail_templates` | compartida | mail-templates.sql | Plantillas de correo creadas por usuarios: búsqueda de Gmail y expresión regular por campo; autor y usos |
 | `saved_funds` | usuario | saved-funds.sql | Fondos guardados de «Analizar mejores opciones», uno por fondo y perfil (foto de los datos) |
 | `mail_import_state` | usuario | mail-import.sql | Última importación del correo (fecha, último correo, bancos elegidos) |
+| `bank_links` | usuario | banking.sql | Permisos de Open Banking (sesión de Enable Banking, banco, válido hasta, última lectura, error) |
+| `bank_accounts` | usuario | banking.sql | Cuentas de cada permiso: nombre, IBAN, saldo; `accountKey` (IBAN) las mantiene al renovar el permiso |
+| `bank_transactions` | usuario | banking.sql | Movimientos (importe con signo, concepto, contraparte, categoría y quién la puso, `internal` = traspaso/inversión) |
+| `spend_rules` | usuario | banking.sql | Reglas aprendidas: texto → categoría |
 | `betting_houses`, `betting_transactions` | usuario | (Prisma) | Apuestas (oculto a user2) |
 
 ## Sentimiento (compartidas)

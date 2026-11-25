@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { AllocationTarget, BenchmarkData, CalendarDay, CalendarDayDetail, ClosingSheet, Goal, GoalsData, IntradayData, MagicFormulaData, MonthlyData, Movement, NewsData, PerpsData, WalletsData, Overview, PriceQuote, RealEstateTicket, RealizedData, RecurringData } from './portfolio.models';
+import { AllocationTarget, BankingBank, BankingStatus, BankTx, BenchmarkData, CalendarDay, CalendarDayDetail, ClosingSheet, Goal, GoalsData, IntradayData, MagicFormulaData, MonthlyData, Movement, NewsData, PerpsData, WalletsData, Overview, PriceQuote, RealEstateTicket, RealizedData, RecurringData } from './portfolio.models';
 
 const BASE = 'http://localhost:3000/api';
 
@@ -174,6 +174,29 @@ export class PortfolioApi {
   async series(banks: string[], types: string[]): Promise<Overview['series']> {
     const q = new URLSearchParams({ banks: banks.join(','), types: types.join(',') });
     return (await firstValueFrom(this.http.get<{ series: Overview['series'] }>(`${BASE}/v2/series?${q}`))).series;
+  }
+
+  // ---- Gastos (Open Banking, back/src/banking.ts)
+  bankingStatus(): Promise<BankingStatus> {
+    return firstValueFrom(this.http.get<BankingStatus>(`${BASE}/v2/banking/status`));
+  }
+  bankingBanks(country: string): Promise<{ banks: BankingBank[] }> {
+    return firstValueFrom(this.http.get<{ banks: BankingBank[] }>(`${BASE}/v2/banking/banks`, { params: { country } }));
+  }
+  bankingConnect(aspsp: string, country: string): Promise<{ url: string; days: number }> {
+    return firstValueFrom(this.http.post<{ url: string; days: number }>(`${BASE}/v2/banking/connect`, { aspsp, country }));
+  }
+  bankingSync(): Promise<{ added: number; accounts: number; errors: string[] }> {
+    return firstValueFrom(this.http.post<{ added: number; accounts: number; errors: string[] }>(`${BASE}/v2/banking/sync`, {}));
+  }
+  bankingRevoke(linkId: string): Promise<unknown> {
+    return firstValueFrom(this.http.post(`${BASE}/v2/banking/links/${linkId}/revoke`, {}));
+  }
+  bankingTransactions(from: string): Promise<{ transactions: BankTx[] }> {
+    return firstValueFrom(this.http.get<{ transactions: BankTx[] }>(`${BASE}/v2/banking/transactions`, { params: { from } }));
+  }
+  bankingSetCategory(id: string, category: string, learn?: string): Promise<{ ok: boolean; applied: number }> {
+    return firstValueFrom(this.http.patch<{ ok: boolean; applied: number }>(`${BASE}/v2/banking/transactions/${id}`, { category, learn }));
   }
 
   /** Daily closes in euros of the indexes of the page Comparar, from a day on (back/src/benchmarks.ts). */

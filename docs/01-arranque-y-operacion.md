@@ -40,6 +40,9 @@ No hay "he olvidado mi contraseña": se vuelve a ejecutar el comando.
 | `AUTH_SECRET` | Firma los tokens de sesión del login | Lo crea `npm run set-password`. Si cambia, todos tienen que volver a entrar |
 | `GEMINI_API_KEY` | Clasificador de la página Sentimiento | Clave del **plan gratis** de Google AI Studio (proyecto sin facturación) |
 | `GEMINI_MODEL` | Opcional: modelo de Gemini a probar primero | Por defecto rota entre los gratis |
+| `EB_APP_ID` | Id de la aplicación de Enable Banking (página Gastos) | La clave privada va aparte (abajo) |
+| `EB_REDIRECT_URL` | Opcional: URL de vuelta del banco | Por defecto `http://localhost:3000/api/banking/callback`; debe estar en la lista de la aplicación |
+| `FRONT_URL` | Opcional: dirección del front para el enlace «Ver mis gastos» | Por defecto `http://localhost:4200` |
 | `PORT` | Puerto del backend | 3000 por defecto |
 
 ## Secretos fuera del proyecto
@@ -47,6 +50,9 @@ No hay "he olvidado mi contraseña": se vuelve a ejecutar el comando.
 En `%USERPROFILE%\.finanzas\` (nunca dentro del proyecto ni en el zip):
 
 - `gmail-client.json`: cliente OAuth de Google Cloud para leer Gmail (solo lectura).
+- `enablebanking.pem`: clave privada de la aplicación de Enable Banking (Open Banking, página Gastos). Con ella y una
+  sesión activa se pueden **leer** movimientos (nunca mover dinero). Si se filtra: borrar la aplicación en el panel de
+  Enable Banking y crear otra.
 - `gmail-token-<usuario>.json`: permiso concedido por cada usuario. En modo "testing" caduca cada 7 días: volver a
   conectar desde Movimientos → Importar.
 
