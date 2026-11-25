@@ -43,6 +43,7 @@ hagas se guarda.
 | **Activos** | Cada posición con valor, coste, resultado y variación del día; filtros por banco y tipo; ficha para comprar, vender o ajustar. |
 | **Calendario** | Cada día del año en verde o rojo con lo que ganaste o perdiste, y qué activos lo movieron. |
 | **Mensual** | Tabla tipo Excel por banco, activo o tipo, exportable. |
+| **Comparar** | Tu cartera, cada banco o cada tipo de activo frente al S&P 500, MSCI World, Nasdaq 100, IBEX 35, oro, bitcoin y más: rentabilidad, volatilidad, peor caída y cuánto tendrías con el mismo dinero en el índice. |
 | **Distribución y composición** | Reparto por tipo, zona geográfica, banco y moneda, y comparación con tu reparto objetivo. |
 | **Movimientos y ventas** | Compras, ventas, aportaciones periódicas, y ganancias realizadas con criterio FIFO. |
 | **Objetivos** | Metas con fecha y probabilidad de llegar (simulación Monte Carlo con tu rentabilidad y volatilidad). |

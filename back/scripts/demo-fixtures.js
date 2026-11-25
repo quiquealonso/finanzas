@@ -73,6 +73,12 @@ async function main() {
   }
   save("bundle_series_pairs", seriesBundle);
 
+  // Indexes of Comparar: from 10 days before the first day of the portfolio (the page asks for that day; the demo
+  // answers any "from" with this file).
+  const first = (await get("/api/v2/series?banks=&types=")).series[0]?.date ?? "2024-01-01";
+  const from = new Date(Date.parse(first.slice(0, 10)) - 10 * 86_400_000).toISOString().slice(0, 10);
+  save(keyOf("/api/v2/benchmarks"), await get(`/api/v2/benchmarks?from=${from}`));
+
   // One answer per day: the day dialog of the calendar.
   const calendar = await get("/api/v2/calendar");
   const days = {};

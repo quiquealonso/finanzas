@@ -432,3 +432,15 @@ export interface CalendarDayDetail {
   date: string;
   assets: Array<{ assetId: string; name: string; bankName: string; typeCode: TypeCode; pnl: number; pct: number | null }>;
 }
+
+/** An index of the page Comparar: closes in euros, oldest first ([day, close]). */
+export interface BenchmarkData {
+  id: string;
+  name: string;
+  note: string;
+  group: 'Acciones' | 'Otros';
+  symbol: string | null;
+  /** First day with data (some ETFs are younger than the portfolio). */
+  first: string | null;
+  closes: Array<[string, number]>;
+}

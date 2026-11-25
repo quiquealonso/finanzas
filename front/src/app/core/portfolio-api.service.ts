@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { AllocationTarget, CalendarDay, CalendarDayDetail, ClosingSheet, Goal, GoalsData, IntradayData, MagicFormulaData, MonthlyData, Movement, NewsData, PerpsData, WalletsData, Overview, PriceQuote, RealEstateTicket, RealizedData, RecurringData } from './portfolio.models';
+import { AllocationTarget, BenchmarkData, CalendarDay, CalendarDayDetail, ClosingSheet, Goal, GoalsData, IntradayData, MagicFormulaData, MonthlyData, Movement, NewsData, PerpsData, WalletsData, Overview, PriceQuote, RealEstateTicket, RealizedData, RecurringData } from './portfolio.models';
 
 const BASE = 'http://localhost:3000/api';
 
@@ -174,6 +174,11 @@ export class PortfolioApi {
   async series(banks: string[], types: string[]): Promise<Overview['series']> {
     const q = new URLSearchParams({ banks: banks.join(','), types: types.join(',') });
     return (await firstValueFrom(this.http.get<{ series: Overview['series'] }>(`${BASE}/v2/series?${q}`))).series;
+  }
+
+  /** Daily closes in euros of the indexes of the page Comparar, from a day on (back/src/benchmarks.ts). */
+  benchmarks(from: string): Promise<{ benchmarks: BenchmarkData[]; failed: string[] }> {
+    return firstValueFrom(this.http.get<{ benchmarks: BenchmarkData[]; failed: string[] }>(`${BASE}/v2/benchmarks`, { params: { from } }));
   }
 
   calendar(): Promise<{ days: CalendarDay[] }> {

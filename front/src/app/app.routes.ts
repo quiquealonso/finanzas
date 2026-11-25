@@ -26,6 +26,8 @@ export const PAGES: PageDef[] = [
     load: () => import('./features/charts/charts-page.component').then((m) => m.ChartsPageComponent) },
   { path: 'composicion', label: 'Composición', icon: 'M12 3a9 9 0 109 9M12 7a5 5 0 105 5h-5zM12 3v4M21 12h-4',
     load: () => import('./features/composition/composition-page.component').then((m) => m.CompositionPageComponent) },
+  { path: 'comparar', label: 'Comparar', icon: 'M3 20h18M5 16l4-5 3 3 4-6 3 3M5 9l4-3 3 2 6-4',
+    load: () => import('./features/compare/compare-page.component').then((m) => m.ComparePageComponent) },
   { path: 'movimientos', label: 'Movimientos', icon: 'M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4',
     load: () => import('./features/movements/movements-page.component').then((m) => m.MovementsPageComponent) },
   { path: 'ventas', label: 'Ventas', icon: 'M4 19h16M7 15l4-4 3 3 5-6M15 8h4v4',

@@ -2,7 +2,7 @@
 
 Orden de la barra lateral. Para cada página: qué hace, de dónde saca los datos, y límites o ideas conocidas.
 **URLs** (router de Angular, `app.routes.ts`): `/resumen`, `/activos`, `/calendario`, `/mensual`, `/distribucion`,
-`/composicion`, `/movimientos`, `/ventas`, `/inmobiliario`, `/cierres`, `/objetivos`, `/perfil-riesgo`, `/noticias`,
+`/composicion`, `/comparar`, `/movimientos`, `/ventas`, `/inmobiliario`, `/cierres`, `/objetivos`, `/perfil-riesgo`, `/noticias`,
 `/sentimiento`, `/valoraciones`, `/formula-magica`, `/apuestas`. `/` abre la última página usada; una URL desconocida
 u oculta para el usuario lleva a `/resumen`. Cada página se descarga al abrirla.
 Al cambiar una página, **actualiza su sección** (y la fecha).
@@ -22,7 +22,7 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
   (aviso «los cambios no se guardan»); el perfil de riesgo y los fondos guardados se recuerdan en el navegador.
 - **Simulado**: el buscador de fondos (búsqueda real hecha antes, una por perfil, con zona Global; se reproduce paso a
   paso) y la importación del correo (4 correos de ejemplo: nueva, dudosa, dos que ya tienes).
-- **Tour** (`tour-steps.ts`, 36 pasos): bienvenida «¿Eres nuevo invirtiendo?» → test de perfil (el tour espera a que
+- **Tour** (`tour-steps.ts`, 39 pasos): bienvenida «¿Eres nuevo invirtiendo?» → test de perfil (el tour espera a que
   acabes) → resultado, peso en bolsa, «Analizar mejores opciones», Mis fondos → recorrido por todas las páginas →
   ojo de privacidad, nuevo movimiento → fin (seguir explorando, repetir, salir). Foco morado sobre el elemento
   (`data-tour="…"` en las plantillas), burbuja con capítulo y progreso; la página sigue funcionando debajo; si se abre
@@ -75,6 +75,22 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
 ## Composición · `features/composition`
 - Reparto objetivo (plan por tipo y producto) frente al real. ETFs de metales cuentan en "Metales preciosos".
 - Datos: `allocation_targets`.
+
+## Comparar · `features/compare` · nueva 2026-11-25
+- **Para qué**: ver si lo haces mejor que un índice, con toda la cartera o **por banco** o **por tipo de activo** (como
+  el plan de pago de getquin). Arriba: qué comparas (Toda la cartera / Por banco / Por tipo, con desplegable para
+  elegir cuáles), contra qué índices (desplegable múltiple), índice de referencia y periodo (1M, 3M, YTD, 1A, 3A, 5A,
+  Todo). Se recuerda en el navegador (`finanzas.compare`).
+- **Titular**: tu cartera vs. la referencia en el periodo, cuántos puntos le sacas (o te saca) y cuántos índices bates.
+- **Gráfica**: rentabilidad acumulada desde 0 % (lo tuyo continuo, índices discontinuo, "Toda la cartera" más gruesa);
+  pulsar en la leyenda oculta una línea; tooltip con todas, de mejor a peor.
+- **Tabla**: rentabilidad, anual (con ≥ 1 año), volatilidad, peor caída y "vs." la referencia en p.p. Un banco o tipo
+  que empezó dentro del periodo dice "desde el …" y se compara con el índice desde ese mismo día.
+- **¿Y si lo hubieras metido en un índice?**: con el mismo dinero, los mismos días (de toda la cartera o de un banco/tipo).
+- Índices: ETFs de acumulación en euros (S&P 500, MSCI World, MSCI ACWI, Nasdaq 100, MSCI Emergentes, Euro Stoxx 50),
+  IBEX 35 (sin dividendos), bonos globales, oro, bitcoin y una cartera 60/40. Cálculos en [04](04-calculos.md#comparar).
+- Datos: `/api/v2/series` (lo mismo que el filtro del Resumen) y `GET /api/v2/benchmarks?from=` (`back/src/benchmarks.ts`,
+  cierres de Yahoo guardados 6 h en memoria). En la demo, `v2_benchmarks.json`.
 
 ## Movimientos · `features/movements` · act. 2026-11-24
 - Lista por meses (tarjetas o tabla) de compras, ventas, aportaciones, retiradas, ajustes.

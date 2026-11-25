@@ -5,6 +5,14 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-25 · Comparar: ETFs en euros como índices y TTWROR para lo tuyo** — los índices "de verdad" (^GSPC…) van
+  en dólares y sin dividendos; un ETF de acumulación que cotiza en euros (iShares en Xetra) da lo que habría ganado un
+  inversor español, con dividendos y divisa, y Yahoo lo tiene gratis. Lo tuyo con TTWROR porque meter o sacar dinero no
+  la mueve (la TIR o Modified Dietz no se pueden poner al lado de un índice). Además "con el mismo dinero" para ver la
+  diferencia en euros. Cierres en memoria 6 h en vez de una tabla: son públicos, pocos (11 series) y baratos de pedir.
+  Alternativas descartadas: convertir ^GSPC con EURUSD (sin dividendos), guardar en `sentiment_prices` (otro uso).
+  El cálculo va en el front sobre `/api/v2/series` para reutilizar el filtro por banco/tipo y que la demo funcione sin back.
+
 - **2026-11-25 · Electron a 42 a mano; minimatch se queda en 10** — Dependabot no propone majors, así que Electron
   se sube a mano (`electron-main.js` solo abre una ventana, sin APIs que cambien). minimatch 10.2.6 (vía Angular CLI y
   electron-builder, solo desarrollo) tiene un aviso de DoS con patrones maliciosos; el arreglo está en 11, pero `glob`

@@ -22,7 +22,7 @@ App móvil (mobile/, Capacitor) ── RPC de solo lectura (mobile.sql), solo el
 | `front/src/app/app.routes.ts` | **Páginas**: lista `PAGES` (URL, nombre, icono, componente con carga diferida), `HIDDEN_FOR`, rutas del router |
 | `front/src/app/app.ts/.html` | Armazón: barra lateral (`routerLink`), `<router-outlet />`, usuario, diálogos comunes, recuerda la última página |
 | `back/src/index.ts` | Arranque, middleware de usuario, rutas antiguas, registro de módulos |
-| `back/src/*.ts` | Un módulo por área: `portfolio`, `calendar`, `closings`, `goals`, `allocation`, `news`, `magic-formula`, `hyperliquid`, `wallets`, `gmail`, `mail-import`, `bbva-orders`, `sentiment`, `valuations` |
+| `back/src/*.ts` | Un módulo por área: `portfolio`, `calendar`, `closings`, `goals`, `allocation`, `news`, `magic-formula`, `hyperliquid`, `wallets`, `gmail`, `mail-import`, `bbva-orders`, `sentiment`, `valuations`, `benchmarks` |
 | `back/supabase/*.sql` | Estructura, funciones SQL y trabajos pg_cron (re-ejecutables) |
 | `back/scripts/` | Scripts sueltos: copia de seguridad, noticias, fórmula mágica |
 | `mobile/` | App móvil de solo lectura |

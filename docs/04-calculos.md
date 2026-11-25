@@ -34,6 +34,20 @@ no cuadra con otra, es un fallo.
 | **Ganancia total %** | (P&L + realizado) / (coste − realizado) | Resumen, Activos | Sobre el dinero metido neto |
 | **Rentab. desde compra** | valor / coste − 1 por posición | Mensual | No es del periodo |
 
+## Comparar
+
+- **Lo tuyo**: TTWROR diaria (la misma fórmula que el Resumen) sobre la serie de toda la cartera, de un banco o de un
+  tipo (`/api/v2/series`, liquidez incluida, igual que el filtro del Resumen). Debe cuadrar con el TTWROR del Resumen.
+- **Índice**: cierre en euros del ETF de acumulación (dividendos y divisa incluidos); fines de semana y festivos con el
+  último cierre. 60/40 = 60 % MSCI World + 40 % bonos globales, reequilibrada cada día.
+- Todas las curvas empiezan en 0 % el día antes del periodo. Un banco o tipo sin dinero al empezar cuenta desde el día
+  antes de tener dinero, y su "vs." usa el índice desde ese mismo día.
+- **Anual** = (1 + total)^(365/días) − 1, solo con ≥ 365 días. **Volatilidad** = desviación de las rentabilidades
+  semanales (contadas hacia atrás desde el último día) × √52, con ≥ 8 semanas. **Peor caída** = mínimo de valor/máximo − 1.
+- **Mismo dinero**: el valor al empezar compra índice ese día; cada flujo (Δvalor − ganancia del día) compra o vende
+  índice al cierre de su día (nunca por debajo de 0 participaciones). Lo tendrías = participaciones × último cierre.
+- Código: `front/src/app/features/compare/compare.engine.ts`.
+
 ## Calendario
 
 - Día: ganancia y % del día (backend: ganancia / valor del día anterior).

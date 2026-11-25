@@ -1,0 +1,183 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Comparar</h1>
+      <p>Tu cartera, un banco o un tipo de activo frente a los índices más conocidos, medidos igual: lo que hizo cada euro, sin importar cuándo lo metiste.</p>
+    </div>
+  </div>
+
+  <!-- What is compared, against what, and the period -->
+  <section class="card controls" data-tour="cmp-controls">
+    <div class="ctl">
+      <span class="faint small">Qué comparas</span>
+      <div class="seg">
+        <button type="button" [class.on]="mode() === 'all'" (click)="mode.set('all')">Toda la cartera</button>
+        <button type="button" [class.on]="mode() === 'bank'" (click)="mode.set('bank')">Por banco</button>
+        <button type="button" [class.on]="mode() === 'type'" (click)="mode.set('type')">Por tipo de activo</button>
+      </div>
+    </div>
+    @if (mode() === 'bank') {
+      <div class="ctl"><span class="faint small">Bancos</span><app-multi-select label="Banco" [options]="bankOptions()" [(selected)]="pickBanks" /></div>
+    }
+    @if (mode() === 'type') {
+      <div class="ctl"><span class="faint small">Tipos</span><app-multi-select label="Tipo" [options]="typeOptions()" [(selected)]="pickTypes" /></div>
+    }
+    <div class="ctl">
+      <span class="faint small">Contra</span>
+      <app-multi-select label="Índices" [options]="benchOptions()" [selected]="bench()" (selectedChange)="setBench($event)" />
+    </div>
+    <div class="ctl">
+      <span class="faint small">Referencia</span>
+      <select class="ref" [value]="refRow()?.id ?? ''" (change)="ref.set($any($event.target).value)" title="El índice con el que se calcula la columna «vs.» y el titular">
+        @for (r of indexRows(); track r.id) { <option [value]="r.id" [selected]="r.id === refRow()?.id">{{ r.label }}</option> }
+      </select>
+    </div>
+    <span class="spacer"></span>
+    <div class="ctl">
+      <span class="faint small">Periodo</span>
+      <div class="seg">
+        @for (p of PERIODS; track p.id) { <button type="button" [class.on]="period() === p.id" (click)="period.set(p.id)">{{ p.label }}</button> }
+      </div>
+    </div>
+  </section>
+
+  @if (benchError()) { <div class="notice">{{ benchError() }}</div> }
+
+  @if (!store.overview() || benchLoading()) {
+    <section class="card loading"><span class="faint">Cargando los índices…</span></section>
+  } @else if (axis().length < 2) {
+    <section class="card loading"><span class="faint">Todavía no hay historia suficiente para comparar.</span></section>
+  } @else {
+    <!-- Headline -->
+    @if (headline(); as h) {
+      <section class="heads" data-tour="cmp-head">
+        <div class="head card">
+          <span class="faint small">Tu cartera · desde el {{ day(axis()[0]) }}</span>
+          <strong class="num" [class]="sign(h.mine)">{{ pct(h.mine) }}</strong>
+        </div>
+        <div class="head card">
+          <span class="faint small">{{ h.refName }}</span>
+          <strong class="num" [class]="sign(h.ref)">{{ pct(h.ref) }}</strong>
+        </div>
+        <div class="head card verdict" [class.win]="h.ahead > 0" [class.lose]="h.ahead < 0">
+          <span class="faint small">{{ h.ahead >= 0 ? 'Le sacas al ' + h.refName : 'El ' + h.refName + ' te saca' }}</span>
+          <strong class="num">{{ pp(Math.abs(h.ahead)) }}</strong>
+        </div>
+        @if (beaten(); as b) {
+          <div class="head card">
+            <span class="faint small">Índices que bates</span>
+            <strong class="num">{{ b.won }} de {{ b.of }}</strong>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Chart -->
+    <section class="card" data-tour="cmp-chart">
+      <div class="card-head">
+        <h2>Rentabilidad acumulada</h2>
+        <span class="faint small">Todas empiezan en 0 % el {{ day(axis()[0]) }}. Línea continua: lo tuyo; discontinua: índices. Pulsa una para ocultarla.</span>
+      </div>
+      <div class="legend">
+        @for (r of rows(); track r.id) {
+          <button type="button" class="chip" [class.off]="hidden().includes(r.id)" (click)="toggleLine(r.id)" [title]="r.note ?? ''">
+            <i [class.dash]="r.kind === 'index'" [style.--c]="r.color"></i>{{ r.label }}
+          </button>
+        }
+        @if (segLoading()) { <span class="faint small">cargando…</span> }
+      </div>
+      <app-compare-chart [lines]="lines()" [axis]="axis()" />
+      @if (tooYoung().length) { <p class="faint small">Fuera por no existir aún al empezar el periodo: {{ tooYoung().join(', ') }}.</p> }
+    </section>
+
+    <!-- Table -->
+    <section class="card" data-tour="cmp-table">
+      <div class="card-head"><h2>Resultados del periodo</h2></div>
+      <div class="table-wrap">
+        <table class="cmp">
+          <thead>
+            <tr>
+              <th></th>
+              <th class="r" title="TTWROR en lo tuyo; en los índices, lo que subió su precio en euros (dividendos incluidos)">Rentabilidad</th>
+              <th class="r" title="Al año (solo con un año o más)">Anual</th>
+              <th class="r" title="Cuánto se mueve: desviación de las rentabilidades semanales, anualizada. Más alta = más sustos">Volatilidad</th>
+              <th class="r" title="La mayor caída desde un máximo dentro del periodo">Peor caída</th>
+              <th class="r" [title]="'Diferencia con ' + (refRow()?.label ?? 'la referencia') + ' en puntos porcentuales, en los mismos días (si un banco o tipo empezó más tarde, el índice también cuenta desde ese día)'">vs. {{ refRow()?.label ?? '—' }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of rows(); track r.id) {
+              @if (r.kind === 'index' && $index > 0 && rows()[$index - 1].kind === 'mine') { <tr class="sep"><td colspan="6">Índices</td></tr> }
+              <tr [class.main]="r.id === 'all'">
+                <td>
+                  <span class="name"><i [class.dash]="r.kind === 'index'" [style.--c]="r.color"></i>{{ r.label }}</span>
+                  @if (r.since) { <span class="faint small"> · desde el {{ day(r.since) }}</span> }
+                  @if (r.note) { <div class="faint small note">{{ r.note }}</div> }
+                </td>
+                <td class="r num" [class]="sign(r.stats.total)">{{ pct(r.stats.total) }}</td>
+                <td class="r num" [class]="sign(r.stats.annual ?? 0)">{{ pct(r.stats.annual) }}</td>
+                <td class="r num">{{ plain(r.stats.volatility) }}</td>
+                <td class="r num down">{{ r.stats.maxDrawdown < -0.0005 ? pct(r.stats.maxDrawdown) : '—' }}</td>
+                @let d = vs(r);
+                <td class="r num" [class]="d === null ? '' : sign(d)">{{ d === null ? '—' : pp(d) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Same money in an index -->
+    @if (same(); as s) {
+      <section class="card" data-tour="cmp-money">
+        <div class="card-head wrap">
+          <div>
+            <h2>¿Y si lo hubieras metido en un índice?</h2>
+            <span class="faint small">Cada euro que entró (o salió) de {{ s.label.toLowerCase() }}, el mismo día y la misma cantidad, en el índice.</span>
+          </div>
+          @if (moneyOptions().length > 1) {
+            <select class="ref" [value]="s.key" (change)="moneyOf.set($any($event.target).value)">
+              @for (o of moneyOptions(); track o.id) { <option [value]="o.id" [selected]="o.id === s.key">{{ o.label }}</option> }
+            </select>
+          }
+        </div>
+        <div class="money-top">
+          <div><span class="faint small">Valor al empezar + lo metido</span><strong class="num">{{ money(s.put) }}</strong></div>
+          <div><span class="faint small">Hoy vale</span><strong class="num">{{ money(s.real) }}</strong></div>
+        </div>
+        <div class="money-list">
+          @for (it of s.items; track it.id) {
+            @let diff = s.real - it.r.inIndex;
+            <div class="money-row">
+              <span class="name"><i class="dash" [style.--c]="it.color"></i>{{ it.label }}</span>
+              <span class="faint small">tendrías</span>
+              <strong class="num">{{ money(it.r.inIndex) }}</strong>
+              <span class="num badge" [class]="sign(diff)" [title]="diff >= 0 ? 'Tienes más de lo que tendrías en el índice' : 'Tendrías más en el índice'">
+                {{ diff >= 0 ? 'tú +' : 'índice +' }}{{ money(Math.abs(diff)) }}
+              </span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <details class="card how">
+      <summary>¿Cómo se calcula?</summary>
+      <p class="small">
+        <strong>Lo tuyo</strong>: TTWROR, la misma del Resumen. Se encadena la rentabilidad de cada día (ganancia del día entre el valor
+        del día anterior más lo que entró ese día), así que meter o sacar dinero no la mueve. Es la forma justa de ponerla al lado de un índice.
+        Un banco o un tipo incluye su liquidez, igual que el filtro del Resumen.
+      </p>
+      <p class="small">
+        <strong>Los índices</strong>: ETFs de acumulación que cotizan en euros (iShares en Xetra), así que ya llevan los dividendos y la
+        subida o bajada del dólar, y su pequeña comisión. El IBEX 35 es el índice sin dividendos. La cartera 60/40 se calcula
+        con el MSCI World y los bonos globales, reequilibrada cada día. Los fines de semana y festivos cuentan con el último cierre.
+      </p>
+      <p class="small">
+        <strong>Volatilidad</strong>: con rentabilidades semanales (igual para todo, también la cripto que cotiza en fin de semana).
+        <strong>Con el mismo dinero</strong>: el valor al empezar y cada entrada o salida de dinero compran o venden el índice ese día.
+      </p>
+      <p class="small faint">Rentabilidades pasadas no garantizan las futuras. No es una recomendación de inversión.</p>
+    </details>
+  }
+</div>

@@ -7,7 +7,7 @@ Si una web bloquea a los clientes automáticos (Cloudflare, "Just a moment…"),
 
 | Fuente | Para qué | Límites / notas |
 |---|---|---|
-| Yahoo Finance (`query1/2.finance.yahoo.com`) | Precios diarios e intradía, búsqueda por ISIN, splits, VIX | Sin clave. A veces timeout puntual (se reintenta) |
+| Yahoo Finance (`query1/2.finance.yahoo.com`) | Precios diarios e intradía, búsqueda por ISIN, splits, VIX, índices de Comparar (ETFs en euros) | Sin clave. A veces timeout puntual (se reintenta) |
 | SEC XBRL frames (`data.sec.gov`) | Fundamentales de EE. UU. (Valoraciones, Fórmula mágica) | 10 peticiones/s como máximo; User-Agent genérico |
 | SEC `company_tickers.json` | CIK ↔ ticker | — |
 | Nasdaq (`api.nasdaq.com`) | Precio, capitalización y sector de cotizadas de EE. UU.; lista del Nasdaq 100 | — |

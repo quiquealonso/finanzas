@@ -147,6 +147,13 @@ export const TOUR: TourStep[] = [
       + 'comprar de cada cosa para volver al plan.',
   },
   {
+    id: 'cmp-chart', chapter: 'Comparar', route: '/comparar', target: 'cmp-chart',
+    title: '¿Lo haces mejor que un índice?',
+    text: 'Tu cartera frente al S&amp;P 500, el MSCI World y otros índices, medidos igual. Arriba puedes comparar '
+      + '<strong>por banco</strong> o <strong>por tipo de activo</strong>, y abajo ves cuánto tendrías si hubieras '
+      + 'metido el mismo dinero en el índice.',
+  },
+  {
     id: 'mov-import', chapter: 'Movimientos', route: '/movimientos', target: 'mov-import',
     title: 'Apuntar sin teclear',
     text: '<strong>Importar del correo</strong> lee los correos de confirmación de tu bróker (solo lectura), te enseña '
