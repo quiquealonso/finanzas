@@ -81,7 +81,9 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
   el plan de pago de getquin). Arriba: qué comparas (Toda la cartera / Por banco / Por tipo, con desplegable para
   elegir cuáles), contra qué índices (desplegable múltiple), índice de referencia y periodo (1M, 3M, YTD, 1A, 3A, 5A,
   Todo). Se recuerda en el navegador (`finanzas.compare`).
-- **Titular**: tu cartera vs. la referencia en el periodo, cuántos puntos le sacas (o te saca) y cuántos índices bates.
+- **Solo lo invertido** (2026-11-25): sin la liquidez de cada banco ni «Pendiente de reinvertir». La línea
+  principal se llama «Todo lo invertido».
+- **Titular**: lo invertido vs. la referencia en el periodo, cuántos puntos le sacas (o te saca) y cuántos índices bates.
 - **Gráfica**: rentabilidad acumulada desde 0 % (lo tuyo continuo, índices discontinuo, "Toda la cartera" más gruesa);
   pulsar en la leyenda oculta una línea; tooltip con todas, de mejor a peor.
 - **Tabla**: rentabilidad (TTWROR), anual (con ≥ 1 año), volatilidad, peor caída, **ganancia en €** y **rentab. de tu
@@ -90,7 +92,8 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
   rentab. de tu dinero porque un banco con poco dinero en una acción que se hundió salía con −90 % de TTWROR.)
 - Las gráficas de Comparar y del Simulador se dibujan al ancho real (ResizeObserver): antes el SVG se estiraba y las
   letras y fechas salían deformadas. Eje Y en pasos redondos (5 %, 10 %, 25 %…).
-- **¿Y si lo hubieras metido en un índice?**: con el mismo dinero, los mismos días (de toda la cartera o de un banco/tipo).
+- **¿Y si lo hubieras metido en un índice?**: con el mismo dinero, los mismos días (de todo lo invertido o de un banco/tipo).
+  Arriba: puesto, valor de hoy y ganancia; una tarjeta por índice (lo que tendrías y la diferencia).
 - Índices: ETFs de acumulación en euros (S&P 500, MSCI World, MSCI ACWI, Nasdaq 100, MSCI Emergentes, Euro Stoxx 50),
   IBEX 35 (sin dividendos), bonos globales, oro, bitcoin y una cartera 60/40. Cálculos en [04](04-calculos.md#comparar).
 - Datos: `/api/v2/series` (lo mismo que el filtro del Resumen) y `GET /api/v2/benchmarks?from=` (`back/src/benchmarks.ts`,

@@ -94,7 +94,7 @@ export class ComparePageComponent {
     // Series of the banks or types shown (again after any change in the portfolio: store.version).
     effect(() => {
       this.store.version();
-      const keys = this.segments().map((s) => s.key).filter((k) => k !== 'all');
+      const keys = this.segments().map((s) => s.key);
       void this.loadSegments(keys);
     });
     effect(() => {
@@ -116,8 +116,11 @@ export class ComparePageComponent {
     this.segLoading.set(true);
     try {
       const got = await Promise.all(missing.map(async (k) => {
+        // Only what is invested: the cash of each bank (and the "Reinversión" account) is left out, so idle money
+        // does not pull the return down. A type is already one type of asset.
         const [kind, id] = k.split(':');
-        return [k, await this.api.series(kind === 'bank' ? [id] : [], kind === 'type' ? [id] : [])] as const;
+        const types = kind === 'type' ? [id] : this.investedTypes();
+        return [k, await this.api.series(kind === 'bank' ? [id] : [], types)] as const;
       }));
       this.segSeries.update((m) => ({ ...m, ...Object.fromEntries(got) }));
     } finally {
@@ -126,6 +129,11 @@ export class ComparePageComponent {
   }
 
   // ---------------------------------------------------------------- options
+
+  /** Every type of asset that is not cash: the filter of every series of this page. */
+  private investedTypes(): string[] {
+    return untracked(() => this.store.types()).filter((t) => !t.isLiquidity).map((t) => t.code);
+  }
 
   /** Banks and types with something that is not cash (the "Reinversión" account alone is not compared). */
   protected readonly bankOptions = computed<MultiOption[]>(() => {
@@ -143,7 +151,7 @@ export class ComparePageComponent {
 
   /** Parts of the portfolio being compared ("all" is always there, as the reference line). */
   protected readonly segments = computed(() => {
-    const all = { key: 'all', label: 'Toda la cartera', color: this.mode() === 'all' ? '#6366f1' : 'var(--text-2)' };
+    const all = { key: 'all', label: 'Todo lo invertido', color: this.mode() === 'all' ? '#6366f1' : 'var(--text-2)' };
     if (this.mode() === 'bank') {
       const pick = this.pickBanks();
       return [all, ...this.bankOptions().filter((o) => !pick.length || pick.includes(o.id)).map((o) => ({ key: `bank:${o.id}`, label: o.label, color: o.color! }))];
@@ -162,7 +170,11 @@ export class ComparePageComponent {
 
   // ---------------------------------------------------------------- period and figures
 
-  private readonly whole = computed<SeriesPoint[]>(() => this.store.overview()?.series ?? []);
+  /** Days of the page: those of everything invested (no cash) once loaded; the whole portfolio until then. */
+  private readonly whole = computed<SeriesPoint[]>(() => {
+    const invested = this.segSeries()['all'];
+    return invested?.length ? invested : this.store.overview()?.series ?? [];
+  });
 
   protected readonly from = computed(() => {
     const s = this.whole();
@@ -193,7 +205,7 @@ export class ComparePageComponent {
     const series = this.segSeries();
     const mine: Row[] = [];
     for (const s of this.segments()) {
-      const points = s.key === 'all' ? this.whole() : series[s.key];
+      const points = series[s.key];
       if (!points?.length) continue;
       const inPeriod = points.filter((p) => p.date.slice(0, 10) >= axis[0]);
       if (!inPeriod.some((p) => p.value > 0)) continue; // nothing in this bank / type during the period
@@ -260,7 +272,7 @@ export class ComparePageComponent {
   protected readonly same = computed(() => {
     const axis = this.axis();
     const key = this.moneyOptions().some((r) => r.id === this.moneyOf()) ? this.moneyOf() : 'all';
-    const points = key === 'all' ? this.whole() : this.segSeries()[key];
+    const points = this.segSeries()[key];
     if (!points?.length || axis.length < 2) return null;
     const label = this.moneyOptions().find((r) => r.id === key)?.label ?? '';
     const out: Array<{ id: string; label: string; color: string; r: SameMoney }> = [];

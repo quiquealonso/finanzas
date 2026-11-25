@@ -52,7 +52,7 @@
     @if (headline(); as h) {
       <section class="heads" data-tour="cmp-head">
         <div class="head card">
-          <span class="faint small">Tu cartera · desde el {{ day(axis()[0]) }}</span>
+          <span class="faint small">Lo invertido · desde el {{ day(axis()[0]) }}</span>
           <strong class="num" [class]="sign(h.mine)">{{ pct(h.mine) }}</strong>
         </div>
         <div class="head card">
@@ -140,7 +140,7 @@
         <div class="card-head wrap">
           <div>
             <h2>¿Y si lo hubieras metido en un índice?</h2>
-            <span class="faint small">Cada euro que entró (o salió) de {{ s.label.toLowerCase() }}, el mismo día y la misma cantidad, en el índice.</span>
+            <span class="faint small">Cada euro que entró (o salió) de lo invertido en {{ s.label.toLowerCase() }}, el mismo día y la misma cantidad, en el índice.</span>
           </div>
           @if (moneyOptions().length > 1) {
             <select class="ref" [value]="s.key" (change)="moneyOf.set($any($event.target).value)">
@@ -151,16 +151,17 @@
         <div class="money-top">
           <div><span class="faint small">Valor al empezar + lo metido</span><strong class="num">{{ money(s.put) }}</strong></div>
           <div><span class="faint small">Hoy vale</span><strong class="num">{{ money(s.real) }}</strong></div>
+          <div><span class="faint small">Ganancia</span><strong class="num" [class]="sign(s.real - s.put)">{{ signedMoney(s.real - s.put) }}</strong></div>
         </div>
         <div class="money-list">
           @for (it of s.items; track it.id) {
             @let diff = s.real - it.r.inIndex;
-            <div class="money-row">
-              <span class="name"><i class="dash" [style.--c]="it.color"></i>{{ it.label }}</span>
-              <span class="faint small">tendrías</span>
-              <strong class="num">{{ money(it.r.inIndex) }}</strong>
-              <span class="num badge" [class]="sign(diff)" [title]="diff >= 0 ? 'Tienes más de lo que tendrías en el índice' : 'Tendrías más en el índice'">
-                {{ diff >= 0 ? 'tú +' : 'índice +' }}{{ money(Math.abs(diff)) }}
+            <div class="money-card" [style.--c]="it.color">
+              <span class="mc-name"><i class="dash"></i>{{ it.label }}</span>
+              <span class="faint small">Tendrías</span>
+              <strong class="num mc-value">{{ money(it.r.inIndex) }}</strong>
+              <span class="num badge" [class]="sign(diff)">
+                {{ diff >= 0 ? money(Math.abs(diff)) + ' más con lo tuyo' : money(Math.abs(diff)) + ' más en el índice' }}
               </span>
             </div>
           }
@@ -173,7 +174,8 @@
       <p class="small">
         <strong>Lo tuyo</strong>: TTWROR, la misma del Resumen. Se encadena la rentabilidad de cada día (ganancia del día entre el valor
         del día anterior más lo que entró ese día), así que meter o sacar dinero no la mueve. Es la forma justa de ponerla al lado de un índice.
-        Un banco o un tipo incluye su liquidez, igual que el filtro del Resumen.
+        Solo cuenta lo invertido: la liquidez de cada banco y la cuenta «Pendiente de reinvertir» se quedan fuera (es como
+        filtrar el Resumen por todos los tipos menos Liquidez). Comprar con esa liquidez cuenta como dinero que entra.
       </p>
       <p class="small">
         <strong>Los índices</strong>: ETFs de acumulación que cotizan en euros (iShares en Xetra), así que ya llevan los dividendos y la

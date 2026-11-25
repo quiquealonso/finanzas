@@ -36,8 +36,10 @@ no cuadra con otra, es un fallo.
 
 ## Comparar
 
-- **Lo tuyo**: TTWROR diaria (la misma fórmula que el Resumen) sobre la serie de toda la cartera, de un banco o de un
-  tipo (`/api/v2/series`, liquidez incluida, igual que el filtro del Resumen). Debe cuadrar con el TTWROR del Resumen.
+- **Lo tuyo**: TTWROR diaria (la misma fórmula que el Resumen) sobre la serie de **solo lo invertido** (todo, un banco o
+  un tipo): `/api/v2/series` con todos los tipos menos Liquidez. La liquidez de cada banco y «Pendiente de reinvertir»
+  quedan fuera; comprar con ella cuenta como dinero que entra. Debe cuadrar con el Resumen filtrado por todos los tipos
+  menos Liquidez (no con el Resumen sin filtro).
 - **Índice**: cierre en euros del ETF de acumulación (dividendos y divisa incluidos); fines de semana y festivos con el
   último cierre. 60/40 = 60 % MSCI World + 40 % bonos globales, reequilibrada cada día.
 - Todas las curvas empiezan en 0 % el día antes del periodo. Un banco o tipo sin dinero al empezar cuenta desde el día

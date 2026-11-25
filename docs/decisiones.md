@@ -5,6 +5,10 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-25 · Comparar solo lo invertido** — a petición del usuario: la liquidez de cada banco bajaba su
+  rentabilidad sin que fuera culpa de lo que eligió. Alternativa descartada: dejarlo como el filtro del Resumen (con
+  liquidez). El eje de días sale de lo invertido para no marcar "desde el …" por un día de diferencia.
+
 - **2026-11-25 · Comparar enseña también ganancia en € y rentab. de tu dinero** — un banco salía con −90 % de TTWROR
   (meses con poco dinero en una acción que se hundió; las compras grandes llegaron después). La TTWROR es la correcta
   para comparar con un índice y se mantiene, pero sola confunde. Alternativa descartada: cambiar a Modified Dietz (no se
