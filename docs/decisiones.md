@@ -5,6 +5,11 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-25 · Electron a 42 a mano; minimatch se queda en 10** — Dependabot no propone majors, así que Electron
+  se sube a mano (`electron-main.js` solo abre una ventana, sin APIs que cambien). minimatch 10.2.6 (vía Angular CLI y
+  electron-builder, solo desarrollo) tiene un aviso de DoS con patrones maliciosos; el arreglo está en 11, pero `glob`
+  13 pide `^10` y aquí los patrones no vienen de nadie de fuera. Se espera a que lo suban Angular CLI y glob.
+
 - **2026-11-25 · Casillas con unidad: la caja dibuja el borde** — en el Simulador la regla global de inputs
   (`input:not([type="checkbox"]):not([type="radio"])`, más específica) pisaba `.box input`. Se sube la especificidad
   en el componente (`.box input[type="number"]`) en vez de tocar la regla global, que usan todos los formularios.
