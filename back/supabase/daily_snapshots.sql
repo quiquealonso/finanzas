@@ -265,7 +265,10 @@ begin
     "fxToEur"    = excluded."fxToEur",
     "priceEur"   = excluded."priceEur",
     "valueEur"   = excluded."valueEur",
-    source       = excluded.source;
+    source       = excluded.source
+  -- Assets without a market price (perps, manual prices): a past day keeps the price it had that day. Without this,
+  -- every run (hourly) wrote today's price on the last days too, and last week's result kept changing (2026-11-25).
+  where not (excluded.source = 'manual' and s.source = 'manual' and s.date < v_today);
   get diagnostics v_rows = row_count;
 
   -- Assets with registered operations take their holdings from them (see portfolio_v2.sql).

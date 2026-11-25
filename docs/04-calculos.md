@@ -44,6 +44,8 @@ no cuadra con otra, es un fallo.
 
 - Cierres de Yahoo; libras en peniques (GBp) y rands en céntimos (ZAc) se convierten a la unidad.
 - Splits: los precios de Yahoo están ajustados; las operaciones importadas se ajustan con el factor de split (p. ej. Amper 1:25 el 2026-07-20).
+- Activos sin cotización (perps, precio manual): cada día guarda el precio que tenía ese día; la sincronización solo
+  cambia el de hoy (`daily_snapshots.sql`, `asset-snapshots.sql`). Los de Yahoo se rehacen los últimos 3 días.
 - Cripto en wallets: diferencias < 5 USD se acumulan y se apuntan al llegar a 5 USD; ≤ 2 % se ajustan solas.
 - Préstamos (Mintos): precio estimado desde `yield_anchors` (interés simple).
 

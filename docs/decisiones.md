@@ -5,6 +5,11 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-25 · Los días pasados de un activo sin cotización no se reescriben** — la sincronización (cada hora y por la
+  noche) rehace los últimos 3 días; a los activos sin precio de mercado (perps de Hyperliquid) les ponía el precio de
+  ese momento en los 3 días, y el resultado de la semana anterior cambiaba días después. Ahora solo se actualiza el día
+  de hoy; los anteriores guardan el último precio que tuvieron ese día. Los fondos sí pueden cambiar el día siguiente:
+  publican su valor liquidativo con un día de retraso (es lo correcto).
 - **2026-11-25 · Simulador en dos partes** — primero una cuenta manual sencilla (una línea, interés compuesto), y aparte
   el "cálculo inteligente" con la cartera real y tres escenarios. Se descartó la versión con carteras modelo de fondos
   indexados y precios históricos de Yahoo: el usuario la quiso más simple de momento. El cálculo inteligente reutiliza
