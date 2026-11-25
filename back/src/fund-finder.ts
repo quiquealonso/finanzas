@@ -116,7 +116,12 @@ const log = (job: Job, level: Event["level"], text: string) => job.events.push({
 
 // ---------------------------------------------------------------- CNMV
 
-const xmlValue = (block: string, tag: string) => (block.match(new RegExp(`<${tag}>([^<]*)</${tag}>`)) ?? [])[1]?.trim() ?? null;
+// XML text with its entities decoded ("S&amp;P500" → "S&P500").
+const unescapeXml = (s: string) => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
+const xmlValue = (block: string, tag: string) => {
+  const v = (block.match(new RegExp(`<${tag}>([^<]*)</${tag}>`)) ?? [])[1]?.trim();
+  return v == null ? null : unescapeXml(v);
+};
 const num = (s: string | null) => (s == null || s === "" ? null : Number(s));
 
 /** The CNMV site sometimes takes long to connect: three tries before giving up. */

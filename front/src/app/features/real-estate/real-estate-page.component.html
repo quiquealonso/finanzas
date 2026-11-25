@@ -22,7 +22,7 @@
   }
 
   @if (calendar().length) {
-    <section class="card">
+    <section data-tour="re-calendar" class="card">
       <div class="card-head"><h2>Vencimientos</h2><span class="faint small">Capital + intereses previstos por mes</span></div>
       <div class="calendar">
         @for (c of calendar(); track c.month) {

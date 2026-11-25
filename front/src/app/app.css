@@ -33,6 +33,7 @@ nav { display: flex; flex-direction: column; gap: 2px; }
 .nav-item.eye.on { color: var(--accent-text); background: var(--accent-soft); }
 .nav-item svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .new { margin-top: 14px; }
+.demo-badge { margin-left: 6px; padding: 1px 6px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: #fff; background: linear-gradient(90deg, #6366f1, #a855f7); vertical-align: middle; }
 .side-foot { margin-top: auto; padding: 0 10px; }
 .side-total { font-weight: 600; font-size: 16px; }
 

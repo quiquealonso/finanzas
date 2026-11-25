@@ -20,7 +20,7 @@
           <li><span>💭</span> Tu actitud ante las caídas</li>
           <li><span>🎓</span> Tu experiencia</li>
         </ul>
-        <button type="button" class="btn primary big" (click)="start()">Empezar</button>
+        <button data-tour="risk-start" type="button" class="btn primary big" (click)="start()">Empezar</button>
         <p class="faint small">Puedes responder con las teclas 1–5. Es orientativo y no es una recomendación de inversión.</p>
       </section>
     }
@@ -87,7 +87,7 @@
     @case ('result') {
       @if (result(); as r) {
         @let p = profile();
-        <section class="card result pop" [style.--pc]="p.color">
+        <section data-tour="risk-result" class="card result pop" [style.--pc]="p.color">
           <div class="result-head">
             <div class="badge-emoji">{{ p.emoji }}</div>
             <div>
@@ -120,7 +120,7 @@
             <div><span class="faint small">🎓 Conocimiento y experiencia</span><div class="bar"><div [style.width.%]="r.knowledge"></div></div><span class="num small">{{ r.knowledge }}</span></div>
           </div>
 
-          <div class="equity">
+          <div data-tour="risk-equity" class="equity">
             <span class="faint small">Peso orientativo en bolsa y otros activos de riesgo</span>
             <div class="eq-bar">
               <div class="eq-range" [style.left.%]="p.equity[0]" [style.width.%]="p.equity[1] - p.equity[0]"></div>
@@ -131,7 +131,7 @@
           </div>
 
           <!-- Next step: funds that fit this profile, chosen with AI. -->
-          <div class="next-step">
+          <div data-tour="risk-ai" class="next-step">
             <div>
               <strong>¿Y ahora qué fondos encajan contigo?</strong>
               <p class="faint small">Elige las zonas del mundo y la IA buscará entre miles de fondos los 5 que mejor encajan con tu perfil.</p>
@@ -151,7 +151,7 @@
         }
 
         <!-- Saved funds, by profile -->
-        <section class="card funds pop" [style.--pc]="tabProfile().color">
+        <section data-tour="risk-funds" class="card funds pop" [style.--pc]="tabProfile().color">
           <div class="funds-head">
             <div>
               <h2>★ Mis fondos</h2>

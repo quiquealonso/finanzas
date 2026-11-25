@@ -17,7 +17,8 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Ideas y peticiones
 
-- [ ] (Repositorio) GitHub Pages: web de presentación y la app (necesita el back desplegado). Prioridad: media
+- [ ] (Resumen) "Pendiente de reinvertir" suma toda la liquidez (cuentas de los bancos incluidas), no solo la cuenta de
+  reinversión. ¿Debería ser solo lo que queda de las ventas? Prioridad: media
 - [ ] (Presentación) Diseñar la app como para un cliente final (portada, onboarding, perfil de riesgo al empezar…). Prioridad: media
 
 - [ ] (Servidor) Subir la app a Google Cloud (VM e2-micro); el login ya está hecho. Prioridad: alta (proyecto de clase)
@@ -31,6 +32,8 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Hecho
 
+- [x] 2026-11-25 · (Toda la app) Demo guiada con tutorial de 36 pasos, empezando por el test de perfil; publicada en GitHub Pages.
+- [x] 2026-11-25 · (Perfil de riesgo) Nombres de fondos de la CNMV con "&amp;" → "&".
 - [x] 2026-11-24 · (Toda la app) Ojo de privacidad en la barra lateral: oculta importes y cantidades, deja los %.
 - [x] 2026-11-24 · (Back) Prisma 7.10 con adaptador `pg`, `prisma.config.ts`, conexión en modo sesión. Respuestas de la API idénticas.
 - [x] 2026-11-24 · (Repositorio) Git + GitHub público, CI, Seguridad (Gitleaks, npm audit, OSV), Dependabot, README.

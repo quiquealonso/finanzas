@@ -29,6 +29,7 @@ repositorio. La documentación habla de "Usuario 1" y "Usuario 2", nunca de pers
 |---|---|---|
 | **CI** (`ci.yml`) | Cada push y pull request | Back: `npm ci`, `prisma generate`, tipos (`tsc --noEmit`), build y tests del login. Front y app móvil: build de producción. No usa secretos ni base de datos. |
 | **Seguridad** (`security.yml`) | Cada push, pull request y los lunes | **Gitleaks** en todo el historial (claves y contraseñas; excepciones en `.gitleaks.toml`). **npm audit** de back, front y móvil: falla con vulnerabilidades altas en producción. **OSV-Scanner** de todos los `package-lock.json` (informativo). |
+| **Demo (GitHub Pages)** (`pages.yml`) | Cuando el CI pasa en `main` | Construye el front con la base `/finanzas/` y lo publica en https://quiquealonso.github.io/finanzas/ (siempre en modo demo). `404.html` = `index.html` para que recargar una página funcione. |
 | **Dependabot** (`dependabot.yml`) | Semanal | Un PR agrupado por carpeta (back, front, móvil, acciones). Sin versiones mayores: esas se hacen a mano y probando la app. Los avisos de seguridad llegan siempre. |
 
 Si el CI falla: abrir el workflow en la pestaña **Actions** de GitHub, ver el paso en rojo y reproducirlo en local con
@@ -51,4 +52,4 @@ el mismo comando (`npm run typecheck`, `npm test`, `npx ng build`…).
 
 ## Pendiente
 
-- GitHub Pages (web de presentación y la app) y despliegue del back en Google Cloud: ver [backlog](backlog.md).
+- Despliegue del back en Google Cloud: ver [backlog](backlog.md).

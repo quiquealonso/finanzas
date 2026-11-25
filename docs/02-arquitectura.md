@@ -68,6 +68,21 @@ App móvil (mobile/, Capacitor) ── RPC de solo lectura (mobile.sql), solo el
 - Copia antes de la migración: `backups/db_2026-11-24_1937`. Se comprobó que todas las respuestas GET de la API para los dos
   usuarios son iguales que con Prisma 6, y que crear y borrar banco, activo y compra funciona.
 
+## Sincronizar precios de unos activos
+
+- `sync_asset_snapshots(activos[], desde)` (`supabase/asset-snapshots.sql`): la misma lógica que la sincronización
+  nocturna pero **solo para esos activos**. La usa `refreshSnapshots` cuando un movimiento es más antiguo que la
+  historia guardada, y la edición de un ticket inmobiliario. Antes se resincronizaban todos los activos de todos los
+  usuarios desde ese día.
+
+## Demo (sin back)
+
+- Usuario `demo` en la base de datos (`supabase/demo.sql`), sin contraseña y fuera de la lista de entrada.
+- `scripts/demo-seed.js` crea su cartera por la API; `scripts/demo-fixtures.js` guarda las respuestas en
+  `front/public/demo/` (≈3,6 MB, se suben al repositorio: datos inventados y datos públicos de mercado).
+- En el front, `demo/demo-mode.ts` (activa con `finanzas.demo` en el navegador o siempre en `*.github.io`) y
+  `demo/demo.interceptor.ts` (va antes que el de sesión). Ver [05 · Demo guiada](05-paginas.md).
+
 ## Multiusuario
 
 - Tablas con datos personales tienen `"userId"` (por defecto `public.app_user()`), o cuelgan de una que lo tiene.

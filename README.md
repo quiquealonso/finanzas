@@ -2,6 +2,7 @@
 
 <p align="center">
   <b>Tu patrimonio, tus inversiones y su rentabilidad real, en una sola app.</b><br>
+  <a href="https://quiquealonso.github.io/finanzas/"><b>Probar la demo guiada</b></a> ·
   <a href="docs/README.md">Documentación</a> ·
   <a href="docs/08-repositorio-y-ci.md">Repositorio y CI</a> ·
   <a href="docs/backlog.md">Backlog</a>
@@ -24,6 +25,13 @@ Nació como app personal y es también un **proyecto de clase**.
 
 > Nada de lo que muestra la app es una recomendación de inversión. Los datos vienen de fuentes públicas y pueden
 > tener retraso o errores.
+
+## Demo
+
+**[quiquealonso.github.io/finanzas](https://quiquealonso.github.io/finanzas/)**: la app con una cartera de ejemplo
+inventada y un tutorial paso a paso. Empieza preguntando si eres nuevo invirtiendo, te hace el test de perfil de riesgo,
+busca fondos para ti con IA y después recorre todas las páginas. Funciona en el navegador, sin servidor: nada de lo que
+hagas se guarda.
 
 ## Qué hace
 

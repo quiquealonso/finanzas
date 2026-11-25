@@ -25,7 +25,7 @@
     <app-view-toggle [(view)]="layout" storageKey="realized.view" />
   </div>
 
-  <div class="kpis">
+  <div data-tour="realized-kpis" class="kpis">
     <div class="kpi main">
       <span>Resultado {{ year() ? 'en ' + year() : 'total' }}</span>
       <strong class="num" [class]="fmt.signClass(totals().net)">{{ fmt.formatSignedMoney(totals().net) }}</strong>

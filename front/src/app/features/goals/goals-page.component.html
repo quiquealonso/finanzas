@@ -34,7 +34,7 @@
 
   @if (stats(); as s) {
     @for (v of views(); track v.goal.id) {
-      <section class="card goal">
+      <section data-tour="goals-list" class="card goal">
         <div class="goal-head">
           <div>
             <h2>{{ v.goal.name }}</h2>
@@ -129,7 +129,7 @@
             </span>
           </label>
           <!-- Fixed scale 0 - 5.000 €/month; the mark shows where the user's contribution plans are. -->
-          <div class="slider">
+          <div data-tour="goals-slider" class="slider">
             <input type="range" min="0" [max]="SLIDER_MAX" step="10" [value]="v.monthly" (input)="tryMonthly(v.goal.id, $any($event.target).value)"
                    [attr.aria-label]="'Aportación mensual, de 0 a ' + fmt.formatMoney0(SLIDER_MAX)" />
             @if (planned() > 0) {

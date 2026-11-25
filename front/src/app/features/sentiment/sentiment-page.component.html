@@ -45,7 +45,7 @@
 
   @if (overview(); as o) {
     <!-- Gauge -->
-    <section class="card gauge-card">
+    <section data-tour="sent-gauge" class="card gauge-card">
       <div class="gauge">
         <svg viewBox="0 0 200 116" role="img" [attr.aria-label]="'Termómetro: ' + (o.gauge == null ? 'sin datos' : o.gauge.toFixed(0))">
           <path d="M28 100 A72 72 0 0 1 49.1 49.1" class="arc a1" />
@@ -173,7 +173,7 @@
     }
 
     <!-- Companies -->
-    <section class="card">
+    <section data-tour="sent-map" class="card">
       <div class="card-head wrap">
         <div>
           <h2>Empresas del {{ fundLabel() }}</h2>

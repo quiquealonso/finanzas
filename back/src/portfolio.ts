@@ -391,6 +391,15 @@ async function runPriceSync(fromDay?: string): Promise<unknown> {
   }, { timeout: 15 * 60_000, maxWait: 10_000 });
 }
 
+// Prices and snapshots of only these assets from fromDay (supabase/asset-snapshots.sql). An old movement or a
+// ticket edit no longer re-syncs every asset of every user.
+async function syncAssets(ids: string[], fromDay: string): Promise<void> {
+  await prisma.$transaction(async (tx: Tx) => {
+    await tx.$executeRawUnsafe(`set local statement_timeout = '10min'`);
+    await tx.$queryRawUnsafe(`select public.sync_asset_snapshots($1::text[], $2::date) as r`, ids, fromDay);
+  }, { timeout: 10 * 60_000, maxWait: 10_000 });
+}
+
 // Brings the daily snapshots in line after operations changed. Fetching prices again from Yahoo
 // is only needed when the change goes further back than the stored history of an asset.
 export async function refreshSnapshots(assetIds: string[], fromDay: string): Promise<void> {
@@ -407,7 +416,7 @@ export async function refreshSnapshots(assetIds: string[], fromDay: string): Pro
   });
 
   if (needsFetch) {
-    await runPriceSync(fromDay);
+    await syncAssets(ids, fromDay);
     return;
   }
 
@@ -1510,7 +1519,7 @@ export function registerPortfolioRoutes(app: Express): void {
       await prisma.asset.update({ where: { id }, data: { name: String(req.body.name).trim() } });
     }
     const fresh = await prisma.realEstateDetails.findUnique({ where: { assetId: id } });
-    if (fresh?.startDate) await runPriceSync(ymd(fresh.startDate));
+    if (fresh?.startDate) await syncAssets([id], ymd(fresh.startDate));
     res.json({ ok: true });
   }));
 

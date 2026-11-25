@@ -3,8 +3,8 @@
 } @else {
 <div class="shell">
   <aside class="side">
-    <div class="brand">Finanzas</div>
-    <nav>
+    <div class="brand">Finanzas @if (demo) { <span class="demo-badge" title="Cartera de ejemplo: nada se guarda">DEMO</span> }</div>
+    <nav data-tour="sidebar">
       @for (item of nav; track item.path) {
         <a class="nav-item" [routerLink]="'/' + item.path" routerLinkActive="on" ariaCurrentWhenActive="page">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="item.icon" /></svg>
@@ -12,7 +12,7 @@
         </a>
       }
       <!-- Privacy mode: hides every nominal value of the app, keeps percentages (shared/format.utils.ts). -->
-      <button type="button" class="nav-item eye" [class.on]="privacy()" (click)="togglePrivacy()"
+      <button data-tour="privacy" type="button" class="nav-item eye" [class.on]="privacy()" (click)="togglePrivacy()"
               [attr.aria-pressed]="privacy()" [title]="(privacy() ? 'Mostrar' : 'Ocultar') + ' los importes (tecla H). Los porcentajes siempre se ven.'">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           @if (privacy()) {
@@ -24,7 +24,7 @@
         <span>{{ privacy() ? 'Mostrar importes' : 'Ocultar importes' }}</span>
       </button>
     </nav>
-    <button type="button" class="btn primary new" (click)="store.openMovement()" title="Atajo: tecla N">+ Nuevo movimiento</button>
+    <button data-tour="new-movement" type="button" class="btn primary new" (click)="store.openMovement()" title="Atajo: tecla N">+ Nuevo movimiento</button>
     <div class="side-foot">
       @if (store.overview(); as o) {
         <div class="faint small">Patrimonio</div>
@@ -32,7 +32,12 @@
       }
       <div class="who">
         <span class="small">{{ userName() }}</span>
-        <button type="button" class="btn sm link" (click)="switchUser()" title="Cerrar la sesión">Salir</button>
+        @if (demo) {
+          <button type="button" class="btn sm link" (click)="tour.restart()" title="Repetir el tutorial guiado">Tutorial</button>
+          @if (!staticSite) { <button type="button" class="btn sm link" (click)="switchUser()" title="Volver a la pantalla de entrada">Salir de la demo</button> }
+        } @else {
+          <button type="button" class="btn sm link" (click)="switchUser()" title="Cerrar la sesión">Salir</button>
+        }
       </div>
     </div>
   </aside>
@@ -51,6 +56,9 @@
 
 <!-- Confirmations of every page (instead of the browser's confirm()). -->
 <app-confirm-dialog />
+
+<!-- Guided tour of the demo (demo/tour.*). -->
+<app-tour />
 
 <div class="toasts">
   @for (t of store.toasts(); track t.id) {

@@ -1,5 +1,6 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
+import { isDemo, leaveDemo } from '../demo/demo-mode';
 
 /**
  * Who is using the app. The entry screen logs in (user + password, POST /api/auth/login) and keeps the session token
@@ -30,10 +31,13 @@ function claims(): Claims | null {
 
 /** User id of this session (null = entry screen). The back checks the token's signature on every request. */
 export function sessionUser(): string | null {
+  // Demo mode: the fictitious "demo" user, without login (demo/demo-mode.ts).
+  if (isDemo()) return 'demo';
   return claims()?.sub ?? null;
 }
 
 export function sessionName(): string {
+  if (isDemo()) return 'Demo';
   return claims()?.name ?? '';
 }
 
@@ -47,6 +51,7 @@ function token(): string | null {
 
 /** Starts a session (token from the login) or ends it (null). Reloads so nothing of the previous user stays in memory. */
 export function enterAs(newToken: string | null): void {
+  if (!newToken && isDemo()) return leaveDemo();
   try {
     if (newToken) localStorage.setItem(KEY, newToken);
     else localStorage.removeItem(KEY);

@@ -2,6 +2,7 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChang
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { userInterceptor } from './core/session';
+import { demoInterceptor } from './demo/demo.interceptor';
 
 import { routes } from './app.routes';
 
@@ -10,6 +11,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([userInterceptor]))
+    provideHttpClient(withInterceptors([demoInterceptor, userInterceptor]))
   ]
 };

@@ -18,7 +18,7 @@
 
   @if (view() === 'real') {
     <div class="duo">
-      <section class="card chart-card">
+      <section data-tour="comp-chart" class="card chart-card">
         @if (selectedProducts(); as sp) {
           <app-sunburst [groups]="sp.chart" [single]="true" [selected]="hoverProduct()" (selectedChange)="hoverProduct.set($event)" [totalLabel]="selectedGroup()!.name" [totalValue]="money(selectedGroup()!.value)" />
           <p class="small faint center-note">Productos de {{ selectedGroup()!.name }}. <button type="button" class="btn sm link" (click)="selected.set(null)">Volver a todos los tipos</button></p>

@@ -1,7 +1,7 @@
 @if (store.overview(); as o) {
   <div class="page">
     <!-- Same filter as Activos: everything below shows the selected assets only. -->
-    <app-asset-filter class="card ov-filter" [(banks)]="bankFilter" [(types)]="typeFilter" [showValues]="false">
+    <app-asset-filter data-tour="ov-filter" class="card ov-filter" [(banks)]="bankFilter" [(types)]="typeFilter" [showValues]="false">
       <div filterAside class="top-stats">
         @if (annual(); as r) {
           <div class="stat" [title]="'TTWROR (rentabilidad ponderada en el tiempo) anualizada desde el ' + fmt.formatDay(r.from) + ': lo que hicieron tus inversiones por año, sin importar cuándo metiste dinero. Es la que se compara con un índice. No depende del periodo de la gráfica.'">
@@ -26,7 +26,7 @@
       </div>
     </app-asset-filter>
 
-    <section class="card hero">
+    <section data-tour="ov-hero" class="card hero">
       <div class="hero-top">
         <div class="hero-main">
           <p class="muted small">{{ selection() ? 'Patrimonio de la selección' : 'Patrimonio' }}</p>
@@ -86,7 +86,7 @@
     </section>
 
     @if (years().length) {
-      <section class="card flush">
+      <section data-tour="ov-years" class="card flush">
         <div class="card-head pad">
           <h2>Rentabilidad por año</h2>
           <span class="faint small">Solo ganancias: lo que metes o sacas no cuenta. Coincide con el Calendario.</span>
@@ -124,7 +124,7 @@
     }
 
     @if (months().length) {
-      <section class="card flush">
+      <section data-tour="ov-months" class="card flush">
         <div class="card-head pad">
           <h2>Rentabilidad por mes</h2>
           <span class="faint small">Respecto al cierre del mes anterior</span>
@@ -191,7 +191,7 @@
       </section>
     }
 
-    <div class="split">
+    <div data-tour="ov-split" class="split">
       <section class="card">
         <div class="card-head"><h2>Reparto por tipo</h2></div>
         <app-donut-chart [segments]="typeSlices()" title="Reparto por tipo de activo" />

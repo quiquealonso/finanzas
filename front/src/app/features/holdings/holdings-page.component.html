@@ -46,7 +46,7 @@
   }
 
   <!-- Summary of what is filtered -->
-  <div class="kpis">
+  <div data-tour="hold-kpis" class="kpis">
     <div class="kpi"><span>Valor</span><strong class="num">{{ fmt.formatMoney(totals().value) }}</strong></div>
     <div class="kpi"><span>Invertido</span><strong class="num">{{ fmt.formatMoney(totals().cost) }}</strong></div>
     <div class="kpi" title="Igual que la Ganancia total del Resumen: lo que ganan las posiciones abiertas más lo ya ganado vendiendo. El % es sobre el dinero metido neto.">
@@ -93,7 +93,7 @@
   </app-asset-filter>
 
   @if (view() === 'cards') {
-    <section class="card">
+    <section data-tour="hold-list" class="card">
       @if (groupByBank()) {
         @for (g of grouped(); track g.name) {
           <div class="tiles-group">
@@ -113,7 +113,7 @@
       }
     </section>
   } @else {
-  <section class="card flush">
+  <section data-tour="hold-list" class="card flush">
     <div class="table-wrap">
       <table class="assets">
         <thead>

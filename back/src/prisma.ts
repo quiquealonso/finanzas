@@ -51,7 +51,7 @@ export function sharedQuery<T = any>(sql: string, ...args: unknown[]): Promise<T
 
 const context = new AsyncLocalStorage<{ userId: string }>();
 
-export const USERS = ["user1", "user2"] as const;
+export const USERS = ["user1", "user2", "demo"] as const;
 export const DEFAULT_USER = "user1";
 
 /** Runs `fn` as `userId`: every query inside only sees that user's data. */

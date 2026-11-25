@@ -51,7 +51,7 @@ export const PAGES: PageDef[] = [
 ];
 
 /** Pages each user does not see (not in the sidebar and the URL does not open them). user2 is used in class. */
-export const HIDDEN_FOR: Record<string, string[]> = { user2: ['apuestas', 'formula-magica'] };
+export const HIDDEN_FOR: Record<string, string[]> = { user2: ['apuestas', 'formula-magica'], demo: ['apuestas'] };
 
 export const isVisible = (path: string): boolean => !HIDDEN_FOR[sessionUser() ?? '']?.includes(path);
 

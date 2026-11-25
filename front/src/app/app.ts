@@ -4,6 +4,9 @@ import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { isVisible, LAST_PAGE_KEY, PAGES } from './app.routes';
+import { isDemo, STATIC_SITE } from './demo/demo-mode';
+import { TourComponent } from './demo/tour.component';
+import { TourService } from './demo/tour.service';
 import { PortfolioStore } from './core/portfolio.store';
 import { ConfirmDialogComponent } from './shared/confirm-dialog.component';
 import { MovementDialogComponent } from './features/movements/movement-dialog.component';
@@ -12,7 +15,7 @@ import { formatMoney0, privacy, setPrivacy } from './shared/format.utils';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MovementDialogComponent, LoginPageComponent, ConfirmDialogComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MovementDialogComponent, LoginPageComponent, ConfirmDialogComponent, TourComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -22,6 +25,10 @@ export class App implements OnInit {
   protected readonly privacy = privacy;
 
   private readonly router = inject(Router);
+  protected readonly tour = inject(TourService);
+  /** Demo mode: example portfolio, no back end (demo/demo-mode.ts). */
+  protected readonly demo = isDemo();
+  protected readonly staticSite = STATIC_SITE;
 
   /** Sidebar: every page this user can see (pages and URLs live in app.routes.ts). */
   protected readonly nav = PAGES.filter((p) => isVisible(p.path));
@@ -46,6 +53,7 @@ export class App implements OnInit {
   ngOnInit(): void {
     if (!this.user) return;
     void this.store.refresh();
+    this.tour.init();
   }
 
   protected togglePrivacy(): void {

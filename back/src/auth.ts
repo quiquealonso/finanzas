@@ -36,7 +36,7 @@ function fail(key: string): void {
 /** Routes without a user: the login itself and the list of users for the entry screen. */
 export function registerAuthRoutes(app: Express): void {
   app.get("/api/v2/users", async (_req: Request, res: Response) => {
-    const users = await base.$queryRawUnsafe<any[]>(`select id, name, "passwordHash" is not null as "hasPassword" from users order by id`);
+    const users = await base.$queryRawUnsafe<any[]>(`select id, name, "passwordHash" is not null as "hasPassword" from users where id <> 'demo' order by id`);
     res.json({ users });
   });
 

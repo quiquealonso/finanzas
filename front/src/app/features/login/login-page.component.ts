@@ -3,6 +3,7 @@ import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angul
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { enterAs } from '../../core/session';
+import { enterDemo } from '../../demo/demo-mode';
 
 const API = 'http://localhost:3000';
 
@@ -35,6 +36,9 @@ type User = { id: string; name: string; hasPassword: boolean };
               @if (!error()) { <p class="faint small">Cargando…</p> }
             }
           </div>
+          <div class="or"><span>¿Primera vez?</span></div>
+          <button type="button" class="btn demo" (click)="demo()">✦ Probar la demo guiada</button>
+          <p class="faint small">Una cartera de ejemplo y un tutorial paso a paso, empezando por tu perfil de inversor. Nada se guarda.</p>
         } @else {
           @let u = chosen()!;
           <button type="button" class="back btn sm link" (click)="chosen.set(null)">‹ Otro usuario</button>
@@ -85,6 +89,14 @@ type User = { id: string; name: string; hasPassword: boolean };
     .field input { height: 40px; font-size: 15px; }
     .form .btn { height: 40px; }
     .notice { text-align: left; }
+    .or { display: flex; align-items: center; gap: 10px; color: var(--text-3); font-size: 12px; }
+    .or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .demo {
+      height: 42px; border: 0; color: #fff; font-weight: 600;
+      background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899); background-size: 200% 100%; animation: shimmer 3s linear infinite;
+    }
+    .demo:hover { opacity: 0.92; color: #fff; }
+    @keyframes shimmer { to { background-position: -200% 0; } }
     code { display: block; margin-top: 6px; font-family: var(--mono); font-size: 12px; user-select: all; }
   `
 })
@@ -104,6 +116,10 @@ export class LoginPageComponent implements OnInit {
     } catch {
       this.error.set('No se pudo conectar con el servidor. ¿Está arrancado el back?');
     }
+  }
+
+  protected demo(): void {
+    enterDemo();
   }
 
   protected choose(u: User): void {

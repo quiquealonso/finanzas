@@ -13,7 +13,26 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
 - Páginas (`app.routes.ts`), **"Ocultar importes"** (ojo de privacidad, tecla H; ver [06](06-diseno.md)), "+ Nuevo
   movimiento" (tecla N), patrimonio y usuario con "Salir".
 
-## Entrada (login) · `features/login` · act. 2026-11-24
+## Demo guiada · `front/src/app/demo/` · nueva 2026-11-25
+- **Para quién**: alguien que entra por primera vez (p. ej. el profesor). Botón «✦ Probar la demo guiada» en la entrada,
+  y la web pública de GitHub Pages (siempre en demo, no hay back ahí).
+- **Datos**: cartera ficticia del usuario `demo` (fondos indexados, ETFs, acciones, cripto, oro, inmobiliario; 5 bancos;
+  desde enero de 2024 con precios reales). Se guardan sus respuestas de la API en `front/public/demo/*.json` y
+  `demo.interceptor.ts` contesta con ellas: **no se llama a ningún servidor**. Los cambios se aceptan y se olvidan
+  (aviso «los cambios no se guardan»); el perfil de riesgo y los fondos guardados se recuerdan en el navegador.
+- **Simulado**: el buscador de fondos (búsqueda real hecha antes, una por perfil, con zona Global; se reproduce paso a
+  paso) y la importación del correo (4 correos de ejemplo: nueva, dudosa, dos que ya tienes).
+- **Tour** (`tour-steps.ts`, 36 pasos): bienvenida «¿Eres nuevo invirtiendo?» → test de perfil (el tour espera a que
+  acabes) → resultado, peso en bolsa, «Analizar mejores opciones», Mis fondos → recorrido por todas las páginas →
+  ojo de privacidad, nuevo movimiento → fin (seguir explorando, repetir, salir). Foco morado sobre el elemento
+  (`data-tour="…"` en las plantillas), burbuja con capítulo y progreso; la página sigue funcionando debajo; si se abre
+  un diálogo, el tour se queda en pausa. Se puede repetir con «Tutorial» en la barra lateral.
+- En demo se oculta Apuestas. Límites: detalle de calendario desde 2025, fichas solo de las ~60 empresas más grandes,
+  Noticias vacía.
+- **Regenerar** (con el back en marcha): `node back/scripts/demo-seed.js --reset` y `node back/scripts/demo-fixtures.js`.
+
+## Entrada (login) · `features/login` · act. 2026-11-25
+- «✦ Probar la demo guiada» debajo de los usuarios: entra en la demo con el tutorial desde el principio.
 - Elegir usuario → contraseña → «Entrar». Guarda el token de sesión (12 h) en el navegador (`finanzas.token`).
 - Usuario sin contraseña: aviso con el comando `npm run set-password -- <usuario>`. Detalles en [02](02-arquitectura.md#login).
 

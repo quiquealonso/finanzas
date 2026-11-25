@@ -60,7 +60,7 @@
       <section class="card"><p class="faint">Todavía no hay ninguna foto. Pulsa «Nueva foto» (tarda unos minutos).</p></section>
     } @else {
       <!-- Metric picker -->
-      <section class="card">
+      <section data-tour="val-metrics" class="card">
         <div class="card-head">
           <div>
             <h2>Métricas</h2>
@@ -165,7 +165,7 @@
       }
 
       <!-- Companies -->
-      <section class="card">
+      <section data-tour="val-table" class="card">
         <div class="card-head wrap">
           <div>
             <h2>{{ rows().length }} empresas</h2>

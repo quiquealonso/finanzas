@@ -5,6 +5,14 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-25 · Demo con respuestas guardadas, no con datos falsos en el código** — como Stockly y Gestor de campos
+  (demo en el navegador, sin servidor), pero los datos salen de un usuario `demo` real en la base de datos: todas las
+  cifras (TTWROR, calendario, series) las calcula el back de verdad y cuadran entre sí. (Reescribir los cálculos en el
+  front para datos inventados: mucho código duplicado. Un usuario demo con el back público: necesita servidor.)
+- **2026-11-25 · Sincronización de precios por activo** — añadir la cartera demo (operaciones desde 2024) habría
+  recalculado la historia de Usuario 1 y Usuario 2. `sync_asset_snapshots` limita la resincronización a los activos tocados.
+- **2026-11-25 · El tour no bloquea la página** — el foco es solo visual y el usuario puede pulsar lo que se le enseña
+  (hacer el test, abrir el buscador de fondos); el tour espera o se pausa con los diálogos.
 - **2026-11-24 · Ojo de privacidad en los formateadores** — un `signal` en `format.utils.ts` que leen `formatMoney` y
   compañía: toda la app se tapa sin tocar cada plantilla y se repinta sola. Se tapan también las cantidades (dicen el
   tamaño de la posición) y los ejes de las gráficas; no los porcentajes ni los precios de mercado. (Difuminar con CSS:

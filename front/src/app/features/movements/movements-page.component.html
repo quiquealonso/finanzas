@@ -5,7 +5,7 @@
       <p>Invertido este mes: <strong class="num">{{ fmt.formatMoney(monthTotals().invested) }}</strong></p>
     </div>
     <div class="row">
-      <button class="btn" type="button" (click)="importing.set(true)" title="Lee los correos de confirmación de tus brókers y apunta las operaciones nuevas">Importar del correo</button>
+      <button data-tour="mov-import" class="btn" type="button" (click)="importing.set(true)" title="Lee los correos de confirmación de tus brókers y apunta las operaciones nuevas">Importar del correo</button>
       <button class="btn primary" type="button" (click)="newMovement()">+ Nuevo movimiento</button>
     </div>
   </div>
@@ -14,7 +14,7 @@
   <app-pending-orders />
 
   <!-- Recurring contributions: folded by default (looked at once a month); the header says if some are due. -->
-  <section class="card plans-card" [class.folded]="!plansOpen()">
+  <section data-tour="mov-plans" class="card plans-card" [class.folded]="!plansOpen()">
     <div class="card-head fold-head">
       <button type="button" class="fold" (click)="togglePlans()" [attr.aria-expanded]="plansOpen()">
         <svg class="chev" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" /></svg>
@@ -124,7 +124,7 @@
   </section>
 
   <!-- Movement list -->
-  <section class="card flush">
+  <section data-tour="mov-list" class="card flush">
     <div class="card-head pad">
       <h2>Historial</h2>
       <div class="row">
