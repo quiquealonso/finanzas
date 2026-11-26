@@ -194,6 +194,27 @@ export class SpendingPageComponent {
     }
   }
 
+  protected readonly importing = signal(false);
+
+  /** «Importar extracto»: the PDF goes to the back, which keeps only what is older than the Open Banking data. */
+  protected async importStatement(input: HTMLInputElement): Promise<void> {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.importing.set(true);
+    try {
+      const r = await this.api.bankingStatement(file);
+      const range = r.from && r.to ? ` (${formatDay(r.from)} – ${formatDay(r.to)})` : '';
+      const kept = r.until ? ` Lo de desde el ${formatDay(r.until)} ya venía por Open Banking.` : '';
+      this.store.toast(r.checked ? 'ok' : 'error', `${r.bank}: ${r.read} movimientos leídos${range}, ${r.imported} nuevos.${kept}${r.checked ? '' : ' Ojo: los saldos no cuadran, revisa el extracto.'}`);
+      await this.load();
+    } catch (e) {
+      this.store.error(e, 'No se pudo leer el extracto.');
+    } finally {
+      this.importing.set(false);
+    }
+  }
+
   protected async openConnect(): Promise<void> {
     this.connectOpen.set(true);
     if (this.banks().length) return;

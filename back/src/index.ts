@@ -23,6 +23,7 @@ import { registerFundFinderRoutes } from "./fund-finder";
 import { registerMailTemplateRoutes } from "./mail-templates";
 import { registerBenchmarkRoutes } from "./benchmarks";
 import { registerBankingCallback, registerBankingRoutes } from "./banking";
+import { registerStatementRoutes } from "./bank-statements";
 
 dotenv.config();
 
@@ -62,6 +63,7 @@ registerFundFinderRoutes(app);
 registerMailTemplateRoutes(app);
 registerBenchmarkRoutes(app);
 registerBankingRoutes(app);
+registerStatementRoutes(app);
 
 type ApiAssetType = "liquido" | "fondo" | "accion" | "etf" | "cripto" | "inmobiliario";
 type ApiMarketProvider = 'stooq' | 'alphavantage' | 'yahoo';

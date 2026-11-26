@@ -18,6 +18,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 ## Ideas y peticiones
 
 - [ ] (Gastos) Conectar BBVA y Trade Republic de verdad: el usuario crea la aplicación en Enable Banking y pone la clave. Prioridad: alta
+- [ ] (Gastos) Trade Republic manda por Open Banking movimientos sin texto: lo nuevo queda en «Otros» hasta importar otro extracto. Buscar otra fuente (¿correo de cada pago?). Prioridad: media
 - [ ] (Gastos) Clasificar con IA (datos tapados) lo que quede en «Otros»; lectura automática diaria; presupuestos por categoría. Prioridad: media
 - [ ] (Resumen) "Pendiente de reinvertir" suma toda la liquidez (cuentas de los bancos incluidas), no solo la cuenta de
   reinversión. ¿Debería ser solo lo que queda de las ventas? Prioridad: media
@@ -34,6 +35,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Hecho
 
+- [x] 2026-11-26 · (Gastos) Importar extracto PDF de Trade Republic: historia desde la apertura y texto para los movimientos de Open Banking.
 - [x] 2026-11-26 · (Web) Política de privacidad y términos de uso en GitHub Pages (para Enable Banking).
 - [x] 2026-11-25 · (Gastos) Nueva página tipo Fintonic: BBVA y Trade Republic por Open Banking, categorías, ahorro, recibos.
 - [x] 2026-11-25 · (Comparar) Solo lo invertido, sin liquidez; tarjetas de «¿Y si lo hubieras metido en un índice?» rehechas.

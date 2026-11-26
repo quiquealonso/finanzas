@@ -70,6 +70,14 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
 - Trade Republic (2026-11-26): sale como ES y como DE en Enable Banking; las dos dan la **misma** cuenta (IBAN ES) y
   solo movimientos **desde el 1 de septiembre de 2026**, aunque se pida más (`strategy=longest`). Lo anterior no llega
   por Open Banking. Un permiso nuevo solo sustituye al del mismo banco **y país**.
+- **Importar extracto** (2026-11-26, `back/src/bank-statements.ts`): PDF «Certificado de saldo y movimientos» de Trade
+  Republic. Se lee en memoria con `pdftotext` (no se guarda). El signo sale del saldo tras cada movimiento y se comprueba
+  con el saldo final. Antes del primer movimiento de Open Banking: se **añade**; desde ese día: **rellena el texto** de
+  los movimientos de Open Banking con mismo día e importe (Trade Republic los manda por Open Banking **sin concepto ni
+  contraparte**). Repetir el mismo PDF no duplica. Lo nuevo que llegue por Open Banking vuelve a venir sin texto: hace
+  falta un extracto nuevo para clasificarlo.
+- Transferencias a o desde el titular (nombre de la cuenta de Trade Republic) y a Lemon Way (crowdfunding) cuentan como
+  traspaso/inversión. Cada lectura e importación reclasifica todo lo automático (nunca lo puesto a mano).
 - Pendiente: clasificar con IA lo que quede en «Otros» (con datos tapados), lectura automática diaria.
 
 ## Privacidad y términos · `front/public/privacidad.html`, `terminos.html` · nueva 2026-11-26

@@ -83,7 +83,7 @@ const CATEGORY = new Map(CATEGORIES.map((c) => [c.code, c]));
 const BUILTIN: Array<[RegExp, string, ("out" | "in")?]> = [
   [/N[OÓ]MINA|SALARIO|PAYROLL/, "nomina", "in"],
   [/INTERES|INTEREST|DIVIDEND|REMUNERACI[OÓ]N/, "otros_ingresos", "in"],
-  [/MYINVESTOR|TRADE ?REPUBLIC|BINANCE|MINTOS|URBANITAE|WECITY|INDEXA|COINBASE|KRAKEN|NEVERLESS|SAVINGS PLAN|SAVEBACK|ROUND ?UP|BUY TRADE|SELL TRADE|TRASPASO/, "inversion"],
+  [/MYINVESTOR|TRADE ?REPUBLIC|BINANCE|MINTOS|URBANITAE|WECITY|LEMON ?WAY|INDEXA|COINBASE|KRAKEN|NEVERLESS|SAVINGS PLAN|SAVEBACK|ROUND ?UP|BUY TRADE|SELL TRADE|TRASPASO/, "inversion"],
   [/BIZUM/, "bizum"],
   [/MERCADONA|CARREFOUR|LIDL|ALDI|\bDIA\b|EROSKI|ALCAMPO|CONSUM|HIPERCOR|AHORRAMAS|SUPERCOR|BM SUPERMERCADOS|SUPERMERCADO|CAPRABO|GADIS|FROIZ|SIMPLY|SPAR\b/, "supermercado"],
   [/NETFLIX|SPOTIFY|HBO|DISNEY|PRIME VIDEO|AMAZON PRIME|APPLE\.COM|ICLOUD|GOOGLE ?\*|YOUTUBE|DAZN|MOVISTAR ?\+|CHATGPT|OPENAI|ANTHROPIC|CLAUDE\.AI|BASIC.?FIT|ALTAFIT|MCFIT|GIMNASIO|\bGYM\b|PATREON|TWITCH/, "suscripciones"],
@@ -102,10 +102,12 @@ type Rule = { pattern: string; category: string; internal: boolean };
 
 /** Category of a movement: the user's rules first, then a transfer to one of the user's own accounts, then the built-in ones. */
 export function classify(t: { amount: number; description: string; counterparty: string | null; counterpartyIban: string | null },
-                  rules: Rule[], ownIbans: Set<string>): { category: string; internal: boolean; source: string } {
+                  rules: Rule[], ownIbans: Set<string>, ownNames: Set<string> = new Set()): { category: string; internal: boolean; source: string } {
   const text = `${t.description} ${t.counterparty ?? ""}`.toUpperCase();
   for (const r of rules) if (text.includes(r.pattern.toUpperCase())) return { category: r.category, internal: r.internal, source: "learned" };
   if (t.counterpartyIban && ownIbans.has(t.counterpartyIban.replace(/\s/g, ""))) return { category: "inversion", internal: true, source: "rule" };
+  // A transfer to or from the account holder (to another account of theirs, even one not linked here).
+  if (t.counterparty && ownNames.has(normName(t.counterparty))) return { category: "inversion", internal: true, source: "rule" };
   for (const [re, code, only] of BUILTIN) {
     if (only === "in" && t.amount <= 0) continue;
     if (only === "out" && t.amount >= 0) continue;
@@ -116,23 +118,30 @@ export function classify(t: { amount: number; description: string; counterparty:
   return { category: t.amount > 0 ? "otros_ingresos" : "otros_gastos", internal: false, source: "default" };
 }
 
-async function rulesAndIbans(): Promise<{ rules: Rule[]; own: Set<string> }> {
+const normName = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+
+async function rulesAndIbans(): Promise<{ rules: Rule[]; own: Set<string>; names: Set<string> }> {
   const rules = await prisma.$queryRawUnsafe<Rule[]>(`select pattern, category, internal from spend_rules order by length(pattern) desc`);
-  const ibans = await prisma.$queryRawUnsafe<Array<{ iban: string }>>(`select iban from bank_accounts where iban is not null`);
-  return { rules, own: new Set(ibans.map((r) => r.iban.replace(/\s/g, ""))) };
+  const accs = await prisma.$queryRawUnsafe<Array<{ iban: string | null; name: string }>>(`select iban, name from bank_accounts`);
+  // Some banks (Trade Republic) name the account after its holder: that name is the user's own.
+  const names = accs.map((a) => a.name).filter((n) => /^[\p{L} .'-]+$/u.test(n) && n.trim().split(/\s+/).length >= 2 && !/CUENTA|ACCOUNT|AHORRO|TARJETA|ONLINE|CORRIENTE/i.test(n));
+  return { rules, own: new Set(accs.filter((a) => a.iban).map((a) => a.iban!.replace(/\s/g, ""))), names: new Set(names.map(normName)) };
 }
 
 /** (Re)classifies the movements not set by hand (all, or the ones without category). */
-async function classifyAll(onlyNew: boolean): Promise<number> {
-  const { rules, own } = await rulesAndIbans();
+export async function classifyAll(onlyNew: boolean): Promise<number> {
+  const { rules, own, names } = await rulesAndIbans();
   const rows = await prisma.$queryRawUnsafe<Array<{ id: string; amount: unknown; description: string; counterparty: string | null; counterpartyIban: string | null }>>(
     `select id, amount, description, counterparty, "counterpartyIban" from bank_transactions
       where ${onlyNew ? "category is null" : `coalesce("categorySource", '') <> 'user'`}`
   );
-  for (const r of rows) {
-    const c = classify({ ...r, amount: Number(r.amount) }, rules, own);
-    await prisma.$executeRawUnsafe(`update bank_transactions set category = $2, internal = $3, "categorySource" = $4 where id = $1`, r.id, c.category, c.internal, c.source);
-  }
+  if (!rows.length) return 0;
+  // One statement for all of them (one by one is a round trip to the database each).
+  const sets = rows.map((r) => ({ id: r.id, ...classify({ ...r, amount: Number(r.amount) }, rules, own, names) }));
+  await prisma.$executeRawUnsafe(
+    `update bank_transactions t set category = s.category, internal = s.internal, "categorySource" = s.source
+       from jsonb_to_recordset($1::jsonb) as s(id text, category text, internal boolean, source text)
+      where t.id = s.id`, JSON.stringify(sets));
   return rows.length;
 }
 
@@ -208,7 +217,7 @@ async function syncLinks(linkIds?: string[], first = false): Promise<{ added: nu
       errors.push(`${link.aspsp}: ${msg}`);
     }
   }
-  await classifyAll(true);
+  await classifyAll(false); // rules get better over time: redo every automatic one (never the ones set by hand)
   return { added, accounts, errors };
 }
 const rank = (type: string) => { const i = BALANCE_ORDER.indexOf(type); return i < 0 ? 99 : i; };

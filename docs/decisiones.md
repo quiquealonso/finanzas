@@ -5,6 +5,13 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-26 · Extracto PDF de Trade Republic para completar Open Banking** — Open Banking de Trade Republic solo da
+  movimientos desde el 1 sep 2026 y **sin texto** (solo fecha, importe y sentido). El extracto PDF trae todo desde la
+  apertura. Lo anterior a Open Banking se añade; lo que solapa rellena el texto de los movimientos de Open Banking por
+  día e importe (no se duplica ni se cambia el importe). Signo por diferencia de saldos, no por columna (el PDF mueve las
+  columnas). Alternativa descartada: importar todo del extracto y borrar lo de Open Banking (se perdería la referencia
+  del banco para las lecturas siguientes).
+
 - **2026-11-26 · Vuelta del banco por una página puente https** — Enable Banking rechaza `http://localhost` («unsupported
   scheme»). `front/public/banco-vuelta.html` (GitHub Pages, https) reenvía solo `code`, `state` y el error a
   `http://localhost:3000/api/banking/callback` (dirección fija, sin redirección abierta). El `code` es de un solo uso y no

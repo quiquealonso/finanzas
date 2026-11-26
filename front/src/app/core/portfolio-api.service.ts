@@ -189,6 +189,10 @@ export class PortfolioApi {
   bankingSync(): Promise<{ added: number; accounts: number; errors: string[] }> {
     return firstValueFrom(this.http.post<{ added: number; accounts: number; errors: string[] }>(`${BASE}/v2/banking/sync`, {}));
   }
+  /** A bank statement in PDF (Trade Republic): fills the history before what Open Banking gives. */
+  bankingStatement(pdf: Blob): Promise<{ bank: string; read: number; imported: number; skipped: number; until: string | null; from: string | null; to: string | null; checked: boolean }> {
+    return firstValueFrom(this.http.post<any>(`${BASE}/v2/banking/statement`, pdf, { headers: { 'Content-Type': 'application/pdf' } }));
+  }
   bankingRevoke(linkId: string): Promise<unknown> {
     return firstValueFrom(this.http.post(`${BASE}/v2/banking/links/${linkId}/revoke`, {}));
   }

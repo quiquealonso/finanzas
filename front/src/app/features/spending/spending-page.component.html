@@ -8,6 +8,11 @@
       <div class="head-actions">
         @if (status()!.links.length) {
           <button type="button" class="btn" (click)="sync()" [disabled]="syncing()">{{ syncing() ? 'Actualizando…' : 'Actualizar' }}</button>
+          <input #pdf type="file" accept="application/pdf" hidden (change)="importStatement(pdf)" />
+          <button type="button" class="btn" (click)="pdf.click()" [disabled]="importing()"
+                  title="Extracto en PDF de Trade Republic («Certificado de saldo y movimientos»): añade lo anterior a lo que da Open Banking, sin duplicar">
+            {{ importing() ? 'Leyendo…' : 'Importar extracto' }}
+          </button>
         }
         <button type="button" class="btn primary" (click)="openConnect()">+ Conectar banco</button>
       </div>
