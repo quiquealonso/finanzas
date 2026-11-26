@@ -5,6 +5,12 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-26 · Inversiones de las cuentas a la cartera, siempre con el visto bueno** — detectarlas y dejarlas
+  preparadas, pero sin apuntar nada solo: muchas ya están en la cartera (correo, a mano) y a veces agrupadas (tres
+  compras del banco apuntadas como una). Antes de proponer, se buscan por títulos y por dinero; lo dudoso se pregunta.
+  Alternativas descartadas: apuntar todo automáticamente (duplicaría) y pedir siempre los datos (demasiado trabajo
+  cuando el banco ya da ISIN y títulos).
+
 - **2026-11-26 · Extracto PDF de Trade Republic para completar Open Banking** — Open Banking de Trade Republic solo da
   movimientos desde el 1 sep 2026 y **sin texto** (solo fecha, importe y sentido). El extracto PDF trae todo desde la
   apertura. Lo anterior a Open Banking se añade; lo que solapa rellena el texto de los movimientos de Open Banking por

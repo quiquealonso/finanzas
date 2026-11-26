@@ -180,7 +180,7 @@ async function templateOf(bankName: string): Promise<Template | null> {
 const markKey = (userId: string, key: string) => `${userId}|${key}`;
 
 /** The user's asset for an operation inside the chosen bank: by Yahoo ticker, else by name (case-insensitive). */
-async function findAsset(bankId: string, symbol: string | null, name: string): Promise<{ id: string; name: string } | null> {
+export async function findAsset(bankId: string, symbol: string | null, name: string): Promise<{ id: string; name: string } | null> {
   const rows: Array<{ id: string; name: string }> = await prisma.$queryRawUnsafe(
     `select id, name from assets
       where "bankId" = $1 and (($2::text is not null and "marketSymbol" = $2) or lower(name) = lower($3))
@@ -196,7 +196,7 @@ async function findAsset(bankId: string, symbol: string | null, name: string): P
  * If none, a "maybe": same units (±0.5 %) within 60 days (dates noted roughly by hand). Operations already linked to
  * another e-mail don't count.
  */
-async function findSameOperation(assetId: string, kind: Kind, from: string, to: string, quantity: number):
+export async function findSameOperation(assetId: string, kind: Kind, from: string, to: string, quantity: number):
     Promise<{ id: string; day: string; sure: boolean } | null> {
   const rows: Array<{ id: string; day: string; gap: number }> = await prisma.$queryRawUnsafe(
     `select o.id, to_char(o."occurredAt", 'YYYY-MM-DD') as day,
@@ -437,25 +437,40 @@ async function orderCandidate(job: Job, bank: { id: string; name: string }, mail
 async function assetInBank(c: Candidate): Promise<{ id: string; created: boolean }> {
   if (c.assetId) return { id: c.assetId, created: false };
   const op = c.op!;
-  const known = INSTRUMENTS.find((i) => i.match.test(op.name.toUpperCase()));
+  return ensureAsset({ bankId: c.bankId, name: c.name, opName: op.name, isin: op.isin, currency: op.currency, price: op.price, fxToEur: op.fxToEur });
+}
+
+/**
+ * The asset of a bank for a security (by known instrument, Yahoo ticker of its ISIN, or name), created when the user
+ * does not have it yet. Also used by the investments found in the bank accounts (bank-investments.ts).
+ */
+export async function ensureAsset(a: { bankId: string; name: string; opName?: string; isin?: string | null; currency?: string; price?: number | null; fxToEur?: number | null; typeCode?: string; marketName?: boolean }):
+    Promise<{ id: string; created: boolean }> {
+  const source = (a.opName ?? a.name).toUpperCase();
+  const known = INSTRUMENTS.find((i) => i.match.test(source));
   let symbol = known?.symbol ?? null;
-  let typeCode = known?.type ?? (/FI$|FUND|INDEX/i.test(op.name) ? "FUND" : "STOCK");
-  if (!known && op.isin) {
-    const t = await tickerForIsin(op.isin, "").catch(() => null);
+  let marketName: string | null = null;
+  let typeCode = a.typeCode ?? known?.type ?? (/FI$|FUND|INDEX/i.test(source) ? "FUND" : /UCITS|ETF/i.test(source) ? "ETF" : "STOCK");
+  if (!known && a.isin) {
+    const t = await tickerForIsin(a.isin, "").catch(() => null);
     if (t) {
       symbol = t.symbol;
-      typeCode = ({ EQUITY: "STOCK", ETF: "ETF", MUTUALFUND: "FUND" } as Record<string, string>)[t.quoteType] ?? typeCode;
+      marketName = t.name || null;
+      if (!a.typeCode) typeCode = ({ EQUITY: "STOCK", ETF: "ETF", MUTUALFUND: "FUND" } as Record<string, string>)[t.quoteType] ?? typeCode;
     }
   }
-  const again = await findAsset(c.bankId, symbol, c.name); // created by an earlier row of this same import
+  // marketName: the bank's text is a poor name ("NVIDIA CORP. DL-,001"): Yahoo's one is better when there is one.
+  const name = known?.name ?? (a.marketName && marketName ? marketName : a.name);
+  const again = await findAsset(a.bankId, symbol, name);
   if (again) return { id: again.id, created: false };
   const type = await prisma.assetTypeEntity.findUnique({ where: { code: typeCode } });
   if (!type) throw new Error(`Tipo ${typeCode} no existe`);
+  const price = a.price ?? 0;
   const asset = await prisma.asset.create({
     data: {
-      bankId: c.bankId, name: c.name, currency: (known?.currency ?? op.currency) as any, assetTypeId: type.id,
+      bankId: a.bankId, name, currency: (known?.currency ?? a.currency ?? "EUR") as any, assetTypeId: type.id,
       marketSymbol: symbol, marketProvider: symbol ? "yahoo" : null,
-      marketPriceLocal: op.price, marketPriceEur: op.price * (op.fxToEur ?? 1),
+      marketPriceLocal: price, marketPriceEur: price * (a.fxToEur ?? 1),
       regions: (await guessRegions(symbol, typeCode)) ?? undefined,
     },
   });

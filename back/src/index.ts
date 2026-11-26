@@ -24,6 +24,7 @@ import { registerMailTemplateRoutes } from "./mail-templates";
 import { registerBenchmarkRoutes } from "./benchmarks";
 import { registerBankingCallback, registerBankingRoutes } from "./banking";
 import { registerStatementRoutes } from "./bank-statements";
+import { registerBankInvestmentRoutes } from "./bank-investments";
 
 dotenv.config();
 
@@ -64,6 +65,7 @@ registerMailTemplateRoutes(app);
 registerBenchmarkRoutes(app);
 registerBankingRoutes(app);
 registerStatementRoutes(app);
+registerBankInvestmentRoutes(app);
 
 type ApiAssetType = "liquido" | "fondo" | "accion" | "etf" | "cripto" | "inmobiliario";
 type ApiMarketProvider = 'stooq' | 'alphavantage' | 'yahoo';

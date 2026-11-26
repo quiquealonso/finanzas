@@ -81,3 +81,8 @@ begin
     execute format('grant select, insert, update, delete on public.%I to finanzas_app', t);
   end loop;
 end $$;
+
+-- Investments found among the movements (bank-investments.ts): whether the user already took it to the portfolio.
+-- null = not reviewed; 'done' = noted (new operation or one the user already had); 'ignored' = not an investment.
+alter table public.bank_transactions add column if not exists "invStatus" text;
+alter table public.bank_transactions add column if not exists "invOperationId" text;

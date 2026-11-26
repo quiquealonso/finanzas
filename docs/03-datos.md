@@ -44,6 +44,7 @@ se crea con los SQL de `back/supabase/` y se consulta con SQL directo (`$queryRa
 | `bank_links` | usuario | banking.sql | Permisos de Open Banking (sesión de Enable Banking, banco, válido hasta, última lectura, error) |
 | `bank_accounts` | usuario | banking.sql | Cuentas de cada permiso: nombre, IBAN, saldo; `accountKey` (IBAN) las mantiene al renovar el permiso |
 | `bank_transactions` | usuario | banking.sql | Movimientos (importe con signo, concepto, contraparte, categoría y quién la puso, `internal` = traspaso/inversión) |
+| `bank_transactions."invStatus"`, `"invOperationId"` | usuario | banking.sql | Inversión detectada: revisada (`done`, con la operación de la cartera) o `ignored` |
 | `spend_rules` | usuario | banking.sql | Reglas aprendidas: texto → categoría |
 | `betting_houses`, `betting_transactions` | usuario | (Prisma) | Apuestas (oculto a user2) |
 

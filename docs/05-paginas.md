@@ -138,7 +138,16 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
 - Datos: `/api/v2/series` (lo mismo que el filtro del Resumen) y `GET /api/v2/benchmarks?from=` (`back/src/benchmarks.ts`,
   cierres de Yahoo guardados 6 h en memoria). En la demo, `v2_benchmarks.json`.
 
-## Movimientos · `features/movements` · act. 2026-11-24
+## Movimientos · `features/movements` · act. 2026-11-26
+- **Inversiones en tus cuentas** (2026-11-26, `bank-investments.component.ts`, `back/src/bank-investments.ts`): las
+  inversiones que se ven en los movimientos de los bancos conectados en Gastos: compras y ventas con ISIN y títulos
+  (Trade Republic), «compra de valores» del banco y dinero enviado a plataformas (MyInvestor, Lemon Way, Binance,
+  Mintos…; no las transferencias a otro banco conectado). Para cada una busca si **ya está en la cartera**: misma
+  operación del activo (por títulos) o mismo dinero (±1,5 % o 1,5 €, de 10 días antes a 5 después; una operación solo
+  vale para un movimiento) → «Sí, es esa» la enlaza. Si varias compras pequeñas pueden estar dentro de una operación
+  mayor apuntada a mano, pregunta («¿Incluida?»). Completas → «Apuntar» (compra en el activo del banco, nuevo si hace
+  falta, con nombre de Yahoo por el ISIN). Sin datos → banco, activo y títulos a mano. «Ignorar» para lo que no es.
+  Plegado por defecto con el resumen; «Ya las tengo» y «Apuntar las listas» en bloque.
 - Lista por meses (tarjetas o tabla) de compras, ventas, aportaciones, retiradas, ajustes.
 - **Aportaciones periódicas**: plegadas por defecto; la cabecera dice cuántas hay activas, cuánto al mes y si hay
   meses pendientes de registrar. "+ Nueva aportación" las despliega.

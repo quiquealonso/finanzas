@@ -6,6 +6,7 @@ import { Movement, RecurringData, RecurringPending, RecurringPlan, TYPE_COLORS }
 import { ListView, ViewToggleComponent } from '../../shared/view-toggle.component';
 import { MailImportDialogComponent } from './mail-import-dialog.component';
 import { PendingOrdersComponent } from './pending-orders.component';
+import { BankInvestmentsComponent } from './bank-investments.component';
 import { PortfolioStore } from '../../core/portfolio.store';
 import {
   formatDay,
@@ -53,7 +54,7 @@ function readPlansOpen(): boolean {
 @Component({
   selector: 'app-movements-page',
   standalone: true,
-  imports: [FormsModule, ViewToggleComponent, MailImportDialogComponent, PendingOrdersComponent],
+  imports: [FormsModule, ViewToggleComponent, MailImportDialogComponent, PendingOrdersComponent, BankInvestmentsComponent],
   templateUrl: './movements-page.component.html',
   styleUrl: './movements-page.component.css'
 })
