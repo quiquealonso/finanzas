@@ -148,6 +148,8 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
   mayor apuntada a mano, pregunta («¿Incluida?»). Completas → «Apuntar» (compra en el activo del banco, nuevo si hace
   falta, con nombre de Yahoo por el ISIN). Sin datos → banco, activo y títulos a mano. «Ignorar» para lo que no es.
   Plegado por defecto con el resumen; «Ya las tengo» y «Apuntar las listas» en bloque.
+  **Se cierran solas** las que confirman dos fuentes: mismos títulos que una operación de la cartera, o mismo dinero
+  que una operación que vino del correo del bróker. En Gastos, el movimiento enlazado muestra «↳ Invertido en …».
 - Lista por meses (tarjetas o tabla) de compras, ventas, aportaciones, retiradas, ajustes.
 - **Aportaciones periódicas**: plegadas por defecto; la cabecera dice cuántas hay activas, cuánto al mes y si hay
   meses pendientes de registrar. "+ Nueva aportación" las despliega.

@@ -454,4 +454,6 @@ export interface BankingBank { name: string; country: string; logo: string | nul
 export interface BankTx {
   id: string; date: string; amount: number; currency: string; description: string; counterparty: string | null;
   category: string | null; categorySource: string | null; internal: boolean; note: string | null; account: string; bank: string;
+  /** Asset of the portfolio this money went into (or came from), once linked in Movimientos. */
+  investedIn?: string | null; investedOn?: string | null; investedType?: 'BUY' | 'SELL' | null;
 }

@@ -52,7 +52,7 @@ export function detectInvestment(t: { amount: number; description: string; count
   return null;
 }
 
-const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
 const tickerCache = new Map<string, string | null>();
 async function symbolOf(isin: string): Promise<string | null> {
   if (!tickerCache.has(isin)) tickerCache.set(isin, (await tickerForIsin(isin, "").catch(() => null))?.symbol ?? null);
@@ -64,9 +64,10 @@ const bankFor = (banks: Bank[], platform: string | null) =>
   platform ? banks.find((b) => norm(b.name) === norm(platform)) ?? banks.find((b) => norm(b.name).includes(norm(platform)) || norm(platform).includes(norm(b.name))) ?? null : null;
 
 /** An operation already in the portfolio with the same money (±1,5 % or 1,5 €) between 10 days before and 5 after. */
-async function sameMoney(bankId: string | null, side: Side, day: string, amount: number, used: Set<string>): Promise<{ id: string; day: string; assetName: string } | null> {
-  const rows = await prisma.$queryRawUnsafe<Array<{ id: string; day: string; assetName: string }>>(
-    `select o.id, to_char(o."occurredAt", 'YYYY-MM-DD') as day, a.name as "assetName"
+async function sameMoney(bankId: string | null, side: Side, day: string, amount: number, used: Set<string>): Promise<{ id: string; day: string; assetName: string; fromMail: boolean } | null> {
+  const rows = await prisma.$queryRawUnsafe<Array<{ id: string; day: string; assetName: string; fromMail: boolean }>>(
+    `select o.id, to_char(o."occurredAt", 'YYYY-MM-DD') as day, a.name as "assetName",
+            exists (select 1 from external_operations e where e."operationId" = o.id and e.source = 'mail') as "fromMail"
        from asset_operations o join assets a on a.id = o."assetId" join asset_types ty on ty.id = a."assetTypeId"
       where not ty."isLiquidity" and o."operationType"::text = $1 and ($2::text is null or a."bankId" = $2)
         and o."occurredAt"::date between $3::date - 10 and $3::date + 5
@@ -80,7 +81,7 @@ async function sameMoney(bankId: string | null, side: Side, day: string, amount:
 
 /** Words that say nothing about which security it is. */
 const GENERIC = new Set(["group", "grupo", "holding", "holdings", "class", "ucits", "index", "fund", "fondo", "core", "acc", "dist", "swap", "units", "multi", "luxembourg", "corp", "corporation", "limited", "ltd", "inc", "plc", "shares", "share", "etf"]);
-const words = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !GENERIC.has(w));
+const words = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !GENERIC.has(w));
 
 /** The asset of the bank whose name shares the most telling words with the bank's text (e.g. "Amundi … Nasdaq-100"). */
 async function assetByName(bankId: string, name: string): Promise<{ id: string; name: string } | null> {
@@ -119,7 +120,7 @@ async function candidates(all: boolean) {
     const bank = bankFor(banks, d.platform);
     let asset: { id: string; name: string } | null = null;
     if (bank && (d.isin || d.name)) asset = await findAsset(bank.id, d.isin ? await symbolOf(d.isin) : null, d.name ?? "") ?? (d.name ? await assetByName(bank.id, d.name) : null);
-    let match: { id: string; day: string; assetName: string; sure: boolean } | null = null;
+    let match: { id: string; day: string; assetName: string; sure: boolean; fromMail?: boolean } | null = null;
     let partOf: { id: string; day: string; assetName: string; quantity: number } | null = null;
     if (!r.invStatus) {
       if (asset && d.quantity) {
@@ -155,6 +156,21 @@ async function candidates(all: boolean) {
   return { items: out, banks };
 }
 
+/**
+ * Closes by itself what two sources confirm: the bank movement and an operation of the portfolio with the same units
+ * (sure match) or one that came from the broker's e-mail with the same money. Only doubtful ones are left to the user.
+ */
+async function closeConfirmed<T extends { items: Array<{ id: string; match: { id: string; sure: boolean; fromMail?: boolean } | null; status: string | null }> }>(r: T, keepClosed: boolean): Promise<T & { closed: number }> {
+  let closed = 0;
+  for (const it of r.items) {
+    if (it.status || !it.match || !(it.match.sure || it.match.fromMail)) continue;
+    await setStatus(it.id, "done", it.match.id);
+    it.status = "done";
+    closed++;
+  }
+  return { ...r, items: keepClosed ? r.items : r.items.filter((i) => !i.status), closed };
+}
+
 async function setStatus(id: string, status: string | null, operationId: string | null = null): Promise<void> {
   const n = await prisma.$executeRawUnsafe(`update bank_transactions set "invStatus" = $2, "invOperationId" = $3 where id = $1`, id, status, operationId);
   if (!n) throw new HttpError(404, "No existe.");
@@ -163,7 +179,8 @@ async function setStatus(id: string, status: string | null, operationId: string 
 export function registerBankInvestmentRoutes(app: Express): void {
   // Investments found in the bank movements; ?all=1 also the ones already noted or ignored.
   app.get("/api/v2/banking/investments", handler(async (req, res) => {
-    res.json(await candidates(req.query.all === "1"));
+    const all = req.query.all === "1";
+    res.json(await closeConfirmed(await candidates(all), all));
   }));
 
   // It was already in the portfolio: link it to that operation.

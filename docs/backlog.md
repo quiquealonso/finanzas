@@ -22,6 +22,8 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 - [ ] (Gastos) Más categorías y reglas (el usuario lo deja para más adelante): compras de valores y cripto desde la
   cuenta corriente deberían contar como inversión; recibo mensual de la tarjeta; pagos por PayPal con el comercio
   detrás; ocio online. Prioridad: media
+- [ ] (Gastos) MyInvestor con cuenta de crédito pignorada: conectar cuenta corriente y de crédito; el traspaso de una a
+  otra es interno, las compras salen de la de crédito; su saldo (deuda) no es efectivo. Prioridad: alta
 - [ ] (Gastos) Clasificar con IA (datos tapados) lo que quede en «Otros»; lectura automática diaria; presupuestos por categoría. Prioridad: media
 - [ ] (Resumen) "Pendiente de reinvertir" suma toda la liquidez (cuentas de los bancos incluidas), no solo la cuenta de
   reinversión. ¿Debería ser solo lo que queda de las ventas? Prioridad: media

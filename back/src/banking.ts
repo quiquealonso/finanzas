@@ -371,8 +371,11 @@ export function registerBankingRoutes(app: Express): void {
     const from = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.from ?? "")) ? String(req.query.from) : yearStart();
     const rows = await prisma.$queryRawUnsafe<any[]>(
       `select t.id, to_char(t."bookingDate", 'YYYY-MM-DD') as date, t.amount::float as amount, t.currency, t.description,
-              t.counterparty, t.category, t."categorySource", t.internal, t.note, a.name as account, l.aspsp as bank
+              t.counterparty, t.category, t."categorySource", t.internal, t.note, a.name as account, l.aspsp as bank,
+              -- What the money was invested in (Movimientos → «Inversiones en tus cuentas»).
+              ia.name as "investedIn", to_char(o."occurredAt", 'YYYY-MM-DD') as "investedOn", o."operationType"::text as "investedType"
          from bank_transactions t join bank_accounts a on a.id = t."accountId" join bank_links l on l.id = a."linkId"
+         left join asset_operations o on o.id = t."invOperationId" left join assets ia on ia.id = o."assetId"
         where t."bookingDate" >= $1::date and not a.hidden
         order by t."bookingDate" desc, t."createdAt" desc`, from);
     res.json({ transactions: rows });

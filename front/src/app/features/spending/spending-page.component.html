@@ -186,6 +186,7 @@
                   <td>
                     <div class="desc">{{ t.counterparty || t.description }}</div>
                     @if (t.counterparty && t.description && t.description !== t.counterparty) { <div class="faint small desc">{{ t.description }}</div> }
+                    @if (t.investedIn) { <div class="invested small" [title]="'Enlazado con tu cartera (' + (t.investedType === 'SELL' ? 'venta' : 'compra') + ' del ' + day(t.investedOn!) + ')'">↳ {{ t.investedType === 'SELL' ? 'Venta de' : 'Invertido en' }} {{ t.investedIn }}</div> }
                   </td>
                   <td class="faint small nowrap">{{ t.bank }}</td>
                   <td>

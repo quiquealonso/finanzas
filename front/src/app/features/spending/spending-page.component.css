@@ -62,6 +62,7 @@ table.tx tbody tr:nth-child(even) { background: color-mix(in srgb, var(--surface
 table.tx tr.internal { opacity: 0.6; }
 .desc { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nowrap { white-space: nowrap; }
+.invested { color: var(--accent-text); font-weight: 500; }
 select.cat-sel { width: 200px; height: 30px; border-left: 4px solid var(--border); font-size: 12.5px; }
 select.cat-sel.auto { color: var(--text-2); }
 
