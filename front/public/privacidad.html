@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Política de privacidad · Finanzas</title>
+  <style>
+    :root { --bg: #ffffff; --text: #1f2937; --muted: #6b7280; --accent: #4f46e5; --border: #e5e7eb; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #111111; --text: #ececec; --muted: #a1a1aa; --accent: #a5b4fc; --border: #2a2a2a; } }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 40px 20px 60px; }
+    h1 { font-size: 28px; margin: 0 0 4px; }
+    h2 { font-size: 19px; margin: 28px 0 6px; }
+    p, li { margin: 6px 0; }
+    .muted { color: var(--muted); font-size: 14px; }
+    a { color: var(--accent); }
+    nav { border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px; font-size: 14px; }
+  </style>
+</head>
+<body>
+<main>
+  <nav><a href="./">Finanzas</a> · <strong>Privacidad</strong> · <a href="terminos.html">Términos de uso</a></nav>
+  <h1>Política de privacidad</h1>
+  <p class="muted">Última actualización: 26 de noviembre de 2026</p>
+
+  <h2>Qué es Finanzas</h2>
+  <p>Finanzas es una aplicación <strong>personal y sin ánimo de lucro</strong>, hecha también como proyecto de clase, para
+    seguir las inversiones y los gastos de su autor. No se ofrece al público ni se cobra por ella. El código es abierto:
+    <a href="https://github.com/quiquealonso/finanzas">github.com/quiquealonso/finanzas</a>.</p>
+
+  <h2>La demo pública</h2>
+  <p>La demo de esta web funciona solo en tu navegador con datos inventados. No envía nada a ningún servidor: lo que
+    hagas (perfil de riesgo, fondos guardados, preferencias) se guarda únicamente en el almacenamiento de tu navegador y
+    puedes borrarlo limpiando los datos del sitio.</p>
+
+  <h2>Datos que trata la aplicación (instalación privada)</h2>
+  <ul>
+    <li><strong>Cuentas bancarias (Open Banking):</strong> saldos y movimientos de las cuentas que el propio usuario
+      conecta, obtenidos con su consentimiento a través de Enable Banking, proveedor autorizado de información sobre
+      cuentas según la directiva europea PSD2. Solo se solicita <strong>información de cuentas (solo lectura)</strong>:
+      la aplicación no puede iniciar pagos ni mover dinero, y nunca ve las credenciales del banco.</li>
+    <li><strong>Inversiones:</strong> posiciones, operaciones y precios de mercado que el usuario introduce o importa.</li>
+    <li><strong>Correo (opcional):</strong> si el usuario conecta Gmail, se leen en modo de solo lectura las
+      confirmaciones de operaciones de sus bancos para proponer movimientos; no se guarda el contenido de los correos.</li>
+  </ul>
+
+  <h2>Para qué se usan</h2>
+  <p>Solo para mostrar al propio usuario su patrimonio, su rentabilidad y la clasificación de sus gastos e ingresos.
+    No se usan para publicidad, no se venden ni se ceden a terceros y no se hacen perfiles comerciales.</p>
+
+  <h2>Dónde se guardan y quién los ve</h2>
+  <ul>
+    <li>En una base de datos privada del autor, con control de acceso por usuario: cada usuario solo ve sus datos.</li>
+    <li>Las claves de acceso y los permisos se guardan fuera del código, en el equipo del autor.</li>
+    <li>Proveedores que intervienen: Enable Banking (lectura de cuentas), Supabase (base de datos) y, solo si el usuario
+      lo acepta expresamente en cada caso, Google Gemini para clasificar textos, siempre con los datos personales tapados
+      (nombres, IBAN, documentos, teléfonos y correos).</li>
+  </ul>
+
+  <h2>Cuánto tiempo</h2>
+  <p>El permiso de lectura de cada banco caduca solo (normalmente a los 180 días) y se puede retirar en cualquier
+    momento desde la aplicación, desde el propio banco o desde Enable Banking. Los movimientos ya leídos se conservan
+    mientras el usuario lo quiera y se borran a petición suya.</p>
+
+  <h2>Tus derechos</h2>
+  <p>Puedes pedir acceso, rectificación, borrado, limitación u oposición al tratamiento de tus datos, y la portabilidad
+    de los mismos, conforme al Reglamento General de Protección de Datos (RGPD). Si crees que no se ha atendido bien tu
+    petición, puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).</p>
+
+  <h2>Contacto</h2>
+  <p>A través del repositorio: <a href="https://github.com/quiquealonso/finanzas/issues">github.com/quiquealonso/finanzas/issues</a>.</p>
+</main>
+</body>
+</html>

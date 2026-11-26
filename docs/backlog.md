@@ -34,6 +34,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Hecho
 
+- [x] 2026-11-26 · (Web) Política de privacidad y términos de uso en GitHub Pages (para Enable Banking).
 - [x] 2026-11-25 · (Gastos) Nueva página tipo Fintonic: BBVA y Trade Republic por Open Banking, categorías, ahorro, recibos.
 - [x] 2026-11-25 · (Comparar) Solo lo invertido, sin liquidez; tarjetas de «¿Y si lo hubieras metido en un índice?» rehechas.
 - [x] 2026-11-25 · (Comparar, Simulador) Letras y fechas de las gráficas estiradas; eje con números raros; ganancia en € y rentab. de tu dinero en Comparar.

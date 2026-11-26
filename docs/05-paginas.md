@@ -69,6 +69,10 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
 - Demo: 325 movimientos inventados (`node back/scripts/demo-banking.js`); conectar un banco real no está disponible.
 - Pendiente: clasificar con IA lo que quede en «Otros» (con datos tapados), lectura automática diaria.
 
+## Privacidad y términos · `front/public/privacidad.html`, `terminos.html` · nueva 2026-11-26
+- Páginas estáticas (fuera de Angular) publicadas con la demo: `https://quiquealonso.github.io/finanzas/privacidad.html`
+  y `…/terminos.html`. Las pide Enable Banking al registrar la aplicación. Contacto por issues de GitHub (sin correo).
+
 ## Activos · `features/holdings`
 - KPIs arriba (valor, invertido, resultado, hoy). Filtro Banco/Tipo + buscador, agrupar por banco, sin saldo.
 - "Ordenar por" (valor, resultado, %, hoy, A-Z) y ver como Tarjetas (6 por fila) o Tabla.
