@@ -62,9 +62,15 @@
               <button type="button" class="btn sm link" (click)="revoke(l.id, l.aspsp)">Desconectar</button>
             </div>
             @for (a of l.accounts; track a.id) {
-              <div class="acc">
+              <div class="acc" [class.off]="a.hidden">
                 <span><span class="acc-name">{{ a.name }}</span> <span class="faint small">{{ a.iban }}</span></span>
-                <strong class="num">{{ a.balance === null ? '—' : money(a.balance) }}</strong>
+                <span class="acc-right">
+                  @if (a.hidden) { <span class="faint small">No se usa</span> } @else { <strong class="num">{{ a.balance === null ? '—' : money(a.balance) }}</strong> }
+                  <button type="button" class="btn sm link" (click)="toggleAccount(a.id, !a.hidden)"
+                          [title]="a.hidden ? 'Volver a leer esta cuenta y contarla' : 'No leer esta cuenta ni contar sus movimientos ni su saldo (lo ya leído se guarda)'">
+                    {{ a.hidden ? 'Usar' : 'No usar' }}
+                  </button>
+                </span>
               </div>
             }
             <div class="faint small">

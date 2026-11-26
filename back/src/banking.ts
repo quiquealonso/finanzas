@@ -190,7 +190,7 @@ async function syncLinks(linkIds?: string[], first = false): Promise<{ added: nu
     }
     try {
       const accs = await prisma.$queryRawUnsafe<Array<{ id: string; uid: string; accountKey: string }>>(
-        `select id, uid, "accountKey" from bank_accounts where "linkId" = $1`, link.id);
+        `select id, uid, "accountKey" from bank_accounts where "linkId" = $1 and not hidden`, link.id); // "No usar": not even read
       for (const acc of accs) {
         accounts++;
         // Balance: the "available" one when the bank gives it.
@@ -337,6 +337,14 @@ export function registerBankingRoutes(app: Express): void {
   }));
 
   // Revoke a consent: the session is closed at Enable Banking (the bank stops giving data). Movements are kept.
+  // «No usar» / «Usar» an account: a hidden one is not read again and its movements count nowhere (they are kept).
+  app.patch("/api/v2/banking/accounts/:id", handler(async (req, res) => {
+    const hidden = !!req.body?.hidden;
+    const n = await prisma.$executeRawUnsafe(`update bank_accounts set hidden = $2 where id = $1`, req.params.id, hidden);
+    if (!n) throw new HttpError(404, "No existe.");
+    res.json({ ok: true, hidden });
+  }));
+
   app.post("/api/v2/banking/links/:id/revoke", handler(async (req, res) => {
     const [link] = await prisma.$queryRawUnsafe<Array<{ sessionId: string }>>(`select "sessionId" from bank_links where id = $1`, req.params.id);
     if (!link) throw new HttpError(404, "No existe.");

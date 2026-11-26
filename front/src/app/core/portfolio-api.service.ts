@@ -193,6 +193,9 @@ export class PortfolioApi {
   bankingStatement(pdf: Blob): Promise<{ bank: string; read: number; imported: number; skipped: number; until: string | null; from: string | null; to: string | null; checked: boolean }> {
     return firstValueFrom(this.http.post<any>(`${BASE}/v2/banking/statement`, pdf, { headers: { 'Content-Type': 'application/pdf' } }));
   }
+  bankingHideAccount(id: string, hidden: boolean): Promise<unknown> {
+    return firstValueFrom(this.http.patch(`${BASE}/v2/banking/accounts/${id}`, { hidden }));
+  }
   bankingRevoke(linkId: string): Promise<unknown> {
     return firstValueFrom(this.http.post(`${BASE}/v2/banking/links/${linkId}/revoke`, {}));
   }

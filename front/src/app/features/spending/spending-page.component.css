@@ -12,6 +12,8 @@
 .tag.bad { background: var(--down-soft); color: var(--down); }
 .acc { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; }
 .acc-name { font-weight: 500; }
+.acc-right { display: inline-flex; align-items: center; gap: 8px; }
+.acc.off { opacity: 0.55; }
 .err { color: var(--down); }
 
 .period { padding: 10px 12px; }

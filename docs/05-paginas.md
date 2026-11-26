@@ -57,7 +57,8 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
   puede pagar) → página puente `banco-vuelta.html` en GitHub Pages (Enable Banking solo admite https) → `http://localhost:3000/api/banking/callback` → lee **los movimientos de este año** en ese momento (muchos bancos
   solo dan más de 90 días en la primera hora). Si falta configurar, la página explica los pasos (aplicación en Enable
   Banking, clave en `~/.finanzas/enablebanking.pem`, `EB_APP_ID`).
-- **Tarjetas de bancos**: cuentas con saldo, días de permiso (aviso con < 15), última lectura, «Desconectar» (cierra la
+- **Tarjetas de bancos**: cuentas con saldo y botón **«No usar» / «Usar»** (2026-11-26: una cuenta oculta no se lee ni
+  cuenta en saldo, ingresos ni gastos; lo leído se guarda), días de permiso (aviso con < 15), última lectura, «Desconectar» (cierra la
   sesión; los movimientos se quedan) y «Renovar permiso». «Actualizar» lee lo nuevo (desde una semana antes del último).
 - **Mes o año**: KPIs (efectivo hoy, ingresos, gastos, ahorro y %), barras ingresos/gastos por mes, gráfico de
   categorías con % frente a la media mensual del año, **recibos y suscripciones** (pagos ≥ 3 meses, ~1 al mes, importe

@@ -244,6 +244,15 @@ export class SpendingPageComponent {
     }
   }
 
+  protected async toggleAccount(id: string, hidden: boolean): Promise<void> {
+    try {
+      await this.api.bankingHideAccount(id, hidden);
+      await this.load();
+    } catch (e) {
+      this.store.error(e);
+    }
+  }
+
   protected async revoke(linkId: string, name: string): Promise<void> {
     const ok = await this.confirm.ask(`¿Desconectar ${name}? La app deja de poder leer esa cuenta (los movimientos ya leídos se quedan).`, { ok: 'Desconectar', danger: true });
     if (!ok) return;

@@ -35,6 +35,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Hecho
 
+- [x] 2026-11-26 · (Gastos) «No usar» una cuenta de un banco (BBVA tiene dos y solo se quiere una).
 - [x] 2026-11-26 · (Gastos) Importar extracto PDF de Trade Republic: historia desde la apertura y texto para los movimientos de Open Banking.
 - [x] 2026-11-26 · (Web) Política de privacidad y términos de uso en GitHub Pages (para Enable Banking).
 - [x] 2026-11-25 · (Gastos) Nueva página tipo Fintonic: BBVA y Trade Republic por Open Banking, categorías, ahorro, recibos.
