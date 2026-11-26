@@ -9,7 +9,10 @@ import { formatDay, formatMoney, formatMoney0, formatSignedMoney, signClass } fr
 
 const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 /** Banks offered first in "Conectar banco" (the others are found with the search box). */
-const SUGGESTED: Array<{ name: string; country: string }> = [{ name: 'BBVA', country: 'ES' }, { name: 'Trade Republic', country: 'DE' }];
+// Trade Republic shows up twice: ES (Spanish IBAN, customers in Spain) and DE (German IBAN, older accounts).
+const SUGGESTED: Array<{ name: string; country: string }> = [
+  { name: 'BBVA', country: 'ES' }, { name: 'Trade Republic', country: 'ES' }, { name: 'Trade Republic', country: 'DE' },
+];
 
 /**
  * "Gastos": current accounts read with Open Banking (read only) and every movement sorted into a category, to see
