@@ -54,7 +54,7 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
 - **Para qué**: como Fintonic. Cuentas del día a día (BBVA, Trade Republic) leídas con **Open Banking** (PSD2, solo
   lectura) a través de Enable Banking: efectivo disponible, ingresos, gastos, ahorro y en qué se va el dinero.
 - **Conectar**: «+ Conectar banco» → web/app del banco (allí se da el permiso, ~180 días; la app no ve la contraseña ni
-  puede pagar) → vuelve a `/api/banking/callback` → lee **los movimientos de este año** en ese momento (muchos bancos
+  puede pagar) → página puente `banco-vuelta.html` en GitHub Pages (Enable Banking solo admite https) → `http://localhost:3000/api/banking/callback` → lee **los movimientos de este año** en ese momento (muchos bancos
   solo dan más de 90 días en la primera hora). Si falta configurar, la página explica los pasos (aplicación en Enable
   Banking, clave en `~/.finanzas/enablebanking.pem`, `EB_APP_ID`).
 - **Tarjetas de bancos**: cuentas con saldo, días de permiso (aviso con < 15), última lectura, «Desconectar» (cierra la

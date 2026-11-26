@@ -5,6 +5,12 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-26 · Vuelta del banco por una página puente https** — Enable Banking rechaza `http://localhost` («unsupported
+  scheme»). `front/public/banco-vuelta.html` (GitHub Pages, https) reenvía solo `code`, `state` y el error a
+  `http://localhost:3000/api/banking/callback` (dirección fija, sin redirección abierta). El `code` es de un solo uso y no
+  sirve sin la clave privada, que no sale del ordenador. Alternativas: https en el back con certificado propio (aviso del
+  navegador en cada conexión) o un túnel (ngrok: tercero más y URL cambiante).
+
 - **2026-11-25 · Gastos con Open Banking (Enable Banking)** — el usuario lo había descartado por desconfianza y ahora lo
   acepta. Solo se pide información de cuentas (AIS), nunca pagos; el permiso se da en el banco y se puede revocar. Enable
   Banking porque es gratis para cuentas propias (modo restringido); GoCardless/Nordigen ya no admite altas nuevas y

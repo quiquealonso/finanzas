@@ -41,7 +41,7 @@ No hay "he olvidado mi contraseña": se vuelve a ejecutar el comando.
 | `GEMINI_API_KEY` | Clasificador de la página Sentimiento | Clave del **plan gratis** de Google AI Studio (proyecto sin facturación) |
 | `GEMINI_MODEL` | Opcional: modelo de Gemini a probar primero | Por defecto rota entre los gratis |
 | `EB_APP_ID` | Id de la aplicación de Enable Banking (página Gastos) | La clave privada va aparte (abajo) |
-| `EB_REDIRECT_URL` | Opcional: URL de vuelta del banco | Por defecto `http://localhost:3000/api/banking/callback`; debe estar en la lista de la aplicación |
+| `EB_REDIRECT_URL` | Opcional: URL de vuelta del banco | Por defecto `https://quiquealonso.github.io/finanzas/banco-vuelta.html` (Enable Banking solo admite https; esa página reenvía a `http://localhost:3000/api/banking/callback`). Debe estar en la lista de la aplicación |
 | `FRONT_URL` | Opcional: dirección del front para el enlace «Ver mis gastos» | Por defecto `http://localhost:4200` |
 | `PORT` | Puerto del backend | 3000 por defecto |
 

@@ -23,7 +23,9 @@ import { handler, HttpError } from "./portfolio";
  */
 const API = "https://api.enablebanking.com";
 const KEY_FILE = path.join(os.homedir(), ".finanzas", "enablebanking.pem");
-const REDIRECT_URL = () => process.env.EB_REDIRECT_URL?.trim() || "http://localhost:3000/api/banking/callback";
+// Enable Banking only accepts https return URLs: the bank sends the user to a small bridge page on GitHub Pages
+// (front/public/banco-vuelta.html), which passes code and state on to /api/banking/callback on this computer.
+const REDIRECT_URL = () => process.env.EB_REDIRECT_URL?.trim() || "https://quiquealonso.github.io/finanzas/banco-vuelta.html";
 const FRONT_URL = () => process.env.FRONT_URL?.trim() || "http://localhost:4200";
 const MAX_CONSENT_DAYS = 180;
 
