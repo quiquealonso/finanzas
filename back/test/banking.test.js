@@ -49,3 +49,8 @@ test("lo desconocido va a otros", () => {
   assert.equal(classify(tx(-9, "XYZ 123"), [], none).category, "otros_gastos");
   assert.equal(classify(tx(9, "XYZ 123"), [], none).category, "otros_ingresos");
 });
+
+test("Mangopay no es la tienda Mango", () => {
+  assert.notEqual(classify(tx(25, "Incoming transfer from Mangopay", "Mangopay"), [], none).category, "compras");
+  assert.equal(classify(tx(-30, "MANGO VALENCIA"), [], none).category, "compras");
+});
