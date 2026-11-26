@@ -277,6 +277,12 @@ export function registerBankingCallback(app: Express): void {
         await saveAccounts(link.id, s.accounts ?? []);
         return syncLinks([link.id], true);
       });
+      if (!(s.accounts ?? []).length) {
+        return void page(`${escapeHtml(p.aspsp)}: permiso dado, pero sin cuentas`,
+          `El banco ha aceptado, pero Enable Banking no ha devuelto ninguna cuenta. En modo personal solo se ven las cuentas
+           <strong>enlazadas en su panel</strong>: entra en enablebanking.com → tu aplicación → enlaza las cuentas de ${escapeHtml(p.aspsp)}
+           (<em>link accounts</em>) y vuelve a pulsar «Conectar banco».`);
+      }
       const errs = result.errors.length ? `<br>Avisos: ${escapeHtml(result.errors.join(" · "))}` : "";
       page(`${escapeHtml(p.aspsp)} conectado`, `${result.accounts} cuenta(s) y ${result.added} movimientos de este año leídos (solo lectura).${errs}`, true);
     } catch (e: any) {
