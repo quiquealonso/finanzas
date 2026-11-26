@@ -19,11 +19,17 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 - [ ] (Gastos) Conectar BBVA y Trade Republic de verdad: el usuario crea la aplicación en Enable Banking y pone la clave. Prioridad: alta
 - [ ] (Gastos) Trade Republic manda por Open Banking movimientos sin texto: lo nuevo queda en «Otros» hasta importar otro extracto. Buscar otra fuente (¿correo de cada pago?). Prioridad: media
-- [ ] (Gastos) Más categorías y reglas (el usuario lo deja para más adelante): compras de valores y cripto desde la
+- [ ] (Gastos) **Pendiente, recordar al usuario** · Más categorías y reglas (el usuario lo deja para más adelante): compras de valores y cripto desde la
   cuenta corriente deberían contar como inversión; recibo mensual de la tarjeta; pagos por PayPal con el comercio
   detrás; ocio online. Prioridad: media
-- [ ] (Gastos) MyInvestor con cuenta de crédito pignorada: conectar cuenta corriente y de crédito; el traspaso de una a
-  otra es interno, las compras salen de la de crédito; su saldo (deuda) no es efectivo. Prioridad: alta
+- [ ] (Gastos) **Pendiente, recordar al usuario** · MyInvestor con cuenta de crédito pignorada. Bloqueo: la página de
+  Open Banking de MyInvestor (redirección, beta) corta la contraseña a 15 caracteres → el usuario la cambiará. Luego:
+  enlazar en Enable Banking **las dos cuentas** (corriente y crédito), conectar desde Gastos y revisar enseguida (la
+  primera hora da todo el historial). Reglas: traspaso corriente → crédito es interno; las compras de fondos salen de
+  la de crédito (inversión, enlazar con el correo); el saldo del crédito es deuda, no efectivo («Crédito dispuesto»).
+  Preguntas abiertas: ¿la deuda resta en el patrimonio del Resumen?; ¿el traspaso es siempre del mismo importe que la
+  compra o agrupa varias? Respaldo: correos de MyInvestor de transferencias y traspasos (cargo/abono por traspaso,
+  transferencia inmediata/SEPA). Prioridad: alta
 - [ ] (Gastos) Clasificar con IA (datos tapados) lo que quede en «Otros»; lectura automática diaria; presupuestos por categoría. Prioridad: media
 - [ ] (Resumen) "Pendiente de reinvertir" suma toda la liquidez (cuentas de los bancos incluidas), no solo la cuenta de
   reinversión. ¿Debería ser solo lo que queda de las ventas? Prioridad: media
