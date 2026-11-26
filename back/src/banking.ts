@@ -263,8 +263,8 @@ export function registerBankingCallback(app: Express): void {
           `insert into bank_links (aspsp, country, "sessionId", "validUntil") values ($1, $2, $3, $4::timestamptz) returning id`,
           p.aspsp, p.country, s.session_id, validUntil
         );
-        // An older consent of the same bank is replaced by this one.
-        await prisma.$executeRawUnsafe(`update bank_links set status = 'replaced' where aspsp = $1 and id <> $2 and status = 'active'`, p.aspsp, link.id);
+        // An older consent of the same bank and country is replaced by this one (Trade Republic ES and DE are two).
+        await prisma.$executeRawUnsafe(`update bank_links set status = 'replaced' where aspsp = $1 and country = $2 and id <> $3 and status = 'active'`, p.aspsp, p.country, link.id);
         await saveAccounts(link.id, s.accounts ?? []);
         return syncLinks([link.id], true);
       });

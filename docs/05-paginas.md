@@ -67,6 +67,9 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
   (`spend_rules`, reclasifica todo lo no puesto a mano). Traspasos e inversión (MyInvestor, Trade Republic, Binance…)
   **no cuentan** como gasto ni ingreso.
 - Demo: 325 movimientos inventados (`node back/scripts/demo-banking.js`); conectar un banco real no está disponible.
+- Trade Republic (2026-11-26): sale como ES y como DE en Enable Banking; las dos dan la **misma** cuenta (IBAN ES) y
+  solo movimientos **desde el 1 de septiembre de 2026**, aunque se pida más (`strategy=longest`). Lo anterior no llega
+  por Open Banking. Un permiso nuevo solo sustituye al del mismo banco **y país**.
 - Pendiente: clasificar con IA lo que quede en «Otros» (con datos tapados), lectura automática diaria.
 
 ## Privacidad y términos · `front/public/privacidad.html`, `terminos.html` · nueva 2026-11-26
