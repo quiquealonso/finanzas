@@ -79,6 +79,10 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
   falta un extracto nuevo para clasificarlo.
 - Transferencias a o desde el titular (nombre de la cuenta de Trade Republic) y a Lemon Way (crowdfunding) cuentan como
   traspaso/inversión. Cada lectura e importación reclasifica todo lo automático (nunca lo puesto a mano).
+- BBVA (2026-11-26): permiso de 180 días y movimientos desde el 2 de enero con texto completo. La primera lectura pide
+  el historial largo (`strategy=longest`), que trae repetidos: se guardan una vez por `entry_reference`. Se guarda una
+  consulta por página (antes una por movimiento: minutos). `POST /api/v2/banking/sync` con `{ full: true }` vuelve a
+  leer el año entero (solo sirve en la primera hora tras el permiso).
 - Pendiente: clasificar con IA lo que quede en «Otros» (con datos tapados), lectura automática diaria.
 
 ## Privacidad y términos · `front/public/privacidad.html`, `terminos.html` · nueva 2026-11-26

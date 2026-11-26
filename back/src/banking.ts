@@ -206,7 +206,7 @@ async function syncLinks(linkIds?: string[], first = false): Promise<{ added: nu
           const q = new URLSearchParams({ date_from: from, transaction_status: "BOOK", strategy: first ? "longest" : "default" });
           if (continuation) q.set("continuation_key", continuation);
           const page = await eb<{ transactions: EbTx[]; continuation_key?: string | null }>("GET", `/accounts/${acc.uid}/transactions?${q}`);
-          for (const t of page.transactions ?? []) added += await saveTx(acc, t, seen);
+          added += await savePage(acc, page.transactions ?? [], seen);
           continuation = page.continuation_key ?? null;
         } while (continuation);
       }
@@ -222,30 +222,37 @@ async function syncLinks(linkIds?: string[], first = false): Promise<{ added: nu
 }
 const rank = (type: string) => { const i = BALANCE_ORDER.indexOf(type); return i < 0 ? 99 : i; };
 
-/** One movement; returns 1 when it is new. Same day, amount and text twice (two coffees) are told apart by order. */
-async function saveTx(acc: { id: string; accountKey: string }, t: EbTx, seen: Map<string, number>): Promise<number> {
-  const date = t.booking_date ?? t.value_date ?? t.transaction_date;
-  if (!date) return 0;
-  const sign = t.credit_debit_indicator === "DBIT" ? -1 : 1;
-  const amount = sign * Math.abs(Number(t.transaction_amount.amount));
-  const out = sign < 0;
-  const counterparty = (out ? t.creditor?.name : t.debtor?.name) ?? null;
-  const counterpartyIban = ((out ? t.creditor_account?.iban : t.debtor_account?.iban) ?? null)?.replace(/\s/g, "") ?? null;
-  const description = (t.remittance_information ?? []).join(" ").replace(/\s+/g, " ").trim() || counterparty || t.note || "";
-  let key: string;
-  if (t.entry_reference) key = `${acc.accountKey}|e|${t.entry_reference}`;
-  else {
-    const base = createHash("sha1").update(`${date}|${amount}|${description}|${counterparty ?? ""}`).digest("hex").slice(0, 20);
-    const n = (seen.get(base) ?? 0) + 1;
-    seen.set(base, n);
-    key = `${acc.accountKey}|h|${base}|${n}`;
+/**
+ * The movements of one page, in one statement (one by one is a round trip to the database each: minutes for a year of
+ * BBVA). Returns how many are new. Same day, amount and text twice (two coffees) are told apart by their order.
+ */
+async function savePage(acc: { id: string; accountKey: string }, txs: EbTx[], seen: Map<string, number>): Promise<number> {
+  const rows = [];
+  for (const t of txs) {
+    const date = t.booking_date ?? t.value_date ?? t.transaction_date;
+    if (!date) continue;
+    const sign = t.credit_debit_indicator === "DBIT" ? -1 : 1;
+    const amount = sign * Math.abs(Number(t.transaction_amount.amount));
+    const out = sign < 0;
+    const counterparty = (out ? t.creditor?.name : t.debtor?.name) ?? null;
+    const counterpartyIban = ((out ? t.creditor_account?.iban : t.debtor_account?.iban) ?? null)?.replace(/\s/g, "") ?? null;
+    const description = (t.remittance_information ?? []).join(" ").replace(/\s+/g, " ").trim() || counterparty || t.note || "";
+    let key: string;
+    if (t.entry_reference) key = `${acc.accountKey}|e|${t.entry_reference}`;
+    else {
+      const base = createHash("sha1").update(`${date}|${amount}|${description}|${counterparty ?? ""}`).digest("hex").slice(0, 20);
+      const n = (seen.get(base) ?? 0) + 1;
+      seen.set(base, n);
+      key = `${acc.accountKey}|h|${base}|${n}`;
+    }
+    rows.push({ key, date, amount, currency: t.transaction_amount.currency, description, counterparty, iban: counterpartyIban, mcc: t.merchant_category_code ?? null });
   }
-  const r = await prisma.$executeRawUnsafe(
+  if (!rows.length) return 0;
+  return Number(await prisma.$executeRawUnsafe(
     `insert into bank_transactions ("accountId", key, "bookingDate", amount, currency, description, counterparty, "counterpartyIban", mcc, status)
-     values ($1, $2, $3::date, $4, $5, $6, $7, $8, $9, 'BOOK') on conflict ("userId", key) do nothing`,
-    acc.id, key, date, amount, t.transaction_amount.currency, description, counterparty, counterpartyIban, t.merchant_category_code ?? null
-  );
-  return Number(r);
+     select $1, r.key, r.date::date, r.amount, r.currency, r.description, r.counterparty, r.iban, r.mcc, 'BOOK'
+       from jsonb_to_recordset($2::jsonb) as r(key text, date text, amount numeric, currency text, description text, counterparty text, iban text, mcc text)
+     on conflict ("userId", key) do nothing`, acc.id, JSON.stringify(rows)));
 }
 
 // ---------------------------------------------------------------- routes
@@ -338,8 +345,9 @@ export function registerBankingRoutes(app: Express): void {
   }));
 
   // Read again (balances and new movements). Banks allow a few background reads a day: on demand, not every minute.
-  app.post("/api/v2/banking/sync", handler(async (_req, res) => {
-    res.json(await syncLinks());
+  app.post("/api/v2/banking/sync", handler(async (req, res) => {
+    // full: read the whole year again (only useful in the first hour after the consent, when banks give it).
+    res.json(await syncLinks(undefined, req.body?.full === true));
   }));
 
   // Revoke a consent: the session is closed at Enable Banking (the bank stops giving data). Movements are kept.
