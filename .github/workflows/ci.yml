@@ -22,8 +22,8 @@ jobs:
       run:
         working-directory: back
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -40,7 +40,7 @@ jobs:
     name: Imagen Docker del back (la del servidor)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # La misma imagen que construye back/deploy/deploy.sh en la VM (docs/09-despliegue.md)
       - run: docker build -t finanzas-api back
       - name: Arranca sin secretos y no escucha fuera del contenedor sin pedirlo
@@ -55,8 +55,8 @@ jobs:
       run:
         working-directory: front
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -71,8 +71,8 @@ jobs:
       run:
         working-directory: mobile
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
