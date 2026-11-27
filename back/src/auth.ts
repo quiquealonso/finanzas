@@ -2,7 +2,7 @@ import { Express, NextFunction, Request, Response } from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { base, USERS, withUser } from "./prisma";
+import { base, currentUser, USERS, withUser } from "./prisma";
 
 // Login with password (see docs/02-arquitectura.md#login).
 // - Passwords: BCrypt hash in users."passwordHash" (supabase/auth.sql). The owner's users get theirs with
@@ -162,6 +162,34 @@ export function registerAuthRoutes(app: Express): void {
       }
       console.error("[auth] registro:", (error as Error).message);
       res.status(500).json({ error: "No se pudo crear la cuenta." });
+    }
+  });
+}
+
+/**
+ * The session's user (after requireUser). tourPending: a self-registered user that has not finished or skipped the
+ * guided tour yet; the front then opens it on every login (demo/tour.service.ts).
+ */
+export function registerMeRoutes(app: Express): void {
+  app.get("/api/v2/me", async (_req: Request, res: Response) => {
+    try {
+      const [row] = await base.$queryRawUnsafe<any[]>(
+        `select id, name, "registeredAt" is not null and "tourDoneAt" is null as "tourPending" from users where id = $1`, currentUser()
+      );
+      res.json(row ? { id: row.id, name: row.name, tourPending: !!row.tourPending } : { id: currentUser(), tourPending: false });
+    } catch (error) {
+      console.error("[auth] me:", (error as Error).message);
+      res.status(500).json({ error: "No se pudo leer el usuario." });
+    }
+  });
+
+  app.post("/api/v2/me/tour-done", async (_req: Request, res: Response) => {
+    try {
+      await base.$executeRawUnsafe(`update users set "tourDoneAt" = coalesce("tourDoneAt", now()) where id = $1`, currentUser());
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("[auth] tour-done:", (error as Error).message);
+      res.status(500).json({ error: "No se pudo guardar." });
     }
   });
 }

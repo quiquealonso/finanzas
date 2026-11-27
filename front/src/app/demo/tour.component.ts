@@ -47,7 +47,7 @@ const TALL = 0.55;
             <div class="buttons">
               @if (s.actions) {
                 @for (a of s.actions; track a.label) {
-                  <button type="button" class="btn" [class.primary]="a.primary" (click)="tour.action(a.goto)">{{ a.label }}</button>
+                  <button type="button" class="btn" [class.primary]="a.primary" (click)="tour.action(a.goto)">{{ a.goto === 'leave' && tour.onboarding ? 'Ir a mi cuenta' : a.label }}</button>
                 }
               } @else {
                 <button type="button" class="btn sm link skip" (click)="tour.finish()">Saltar tutorial</button>

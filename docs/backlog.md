@@ -47,6 +47,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Hecho
 
+- [x] 2026-11-27 · (Entrada) Cuenta recién registrada: el tutorial sale en cada acceso (sobre la demo) hasta que lo termina o lo salta.
 - [x] 2026-11-27 · (Toda la app) Barra lateral agrupada (Cartera, Rendimiento, Dinero, Planificar, Mercado) y con desplazamiento propio.
 - [x] 2026-11-27 · (Servidor) API publicada en una VM de Google Cloud (`us-central1`, Docker + Caddy) con despliegue automático desde `main`.
 - [x] 2026-11-27 · (Servidor) Preparar la subida: registro con código y máximo 5 cuentas, Gmail y bancos apagados en el servidor, solo el dueño refresca datos compartidos, CORS cerrado, `users` solo con la propia fila, Docker + Caddy + workflows de despliegue y Pages con demo y app real.

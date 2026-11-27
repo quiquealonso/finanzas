@@ -39,7 +39,9 @@
         <span class="small">{{ userName() }}</span>
         @if (demo) {
           <button type="button" class="btn sm link" (click)="tour.restart()" title="Repetir el tutorial guiado">Tutorial</button>
-          @if (!staticSite) { <button type="button" class="btn sm link" (click)="switchUser()" title="Volver a la pantalla de entrada">Salir de la demo</button> }
+          @if (tour.onboarding) {
+            <button type="button" class="btn sm link" (click)="switchUser()" title="Volver a tu cuenta (el tutorial saldrá otra vez hasta que lo termines o lo saltes)">Ir a mi cuenta</button>
+          } @else if (!staticSite) { <button type="button" class="btn sm link" (click)="switchUser()" title="Volver a la pantalla de entrada">Salir de la demo</button> }
         } @else {
           <button type="button" class="btn sm link" (click)="switchUser()" title="Cerrar la sesión">Salir</button>
         }

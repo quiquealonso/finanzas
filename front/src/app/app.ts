@@ -2,9 +2,11 @@ import { enterAs, sessionName, sessionUser } from './core/session';
 import { LoginPageComponent } from './features/login/login-page.component';
 import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { filter, firstValueFrom } from 'rxjs';
+import { API_ORIGIN } from './core/api-origin';
 import { isVisible, LAST_PAGE_KEY, NAV_GROUPS, PageDef, PAGES } from './app.routes';
-import { isDemo, STATIC_SITE } from './demo/demo-mode';
+import { isDemo, STATIC_SITE, startOnboarding } from './demo/demo-mode';
 import { TourComponent } from './demo/tour.component';
 import { TourService } from './demo/tour.service';
 import { PortfolioStore } from './core/portfolio.store';
@@ -25,6 +27,7 @@ export class App implements OnInit {
   protected readonly privacy = privacy;
 
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
   protected readonly tour = inject(TourService);
   /** Demo mode: example portfolio, no back end (demo/demo-mode.ts). */
   protected readonly demo = isDemo();
@@ -61,8 +64,19 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     if (!this.user) return;
+    if (!this.demo) void this.checkOnboarding();
     void this.store.refresh();
     this.tour.init();
+  }
+
+  /** A registered user who has not finished or skipped the tour gets it on every login (demo/demo-mode.ts). */
+  private async checkOnboarding(): Promise<void> {
+    try {
+      const me = await firstValueFrom(this.http.get<{ id: string; tourPending: boolean }>(`${API_ORIGIN}/api/v2/me`));
+      if (me.tourPending) startOnboarding(me.id);
+    } catch {
+      /* no answer: the app opens as usual */
+    }
   }
 
   protected togglePrivacy(): void {

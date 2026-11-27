@@ -38,6 +38,10 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
 - «¿No tienes cuenta? Crear una»: solo si el back acepta registros (`GET /api/auth/register` → `open`). Pide el código
   de registro, nombre, usuario y contraseña (12+, repetida). La cuenta nueva empieza vacía. Ver [09](09-despliegue.md).
 - «✦ Probar la demo guiada»: entra en la demo con el tutorial desde el principio.
+- **Primer acceso de una cuenta registrada** (2026-11-27): mientras no termine ni salte el tutorial, cada vez que entra se
+  abre la demo con el tutorial (su cuenta está vacía y el tutorial necesita una cartera). Si lo deja a medias, sigue por
+  el mismo paso. Al terminarlo o saltarlo, `POST /api/v2/me/tour-done` guarda `users."tourDoneAt"` y ya no sale más
+  (tampoco desde otro navegador). «Ir a mi cuenta» (barra lateral y último paso) le devuelve a su cuenta con la sesión.
 - Contraseñas de los usuarios del dueño: `npm run set-password -- <usuario>`. Detalles en [02](02-arquitectura.md#login).
 
 ## Resumen · `features/overview` · act. 2026-11-23

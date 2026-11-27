@@ -7,6 +7,8 @@ alter table public.users add column if not exists username text;
 create unique index if not exists users_username_key on public.users (lower(coalesce(username, id)));
 -- Set when somebody registers from the web (REGISTER_CODE, at most REGISTER_MAX accounts: src/auth.ts).
 alter table public.users add column if not exists "registeredAt" timestamptz;
+-- When a registered user finished or skipped the guided tour (shown on every login until then: src/auth.ts → /api/v2/me).
+alter table public.users add column if not exists "tourDoneAt" timestamptz;
 
 -- Supabase's public roles (Data API) get nothing here; these two functions return no data but are closed anyway.
 revoke execute on function public.app_user() from public, anon, authenticated;

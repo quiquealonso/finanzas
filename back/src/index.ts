@@ -3,7 +3,7 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import { base, prisma } from "./prisma";
-import { registerAuthRoutes, requireUser } from "./auth";
+import { registerAuthRoutes, registerMeRoutes, requireUser } from "./auth";
 import { allowedOrigins, ownerGuard, registerServerMode } from "./server-mode";
 import { registerPortfolioRoutes } from "./portfolio";
 import { registerClosingRoutes } from "./closings";
@@ -55,6 +55,8 @@ registerBankingCallback(app);
 app.use(requireUser);
 // Jobs that write shared data or spend API quota: only the owner (src/server-mode.ts).
 app.use(ownerGuard);
+
+registerMeRoutes(app);
 
 registerPortfolioRoutes(app);
 registerMailImportRoutes(app);

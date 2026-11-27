@@ -37,10 +37,37 @@ export function enterDemo(): void {
   location.href = document.baseURI;
 }
 
+/**
+ * Onboarding: a user who just registered has an empty account, so the guided tour runs on the demo portfolio. Their
+ * session token stays in the browser; leaving the demo takes them back to their own account. The key holds their id.
+ */
+const ONBOARDING_KEY = 'finanzas.onboarding';
+
+export function onboardingUser(): string | null {
+  try {
+    return isDemo() ? localStorage.getItem(ONBOARDING_KEY) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Opens the demo with the tour for this user; if they left it half way, it goes on from the same step. */
+export function startOnboarding(userId: string): void {
+  try {
+    if (localStorage.getItem(ONBOARDING_KEY) !== userId) localStorage.removeItem(DEMO_STATE_KEY);
+    localStorage.setItem(ONBOARDING_KEY, userId);
+    localStorage.setItem(KEY, '1');
+  } catch {
+    return; /* storage blocked: no tour */
+  }
+  location.href = document.baseURI;
+}
+
 /** Leaves the demo (back to the login screen). On the static site it starts the demo again instead. */
 export function leaveDemo(): void {
   try {
     localStorage.removeItem(KEY);
+    localStorage.removeItem(ONBOARDING_KEY);
     localStorage.removeItem(DEMO_STATE_KEY);
   } catch {
     /* ignore */

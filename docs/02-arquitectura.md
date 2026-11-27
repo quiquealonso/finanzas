@@ -49,6 +49,8 @@ App móvil (mobile/, Capacitor) ── RPC de solo lectura (mobile.sql), solo el
 - **Registro** (`POST /api/auth/register`): solo con `REGISTER_CODE` (comparado en tiempo constante) y hasta
   `REGISTER_MAX` cuentas (5), con un candado de Postgres para que dos a la vez no pasen del límite. Usuario de 3-30
   caracteres `[a-z0-9._-]`, contraseña de 12+. La cuenta empieza vacía. `GET /api/auth/register` → `{open, left}`.
+- `GET /api/v2/me` → `{id, name, tourPending}` (registrado sin tutorial terminado) y `POST /api/v2/me/tour-done`
+  (`demo/demo-mode.ts` → `startOnboarding`, `demo/tour.service.ts`).
 - Sin token solo responden el login, el registro y las vueltas de Google y del banco. `GET /api/v2/users` ya no existe.
 - Fuerza bruta: 10 intentos fallidos por IP y por usuario cada 15 min (429); el registro cuenta por IP.
 - Las contraseñas de los usuarios del dueño se ponen desde el ordenador: `npm run set-password -- <usuario>`.

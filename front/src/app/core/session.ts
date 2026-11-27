@@ -42,6 +42,11 @@ export function sessionName(): string {
   return claims()?.name ?? '';
 }
 
+/** Session token (also while the demo runs on top of it, for the onboarding). */
+export function sessionToken(): string | null {
+  return token();
+}
+
 function token(): string | null {
   try {
     return claims() ? localStorage.getItem(KEY) : null;

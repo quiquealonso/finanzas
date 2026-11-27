@@ -1,6 +1,8 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { demoState, isDemo, leaveDemo, setDemoState } from './demo-mode';
+import { API_ORIGIN } from '../core/api-origin';
+import { sessionToken } from '../core/session';
+import { demoState, isDemo, leaveDemo, onboardingUser, setDemoState } from './demo-mode';
 import { TOUR, TourStep } from './tour-steps';
 
 /**
@@ -12,6 +14,8 @@ export class TourService {
   private readonly router = inject(Router);
   readonly steps = TOUR;
   readonly active = signal(false);
+  /** Tour of a user who just registered (demo/demo-mode.ts → startOnboarding): "Ir a mi cuenta" at the end. */
+  readonly onboarding = onboardingUser() !== null;
   readonly index = signal(0);
   readonly step = computed<TourStep>(() => this.steps[this.index()]);
   /** Chapters in order, for the progress line ("Tu perfil · 3 de 5"). */
@@ -46,7 +50,7 @@ export class TourService {
   action(goto: string): void {
     if (goto === 'next') return this.next();
     if (goto === 'end') return this.finish();
-    if (goto === 'leave') return leaveDemo();
+    if (goto === 'leave') return void this.markDone().then(() => leaveDemo());
     if (goto === 'restart') return this.restart();
     const i = this.steps.findIndex((s) => s.id === goto);
     if (i >= 0) this.go(i);
@@ -55,6 +59,22 @@ export class TourService {
   finish(): void {
     this.active.set(false);
     setDemoState('tour', { index: this.index(), done: true });
+    void this.markDone();
+  }
+
+  /**
+   * Onboarding: tells the server the tour is finished or skipped, so it does not open on the next login. Straight
+   * fetch with the user's token: in demo mode the HTTP client answers from the example files.
+   */
+  private async markDone(): Promise<void> {
+    const token = this.onboarding ? sessionToken() : null;
+    if (!token) return;
+    try {
+      const r = await fetch(`${API_ORIGIN}/api/v2/me/tour-done`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+      if (r.ok) localStorage.removeItem('finanzas.onboarding');
+    } catch {
+      /* offline: the tour opens again on the next login */
+    }
   }
 
   private go(i: number): void {
