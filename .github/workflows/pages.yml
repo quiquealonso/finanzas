@@ -30,8 +30,8 @@ jobs:
       run:
         working-directory: front
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -40,7 +40,7 @@ jobs:
       # https://<usuario>.github.io/<repositorio>/ (demo) and …/app/ (real app), each with its CSP, and a 404.html
       # that sends a reload of any page to the right one.
       - run: bash scripts/pages-mount.sh "${{ github.event.repository.name }}" pages "${{ vars.API_URL }}"
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: front/pages
 
@@ -53,4 +53,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
