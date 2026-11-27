@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { PortfolioStore } from '../../core/portfolio.store';
 import { formatDay, MASK, privacy } from '../../shared/format.utils';
 import { TemplateWizardComponent } from './template-wizard.component';
+import { API_ORIGIN } from '../../core/api-origin';
 
 type ImportEvent = { n: number; level: 'info' | 'ok' | 'skip' | 'warn' | 'error'; text: string };
 type Status = 'new' | 'exists' | 'maybe' | 'imported' | 'cancelled';
@@ -25,8 +26,8 @@ type Setup = {
   since: string; gmail: boolean;
 };
 
-const BASE = 'http://localhost:3000/api/v2/mail-import';
-const GMAIL = 'http://localhost:3000/api/v2/gmail';
+const BASE = `${API_ORIGIN}/api/v2/mail-import`;
+const GMAIL = `${API_ORIGIN}/api/v2/gmail`;
 
 /**
  * Import from e-mail in three steps: pick banks and start day → the back reads the e-mails (real progress, nothing is

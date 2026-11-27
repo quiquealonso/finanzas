@@ -42,3 +42,5 @@ coverage/
 .DS_Store
 Thumbs.db
 .github/copilot-instructions.md
+# Carpeta que monta front/scripts/pages-mount.sh (GitHub Pages)
+front/pages/

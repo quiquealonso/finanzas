@@ -2,7 +2,7 @@
 
 ```
 Navegador (Angular 21, puerto 4200)
-   │  HTTP + cabecera x-user-id
+   │  HTTP + Authorization: Bearer <token de sesión>
    ▼
 Backend Express + Prisma (puerto 3000)  ──►  APIs externas (Yahoo, SEC, Nasdaq, Gmail, Bluesky, YouTube, Gemini…)
    │  cada consulta: set app.user_id + rol finanzas_app
@@ -38,20 +38,24 @@ App móvil (mobile/, Capacitor) ── RPC de solo lectura (mobile.sql), solo el
 
 ## Login
 
-- Entrada: elegir usuario y escribir la contraseña (`features/login`). `POST /api/auth/login` compara con el hash
-  **BCrypt** (coste 12) de `users."passwordHash"` (`supabase/auth.sql`) y devuelve un **JWT HS256** firmado con
-  `AUTH_SECRET`, válido 12 h.
-- El front lo guarda en el navegador (`finanzas.token`) y `userInterceptor` (`core/session.ts`) lo manda en cada
-  petición como `Authorization: Bearer …`. Si el back responde 401 (caducado), vuelve a la pantalla de entrada.
+- Entrada: usuario + contraseña (`features/login`). `POST /api/auth/login` busca `lower(coalesce(username, id))` y
+  compara con el hash **BCrypt** (coste 12) de `users."passwordHash"` (`supabase/auth.sql`). Devuelve un **JWT HS256**
+  firmado con `AUTH_SECRET`, válido 12 h. Mismo mensaje para usuario inexistente, sin contraseña o contraseña mala.
+- El front lo guarda en el navegador (`finanzas.token`) y `userInterceptor` (`core/session.ts`) lo manda **solo a la API**
+  (`API_ORIGIN`, `core/api-origin.ts`) como `Authorization: Bearer …`. Si el back responde 401, vuelve a la entrada.
 - El back (`src/auth.ts` → `requireUser`) comprueba firma, caducidad y algoritmo, y ejecuta la petición **como el
-  usuario del token**. Antes el usuario venía en la cabecera `x-user-id`, que el cliente podía cambiar: ya no se acepta.
-- Sin token solo responden `GET /api/v2/users` (nombres para la pantalla de entrada), `POST /api/auth/login` y la
-  vuelta de Google al conectar Gmail.
-- Fuerza bruta: 10 intentos fallidos por IP y por usuario cada 15 min (429). Mismo mensaje para usuario inexistente y
-  contraseña mala.
-- Las contraseñas solo se ponen desde el servidor: `npm run set-password -- <usuario>` (no hay registro desde la web).
+  usuario del token**: los del dueño (`user1`, `user2`) o un registrado (`u_` + 16 hex) que siga existiendo en `users`
+  (se mira en la base como mucho una vez por minuto). `demo` nunca entra.
+- **Registro** (`POST /api/auth/register`): solo con `REGISTER_CODE` (comparado en tiempo constante) y hasta
+  `REGISTER_MAX` cuentas (5), con un candado de Postgres para que dos a la vez no pasen del límite. Usuario de 3-30
+  caracteres `[a-z0-9._-]`, contraseña de 12+. La cuenta empieza vacía. `GET /api/auth/register` → `{open, left}`.
+- Sin token solo responden el login, el registro y las vueltas de Google y del banco. `GET /api/v2/users` ya no existe.
+- Fuerza bruta: 10 intentos fallidos por IP y por usuario cada 15 min (429); el registro cuenta por IP.
+- Las contraseñas de los usuarios del dueño se ponen desde el ordenador: `npm run set-password -- <usuario>`.
 - Los scripts (`back/scripts`) y las tareas programadas van directos a la base de datos con su usuario, sin login.
-- Tests: `back/test/auth.test.js` (`npm test`, también en el CI).
+- Modo servidor (`src/server-mode.ts`): `INTEGRATIONS=off`, `BACKGROUND_JOBS=off`, `OWNER_USER`, `CORS_ORIGINS`,
+  `TRUST_PROXY`, `HOST`. Ver [09](09-despliegue.md).
+- Tests: `back/test/auth.test.js` y `server-mode.test.js` (`npm test`, también en el CI).
 
 ## Prisma 7 y la conexión
 
@@ -88,12 +92,14 @@ App móvil (mobile/, Capacitor) ── RPC de solo lectura (mobile.sql), solo el
 - Tablas con datos personales tienen `"userId"` (por defecto `public.app_user()`), o cuelgan de una que lo tiene.
 - **RLS** (row level security): el rol `finanzas_app` solo ve las filas de `app.user_id`. Políticas en `users.sql`.
 - `back/src/prisma.ts`: `withUser(id, fn)` (AsyncLocalStorage) y un proxy de Prisma que ejecuta cada consulta en una
-  transacción corta con `set_config('app.user_id', …)` y `set role finanzas_app`. El middleware de `index.ts` lee la
-  cabecera `x-user-id` (`user1` | `user2`).
+  transacción corta con `set_config('app.user_id', …)` y `set role finanzas_app`. El usuario sale del token de sesión (`src/auth.ts`).
 - `base` (cliente sin proxy) = dueño de la base: ve todo. Lo usan los trabajos nocturnos y los datos **compartidos**
   (precios, tipos de activo, fx, fórmula mágica, sentimiento, valoraciones).
 - Funciones: `clone_user_data(origen, destino)` y `delete_user_data(usuario)` (se niega con `user1`).
-- Front: `HIDDEN_FOR = { user2: ['apuestas', 'formula-magica'] }` (`app.routes.ts`) quita esas páginas de la barra y bloquea su URL al Usuario 2 (se usa en clase).
+- Front: `HIDDEN_FOR` (`app.routes.ts`): `user1` lo ve todo, `demo` no ve Apuestas y el resto (Usuario 2, que se usa en
+  clase, y los registrados) tampoco ve Fórmula mágica. Quita la página de la barra y bloquea su URL.
+- `users`: cada usuario solo ve su propia fila y la app no la puede cambiar; login, registro y contraseñas van con la
+  conexión del dueño.
 
 ## Trabajos en segundo plano con progreso
 

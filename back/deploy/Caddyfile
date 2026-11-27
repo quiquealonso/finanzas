@@ -1,0 +1,30 @@
+# Caddy gets and renews the HTTPS certificate of the domain by itself, and redirects http:// to https://.
+{$API_DOMAIN} {
+	encode gzip
+
+	header {
+		# Only HTTPS for a year (the browser no longer tries http://)
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		# The API only returns JSON: no scripts, and never inside an iframe
+		Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Cross-Origin-Resource-Policy "same-site"
+		# Do not announce the server software
+		-Server
+	}
+
+	# Only the API: anything else is 404 (no scanners poking at other paths).
+	@api path /api/*
+	handle @api {
+		request_body {
+			max_size 2MB
+		}
+		reverse_proxy api:3000
+	}
+	handle {
+		respond 404
+	}
+}

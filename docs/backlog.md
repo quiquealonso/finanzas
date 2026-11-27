@@ -35,7 +35,8 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
   reinversión. ¿Debería ser solo lo que queda de las ventas? Prioridad: media
 - [ ] (Presentación) Diseñar la app como para un cliente final (portada, onboarding, perfil de riesgo al empezar…). Prioridad: media
 
-- [ ] (Servidor) Subir la app a Google Cloud (VM e2-micro); el login ya está hecho. Prioridad: alta (proyecto de clase)
+- [ ] (Servidor) Montar la VM y Supabase siguiendo [09 · Despliegue](09-despliegue.md) (lo hace el usuario con sus cuentas); el código y los workflows ya están. Prioridad: alta (proyecto de clase)
+- [ ] (Servidor) Despublicar después de la defensa ([09](09-despliegue.md#despublicar-después-de-la-defensa)). Prioridad: alta
 - [ ] (Compartir) Regenerar `finanzas-para-compartir.zip` con lo nuevo (multiusuario, correo, sentimiento, valoraciones). Prioridad: media
 - [ ] (Móvil) **En pausa por decisión del usuario (2026-11-25)**: no se toca la app móvil (`mobile/`) ni se adapta la web a móvil. Cuando se retome: adaptar la app móvil a dos usuarios. Prioridad: en pausa
 - [ ] (Movimientos) Importar WeCity desde el correo (solo hay correos de "Ingreso recibido" y amortizaciones). Prioridad: baja
@@ -46,6 +47,7 @@ Al pedir un cambio: "mira el backlog, punto X". Al terminarlo se mueve a **Hecho
 
 ## Hecho
 
+- [x] 2026-11-27 · (Servidor) Preparar la subida: registro con código y máximo 5 cuentas, Gmail y bancos apagados en el servidor, solo el dueño refresca datos compartidos, CORS cerrado, `users` solo con la propia fila, Docker + Caddy + workflows de despliegue y Pages con demo y app real.
 - [x] 2026-11-26 · (Movimientos) Inversiones detectadas en las cuentas del banco, listas para apuntar en la cartera (o enlazar si ya están).
 - [x] 2026-11-26 · (Gastos) «No usar» una cuenta de un banco (BBVA tiene dos y solo se quiere una).
 - [x] 2026-11-26 · (Gastos) Importar extracto PDF de Trade Republic: historia desde la apertura y texto para los movimientos de Open Banking.

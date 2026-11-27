@@ -5,6 +5,15 @@ Formato: **fecha · decisión** — porqué. (Alternativas descartadas.)
 
 ## 2026-11
 
+- **2026-11-27 · Publicación para clase: registro con código y límite, sin integraciones en el servidor** — el
+  profesor tiene que poder registrarse, pero nadie más. Registro solo con una palabra dicha en persona y como mucho 5
+  cuentas; cada cuenta empieza vacía y RLS impide ver datos de otro. En la VM no están el token de Gmail, la clave de
+  Enable Banking ni la de Gemini (`INTEGRATIONS=off`): el ordenador sigue sincronizando en la misma base, así que si
+  alguien entrara en la VM no tendría acceso al correo ni a los bancos. VM propia (no la de PanGestion) para poder
+  apagarla tras la defensa sin tocar la otra. Alternativas descartadas: limitar el registro por IP (la red de clase es
+  compartida y la IP cambia; queda como capa opcional no implementada), invitación de un solo uso (el usuario prefirió
+  registro), Cloudflare Tunnel + Access (necesita dominio de pago) y publicar solo la demo.
+
 - **2026-11-26 · Inversiones de las cuentas a la cartera, siempre con el visto bueno** — detectarlas y dejarlas
   preparadas, pero sin apuntar nada solo: muchas ya están en la cartera (correo, a mano) y a veces agrupadas (tres
   compras del banco apuntadas como una). Antes de proponer, se buscan por títulos y por dinero; lo dudoso se pregunta.

@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { PortfolioStore } from '../../core/portfolio.store';
 import { isDemo } from '../../demo/demo-mode';
+import { API_ORIGIN } from '../../core/api-origin';
 
-const API = 'http://localhost:3000/api/v2/mail-templates';
+const API = `${API_ORIGIN}/api/v2/mail-templates`;
 
 type Candidate = { id: string; from: string; date: string; subject: string; snippet: string };
 type Event = { n: number; level: 'info' | 'ok' | 'ai' | 'warn' | 'error'; text: string };

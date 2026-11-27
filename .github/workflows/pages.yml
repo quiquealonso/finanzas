@@ -1,8 +1,10 @@
-name: Demo (GitHub Pages)
+name: Web (GitHub Pages)
 
-# Publishes the demo of the app: the front with the example portfolio (front/public/demo/, made by
-# back/scripts/demo-fixtures.js) and the guided tour. No back end: on github.io the app always runs in demo mode
-# (front/src/app/demo/demo-mode.ts → STATIC_SITE). Only after CI passes on main.
+# Publishes, only after CI passes on main (front/scripts/pages-mount.sh):
+#   /finanzas/      the demo: example portfolio (front/public/demo/, made by back/scripts/demo-fixtures.js) and the
+#                   guided tour, no back end (front/src/app/demo/demo-mode.ts → STATIC_SITE)
+#   /finanzas/app/  the real app, calling the API on the server: only when the repository variable API_URL is set
+#                   (Settings → Secrets and variables → Actions → Variables), see docs/09-despliegue.md
 on:
   workflow_run:
     workflows: [CI]
@@ -35,13 +37,12 @@ jobs:
           cache: npm
           cache-dependency-path: front/package-lock.json
       - run: npm ci
-      # https://<usuario>.github.io/<repositorio>/
-      - run: npx ng build --base-href "/${{ github.event.repository.name }}/"
-      # GitHub Pages has no URL rewriting: 404.html is the app too, so /finanzas/resumen works on reload.
-      - run: cp dist/front/browser/index.html dist/front/browser/404.html
+      # https://<usuario>.github.io/<repositorio>/ (demo) and …/app/ (real app), each with its CSP, and a 404.html
+      # that sends a reload of any page to the right one.
+      - run: bash scripts/pages-mount.sh "${{ github.event.repository.name }}" pages "${{ vars.API_URL }}"
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: front/dist/front/browser
+          path: front/pages
 
   deploy:
     name: Publicar

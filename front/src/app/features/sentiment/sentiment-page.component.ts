@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { formatDay } from '../../shared/format.utils';
 import { ListView, ViewToggleComponent } from '../../shared/view-toggle.component';
+import { API_ORIGIN } from '../../core/api-origin';
 
-const BASE = 'http://localhost:3000/api/v2/sentiment';
+const BASE = `${API_ORIGIN}/api/v2/sentiment`;
 const FUND_KEY = 'sentiment.fund';
 
 type Overview = {

@@ -1,0 +1,66 @@
+name: Desplegar API
+
+# After CI passes on main: deploys the back end on the VM (back/deploy, docs/09-despliegue.md) and checks it from
+# outside. Does nothing until the server is set up (repository variable API_URL and secrets VM_SSH_KEY,
+# VM_KNOWN_HOSTS, VM_HOST).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+# Never two deployments at once, and never cancel one half way.
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Desplegar en la VM
+    if: (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') && vars.API_URL != ''
+    runs-on: ubuntu-latest
+    environment:
+      name: produccion
+      url: ${{ vars.API_URL }}
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      # The key can only run ~/finanzas/deploy.sh on the VM (command="…" in authorized_keys).
+      - name: Desplegar
+        env:
+          SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VM_KNOWN_HOSTS }}
+          VM_HOST: ${{ secrets.VM_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "finanzas@$VM_HOST" "$SHA"
+
+      # From outside: HTTPS, security headers, CORS only for the published app, nothing without a session.
+      - name: Comprobar el servidor
+        env:
+          API: ${{ vars.API_URL }}
+          WEB: https://${{ github.repository_owner }}.github.io
+        run: |
+          set -eu
+          check() { code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "${@:2}"); echo "$1 == $code  ${*:2}"; [ "$code" = "$1" ]; }
+          check 200 "$API/api/auth/register"
+          check 401 "$API/api/v2/overview"
+          check 401 "$API/api/v2/users"
+          check 404 "$API/"
+          check 308 "http://${API#https://}/api/auth/register"
+          headers=$(curl -sI --max-time 10 "$API/api/auth/register" | tr 'A-Z' 'a-z')
+          for h in strict-transport-security content-security-policy x-content-type-options x-frame-options referrer-policy; do
+            echo "$headers" | grep -q "^$h:" || { echo "Falta la cabecera $h"; exit 1; }
+          done
+          echo "$headers" | grep -q "^x-powered-by:" && { echo "Sobra x-powered-by"; exit 1; } || true
+          # CORS: the published app yes, another site no.
+          curl -sI --max-time 10 -X OPTIONS "$API/api/auth/login" -H "Origin: $WEB" -H "Access-Control-Request-Method: POST" | grep -qi "^access-control-allow-origin: $WEB"
+          ! curl -sI --max-time 10 -X OPTIONS "$API/api/auth/login" -H "Origin: https://example.com" -H "Access-Control-Request-Method: POST" | grep -qi "^access-control-allow-origin"
+          # Gmail and banks are off on the server.
+          check 403 -X POST "$API/api/v2/banking/sync"

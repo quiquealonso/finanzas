@@ -1,6 +1,7 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 import { isDemo, leaveDemo } from '../demo/demo-mode';
+import { API_ORIGIN } from './api-origin';
 
 /**
  * Who is using the app. The entry screen logs in (user + password, POST /api/auth/login) and keeps the session token
@@ -62,7 +63,8 @@ export function enterAs(newToken: string | null): void {
 }
 
 export const userInterceptor: HttpInterceptorFn = (req, next) => {
-  const t = token();
+  // The token only goes to our back end, never to another site the app may read from.
+  const t = req.url.startsWith(`${API_ORIGIN}/`) ? token() : null;
   return next(t ? req.clone({ setHeaders: { Authorization: `Bearer ${t}` } }) : req).pipe(
     catchError((error: unknown) => {
       // Expired or invalid session while using the app: back to the entry screen.

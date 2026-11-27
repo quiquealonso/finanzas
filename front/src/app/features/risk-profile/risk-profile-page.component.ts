@@ -6,9 +6,10 @@ import { PROFILES, QUESTIONS, RiskQuestion, RiskResult, scoreAnswers } from './r
 import { FundFinderDialogComponent } from './fund-finder-dialog.component';
 import { fundLink, money, pct, plain, regionFlags, SavedFund, zoneFlags } from './fund-format';
 import { ConfirmService } from '../../shared/confirm-dialog.component';
+import { API_ORIGIN } from '../../core/api-origin';
 
-const API = 'http://localhost:3000/api/v2/risk-profile';
-const SAVED_API = 'http://localhost:3000/api/v2/saved-funds';
+const API = `${API_ORIGIN}/api/v2/risk-profile`;
+const SAVED_API = `${API_ORIGIN}/api/v2/saved-funds`;
 /** Types counted as "risky" (equity-like) when comparing with the real portfolio. */
 const RISKY = new Set(['STOCK', 'ETF', 'FUND', 'CRYPTO']);
 

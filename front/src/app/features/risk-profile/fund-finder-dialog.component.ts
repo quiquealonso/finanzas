@@ -4,9 +4,10 @@ import { firstValueFrom } from 'rxjs';
 import { PortfolioStore } from '../../core/portfolio.store';
 import { PROFILES } from './risk-questions';
 import { fundLink, FundPick as Pick, money, pct, plain, regionFlags, SavedFund, ZONES } from './fund-format';
+import { API_ORIGIN } from '../../core/api-origin';
 
-const API = 'http://localhost:3000/api/v2/fund-finder';
-const SAVED_API = 'http://localhost:3000/api/v2/saved-funds';
+const API = `${API_ORIGIN}/api/v2/fund-finder`;
+const SAVED_API = `${API_ORIGIN}/api/v2/saved-funds`;
 
 type Event = { n: number; level: 'info' | 'ok' | 'ai' | 'warn' | 'error'; text: string };
 type Job = { id: string; phase: 'running' | 'done' | 'error'; events: Event[]; picks: Pick[]; model: string | null; considered: number; matched: number };

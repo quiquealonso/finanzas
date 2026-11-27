@@ -267,9 +267,9 @@ export function registerMailTemplateRoutes(app: Express): void {
   /** Every template made by users (shared), with who made it. */
   app.get("/api/v2/mail-templates", handler(async (_req, res) => {
     res.json(await prisma.$queryRawUnsafe(
-      `select t.id, t.label, t.what, t.status, t.samples, t.model, t.uses, t."lastUsedAt", t."createdAt", u.name as "createdBy",
+      `select t.id, t.label, t.what, t.status, t.samples, t.model, t.uses, t."lastUsedAt", t."createdAt", coalesce(u.name, 'otro usuario') as "createdBy",
               t."createdBy" = public.app_user() as mine
-         from mail_templates t join users u on u.id = t."createdBy" order by t."createdAt" desc`
+         from mail_templates t left join users u on u.id = t."createdBy" order by t."createdAt" desc`
     ));
   }));
 

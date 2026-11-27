@@ -2,8 +2,9 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AllocationTarget, BankingBank, BankingStatus, BankTx, BenchmarkData, CalendarDay, CalendarDayDetail, ClosingSheet, Goal, GoalsData, IntradayData, MagicFormulaData, MonthlyData, Movement, NewsData, PerpsData, WalletsData, Overview, PriceQuote, RealEstateTicket, RealizedData, RecurringData } from './portfolio.models';
+import { API_ORIGIN } from './api-origin';
 
-const BASE = 'http://localhost:3000/api';
+const BASE = `${API_ORIGIN}/api`;
 
 @Injectable({ providedIn: 'root' })
 export class PortfolioApi {

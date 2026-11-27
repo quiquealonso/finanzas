@@ -71,7 +71,7 @@ declare
   by_asset text[] := array['asset_operations', 'asset_price_history', 'asset_price_sync_logs', 'daily_asset_snapshots',
                            'intraday_asset_prices', 'real_estate_details', 'recurring_contributions', 'yield_anchors',
                            'external_operations', 'perp_costs', 'perp_positions'];
-  shared text[] := array['asset_types', 'fx_rates', 'price_sync_runs', 'magic_formula_runs', 'magic_formula_picks', 'users'];
+  shared text[] := array['asset_types', 'fx_rates', 'price_sync_runs', 'magic_formula_runs', 'magic_formula_picks'];
   rule text;
 begin
   foreach t in array owned || by_asset || shared || array['transfers', 'closing_rows', 'betting_transactions'] loop
@@ -88,6 +88,13 @@ begin
     execute format('create policy app_user_rows on public.%I for all to finanzas_app using (%s) with check (%s)', t, rule, rule);
   end loop;
 end $$;
+
+-- users: the app only sees its own row (name for the mail import), and never writes it. Login, registration and
+-- passwords go through the owner connection (src/auth.ts, scripts/set-password.js).
+alter table public.users enable row level security;
+drop policy if exists app_user_rows on public.users;
+create policy app_user_rows on public.users for select to finanzas_app using (id = public.app_user());
+revoke insert, update, delete on public.users from finanzas_app;
 
 -- Copies every row of a user to another one (the second user starts with the same investments). New ids are the
 -- old ones with a prefix ("user2_..."), so links between tables keep working. Crypto wallets and Hyperliquid

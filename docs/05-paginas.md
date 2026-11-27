@@ -32,10 +32,13 @@ Al cambiar una página, **actualiza su sección** (y la fecha).
   Noticias vacía.
 - **Regenerar** (con el back en marcha): `node back/scripts/demo-seed.js --reset` y `node back/scripts/demo-fixtures.js`.
 
-## Entrada (login) · `features/login` · act. 2026-11-25
-- «✦ Probar la demo guiada» debajo de los usuarios: entra en la demo con el tutorial desde el principio.
-- Elegir usuario → contraseña → «Entrar». Guarda el token de sesión (12 h) en el navegador (`finanzas.token`).
-- Usuario sin contraseña: aviso con el comando `npm run set-password -- <usuario>`. Detalles en [02](02-arquitectura.md#login).
+## Entrada (login) · `features/login` · act. 2026-11-27
+- Usuario + contraseña → «Entrar». Ya no se listan los usuarios (no se revela quién existe). Guarda el token de sesión
+  (12 h) en el navegador (`finanzas.token`). Los usuarios del dueño entran con su id (`user1`, `user2`).
+- «¿No tienes cuenta? Crear una»: solo si el back acepta registros (`GET /api/auth/register` → `open`). Pide el código
+  de registro, nombre, usuario y contraseña (12+, repetida). La cuenta nueva empieza vacía. Ver [09](09-despliegue.md).
+- «✦ Probar la demo guiada»: entra en la demo con el tutorial desde el principio.
+- Contraseñas de los usuarios del dueño: `npm run set-password -- <usuario>`. Detalles en [02](02-arquitectura.md#login).
 
 ## Resumen · `features/overview` · act. 2026-11-23
 - **Arriba**: filtro Banco/Tipo (desplegables con selección múltiple, compartido con Activos) + a la derecha

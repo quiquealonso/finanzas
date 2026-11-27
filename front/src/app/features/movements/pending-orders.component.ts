@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { PortfolioStore } from '../../core/portfolio.store';
 import { formatDay, formatQty } from '../../shared/format.utils';
 import { ConfirmService } from '../../shared/confirm-dialog.component';
+import { API_ORIGIN } from '../../core/api-origin';
 
 type PendingOrder = {
   id: string; broker: string; orderNo: string | null; kind: 'buy' | 'sell'; isin: string | null; name: string;
@@ -15,7 +16,7 @@ type PendingOrder = {
 };
 type Draft = { date: string; price: number | null; quantity: number; fee: number };
 
-const BASE = 'http://localhost:3000/api/v2/pending-orders';
+const BASE = `${API_ORIGIN}/api/v2/pending-orders`;
 
 /**
  * Orders read from e-mail that the broker never confirmed (BBVA only sends the order): the user says whether

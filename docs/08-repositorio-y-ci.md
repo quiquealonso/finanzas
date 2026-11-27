@@ -29,7 +29,8 @@ repositorio. La documentación habla de "Usuario 1" y "Usuario 2", nunca de pers
 |---|---|---|
 | **CI** (`ci.yml`) | Cada push y pull request | Back: `npm ci`, `prisma generate`, tipos (`tsc --noEmit`), build y tests del login. Front y app móvil: build de producción. No usa secretos ni base de datos. |
 | **Seguridad** (`security.yml`) | Cada push, pull request y los lunes | **Gitleaks** en todo el historial (claves y contraseñas; excepciones en `.gitleaks.toml`). **npm audit** de back, front y móvil: falla con vulnerabilidades altas en producción. **OSV-Scanner** de todos los `package-lock.json` (informativo). |
-| **Demo (GitHub Pages)** (`pages.yml`) | Cuando el CI pasa en `main` | Construye el front con la base `/finanzas/` y lo publica en https://quiquealonso.github.io/finanzas/ (siempre en modo demo). `404.html` = `index.html` para que recargar una página funcione. |
+| **Web (GitHub Pages)** (`pages.yml`) | Cuando el CI pasa en `main` | `front/scripts/pages-mount.sh`: la demo en https://quiquealonso.github.io/finanzas/ y, si existe la variable `API_URL`, la app real en `/finanzas/app/` apuntando al servidor. Cada una con su CSP en `<meta>`. `404.html` guarda la dirección y abre la app correcta, que la recupera (`main.ts`). |
+| **Desplegar API** (`deploy.yml`) | Cuando el CI pasa en `main` (solo con `API_URL`) | Entra por SSH en la VM con una clave que solo ejecuta `deploy.sh` y comprueba el servidor desde fuera: HTTPS, cabeceras, CORS, 401 sin sesión, Gmail/bancos 403. Ver [09](09-despliegue.md). |
 | **Dependabot** (`dependabot.yml`) | Semanal | Un PR agrupado por carpeta (back, front, móvil, acciones). Sin versiones mayores: esas se hacen a mano y probando la app. Los avisos de seguridad llegan siempre. |
 
 Si el CI falla: abrir el workflow en la pestaña **Actions** de GitHub, ver el paso en rojo y reproducirlo en local con

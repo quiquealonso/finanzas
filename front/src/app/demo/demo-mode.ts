@@ -5,12 +5,17 @@
  *
  * On: "Probar la demo guiada" on the login screen (flag in localStorage), or always on GitHub Pages (no back end there).
  */
+import { DEMO_ONLY } from '../core/api-origin';
+
 const KEY = 'finanzas.demo';
 /** Things the demo remembers between reloads (risk profile, saved funds, tour progress). */
 export const DEMO_STATE_KEY = 'finanzas.demo.state';
 
-/** Published as a static site (GitHub Pages): only the demo can work. */
-export const STATIC_SITE = typeof location !== 'undefined' && location.hostname.endsWith('github.io');
+/**
+ * Only the demo can work: the demo build published on GitHub Pages (no back end there). The real app published at
+ * /app/ is built with DEMO_ONLY = false (core/api-origin.ts, written by .github/workflows/pages.yml).
+ */
+export const STATIC_SITE = DEMO_ONLY ?? (typeof location !== 'undefined' && location.hostname.endsWith('github.io'));
 
 export function isDemo(): boolean {
   if (STATIC_SITE) return true;

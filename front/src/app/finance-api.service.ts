@@ -12,10 +12,11 @@ import {
   StandaloneOperationDraft,
   TransferDraft
 } from './models/finance.models';
+import { API_ORIGIN } from './core/api-origin';
 
 @Injectable({ providedIn: 'root' })
 export class FinanceApiService {
-  private readonly baseUrl = 'http://localhost:3000/api';
+  private readonly baseUrl = `${API_ORIGIN}/api`;
 
   constructor(private readonly http: HttpClient) {}
 

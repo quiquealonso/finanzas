@@ -1,0 +1,13 @@
+# Only what the image needs (see Dockerfile). Never secrets, data or local builds.
+node_modules
+dist
+data
+test
+scripts
+deploy
+supabase
+.env
+.env.*
+*.pem
+*.key
+prisma/dev.db

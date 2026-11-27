@@ -1,6 +1,7 @@
 import { Express } from "express";
 import { currentUser, DEFAULT_USER, prisma, USERS, withUser } from "./prisma";
 import { createMovement, fxOn, handler, HttpError, madridToday, num, refreshSnapshots, round } from "./portfolio";
+import { backgroundJobs } from "./server-mode";
 
 // On-chain spot wallets (Solana, Sui, EVM chains) read with public addresses, no keys. See supabase/wallets.sql.
 // The sync stores every balance, maps tokens to assets and brings the asset quantity in line with the chain:
@@ -292,6 +293,9 @@ export function registerWalletRoutes(app: Express): void {
       }
     }
   };
-  setTimeout(tick, 30_000);
-  setInterval(tick, 60 * 60_000);
+  // Not on the public server (BACKGROUND_JOBS=off): the owner's computer runs it (src/server-mode.ts).
+  if (backgroundJobs()) {
+    setTimeout(tick, 30_000);
+    setInterval(tick, 60 * 60_000);
+  }
 }

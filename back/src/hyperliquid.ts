@@ -2,6 +2,7 @@ import { Express } from "express";
 import { randomUUID } from "crypto";
 import { currentUser, DEFAULT_USER, prisma, USERS, withUser } from "./prisma";
 import { addOp, fxOn, handler, madridToday, num, recalcAsset, refreshSnapshots, round, TX_OPTIONS } from "./portfolio";
+import { backgroundJobs } from "./server-mode";
 
 // Perpetual futures from Hyperliquid (MetaMask Perps runs on it), read only with the public wallet address.
 // Model and tables: see supabase/perps.sql. In short: one CRYPTO asset per coin, 1 unit = 1 USD of margin,
@@ -280,7 +281,10 @@ export function registerHyperliquidRoutes(app: Express): void {
       }
     }
   };
-  setTimeout(tick, 15_000);
-  setInterval(tick, 60 * 60_000);
+  // Not on the public server (BACKGROUND_JOBS=off): the owner's computer runs it (src/server-mode.ts).
+  if (backgroundJobs()) {
+    setTimeout(tick, 15_000);
+    setInterval(tick, 60 * 60_000);
+  }
 }
 

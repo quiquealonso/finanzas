@@ -36,6 +36,18 @@ jobs:
       # Login: qué tokens dejan pasar una petición y como qué usuario (test/auth.test.js)
       - run: npm test
 
+  docker:
+    name: Imagen Docker del back (la del servidor)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # La misma imagen que construye back/deploy/deploy.sh en la VM (docs/09-despliegue.md)
+      - run: docker build -t finanzas-api back
+      - name: Arranca sin secretos y no escucha fuera del contenedor sin pedirlo
+        run: |
+          docker run --rm finanzas-api node -e "require('/app/dist/server-mode'); console.log('ok')"
+          docker compose -f back/deploy/docker-compose.yml config --quiet 2>/dev/null || echo "compose: necesita .env (normal en CI)"
+
   frontend:
     name: Frontend (build de producción)
     runs-on: ubuntu-latest

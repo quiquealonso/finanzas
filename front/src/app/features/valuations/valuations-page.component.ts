@@ -5,8 +5,9 @@ import { firstValueFrom } from 'rxjs';
 import { formatDay } from '../../shared/format.utils';
 import { ListView, ViewToggleComponent } from '../../shared/view-toggle.component';
 import { ConfirmService } from '../../shared/confirm-dialog.component';
+import { API_ORIGIN } from '../../core/api-origin';
 
-const API = 'http://localhost:3000/api/v2';
+const API = `${API_ORIGIN}/api/v2`;
 const PICK_KEY = 'valuations.metrics';
 const FUND_KEY = 'valuations.fund';
 

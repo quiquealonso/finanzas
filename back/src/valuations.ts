@@ -2,6 +2,7 @@ import { Express } from "express";
 import { base, prisma, sharedQuery } from "./prisma";
 import { handler, HttpError } from "./portfolio";
 import { ensureUniverse } from "./sentiment";
+import { backgroundJobs } from "./server-mode";
 
 /**
  * Valuations ("Valoraciones"): a weekly photo of 16 usual valuation metrics of every US listed company with a
@@ -459,6 +460,9 @@ export function registerValuationRoutes(app: Express): void {
     const [last] = await q<{ fresh: boolean }>(`select coalesce(max("runDate") > current_date - 7, false) as fresh from valuation_runs`);
     if (!last?.fresh) void runJob();
   };
-  setTimeout(() => void check().catch(() => undefined), 120_000);
-  setInterval(() => void check().catch(() => undefined), 6 * 3_600_000);
+  // Not on the public server (BACKGROUND_JOBS=off): the owner's computer runs it (src/server-mode.ts).
+  if (backgroundJobs()) {
+    setTimeout(() => void check().catch(() => undefined), 120_000);
+    setInterval(() => void check().catch(() => undefined), 6 * 3_600_000);
+  }
 }

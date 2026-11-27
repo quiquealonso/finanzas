@@ -1,9 +1,10 @@
-﻿import express, { NextFunction, Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import { base, prisma } from "./prisma";
 import { registerAuthRoutes, requireUser } from "./auth";
+import { allowedOrigins, ownerGuard, registerServerMode } from "./server-mode";
 import { registerPortfolioRoutes } from "./portfolio";
 import { registerClosingRoutes } from "./closings";
 import { registerGoalRoutes } from "./goals";
@@ -31,8 +32,16 @@ dotenv.config();
 const app = express();
 const ALL_BANKS = "ALL";
 
-app.use(cors());
-app.use(bodyParser.json());
+// Behind Caddy on the server (back/deploy): the real IP of each request comes from the proxy (one hop), so the
+// login attempt limit counts per person and not once for everybody.
+app.set("trust proxy", process.env.TRUST_PROXY === "1" ? 1 : false);
+app.disable("x-powered-by");
+// Only the front (localhost:4200, or the published app in CORS_ORIGINS) can call the API from a browser.
+const origins = allowedOrigins();
+app.use(cors({ origin: (origin, done) => done(null, !origin || origins.includes(origin)), maxAge: 600 }));
+app.use(bodyParser.json({ limit: "1mb" }));
+// Gmail and banking off on the public server (INTEGRATIONS=off): see src/server-mode.ts.
+registerServerMode(app);
 
 // Login and the list of users (no token needed). See src/auth.ts.
 registerAuthRoutes(app);
@@ -44,6 +53,8 @@ registerBankingCallback(app);
 
 // Everything else needs a valid session token; the request runs as its user (row level security does the rest).
 app.use(requireUser);
+// Jobs that write shared data or spend API quota: only the owner (src/server-mode.ts).
+app.use(ownerGuard);
 
 registerPortfolioRoutes(app);
 registerMailImportRoutes(app);
@@ -2606,9 +2617,11 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json({ message });
 });
 
-const port = process.env.PORT ?? 3000;
-app.listen(port, () => {
-  console.log(`Backend listo en puerto ${port}`);
+const port = Number(process.env.PORT ?? 3000);
+// HOST=0.0.0.0 only inside the container (Caddy reaches it on the Docker network); by default only this computer.
+const host = process.env.HOST ?? "127.0.0.1";
+app.listen(port, host, () => {
+  console.log(`Backend listo en ${host}:${port}`);
 });
 
 // Bulk update market config

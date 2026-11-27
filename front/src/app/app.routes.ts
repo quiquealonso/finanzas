@@ -56,10 +56,15 @@ export const PAGES: PageDef[] = [
     load: () => import('./features/betting/betting-page.component').then((m) => m.BettingPageComponent) },
 ];
 
-/** Pages each user does not see (not in the sidebar and the URL does not open them). user2 is used in class. */
-export const HIDDEN_FOR: Record<string, string[]> = { user2: ['apuestas', 'formula-magica'], demo: ['apuestas'] };
+/**
+ * Pages each user does not see (not in the sidebar and the URL does not open them). Only the owner (user1) sees
+ * every page; the demo hides Apuestas; everybody else (user2, used in class, and people who register) also misses
+ * Fórmula mágica.
+ */
+export const HIDDEN_FOR: Record<string, string[]> = { user1: [], demo: ['apuestas'] };
+const HIDDEN_FOR_OTHERS = ['apuestas', 'formula-magica'];
 
-export const isVisible = (path: string): boolean => !HIDDEN_FOR[sessionUser() ?? '']?.includes(path);
+export const isVisible = (path: string): boolean => !(HIDDEN_FOR[sessionUser() ?? ''] ?? HIDDEN_FOR_OTHERS).includes(path);
 
 /** Last page opened, to come back to it on the next visit (key kept from before the router). */
 export const LAST_PAGE_KEY = 'finanzas.page';

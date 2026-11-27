@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { PortfolioStore } from '../../core/portfolio.store';
 import { formatDay, formatMoney, formatQty } from '../../shared/format.utils';
+import { API_ORIGIN } from '../../core/api-origin';
 
 type Item = {
   id: string; date: string; amount: number; side: 'buy' | 'sell'; kind: 'trade' | 'securities' | 'platform'; text: string; fromBank: string;
@@ -16,7 +17,7 @@ type Item = {
 };
 type Draft = { bankId: string; assetId: string; newName: string; quantity: number | null; amount: number; open: boolean };
 
-const BASE = 'http://localhost:3000/api/v2/banking/investments';
+const BASE = `${API_ORIGIN}/api/v2/banking/investments`;
 
 /**
  * Investments found in the bank accounts (page Gastos): each one ready to be noted in the portfolio. The ones that are

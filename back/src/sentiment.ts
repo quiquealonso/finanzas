@@ -1,6 +1,7 @@
 import { Express } from "express";
 import { base, sharedQuery } from "./prisma";
 import { handler, HttpError } from "./portfolio";
+import { backgroundJobs } from "./server-mode";
 
 /**
  * Market sentiment ("Sentimiento de mercado"). Educational analysis only, never investment advice.
@@ -831,6 +832,9 @@ export function registerSentimentRoutes(app: Express): void {
   }));
 
   // Background rounds while the backend runs: first one a minute after start, then every 30 minutes.
-  setTimeout(() => void runJob(false), 60_000);
-  setInterval(() => void runJob(false), 30 * 60_000);
+  // Not on the public server (BACKGROUND_JOBS=off): the owner's computer runs it (src/server-mode.ts).
+  if (backgroundJobs()) {
+    setTimeout(() => void runJob(false), 60_000);
+    setInterval(() => void runJob(false), 30 * 60_000);
+  }
 }

@@ -17,6 +17,7 @@ Esta carpeta es la fuente de verdad del proyecto. **Léela antes de cambiar nada
 | [06 · Diseño](06-diseno.md) | Colores, componentes compartidos y reglas visuales acordadas |
 | [07 · Fuentes externas](07-fuentes-externas.md) | APIs y webs de las que se leen datos, sus límites y las descartadas |
 | [08 · Repositorio y CI](08-repositorio-y-ci.md) | Qué no se sube nunca, ramas, workflows de GitHub Actions, qué hacer si falla |
+| [09 · Despliegue](09-despliegue.md) | Servidor público (VM + Pages): capas de seguridad, montarlo, registro, despublicar |
 | [Decisiones](decisiones.md) | Registro de decisiones con su porqué (para no repetir discusiones) |
 | [Backlog](backlog.md) | Ideas, fallos y peticiones pendientes: **el bucle de retroalimentación** |
 
