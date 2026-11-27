@@ -57,11 +57,15 @@ Todo lo hace el dueño con su cuenta; nada de esto lo puede hacer el asistente.
 2. Compute Engine → **Create instance**: `e2-micro`, región `us-central1` (nivel gratuito), Debian 12, disco estándar de
    30 GB, sin cuenta de servicio (**No service account**), marca *Allow HTTP* y *Allow HTTPS*.
 3. VPC network → **IP addresses → Reserve** la IP externa de la VM como estática.
-4. Firewall: borra la regla `default-allow-rdp` y limita `default-allow-ssh` a la IP de casa (o a `35.235.240.0/20`
-   si usas SSH por el navegador / IAP).
-5. Por SSH en la VM:
+4. Firewall: borra `default-allow-rdp` y `default-allow-icmp`. `default-allow-ssh` se queda abierta: GitHub Actions
+   despliega por SSH desde IPs que cambian. Es seguro porque la VM solo acepta claves (nunca contraseña) y la clave de
+   despliegue solo puede ejecutar `deploy.sh`.
+5. Memoria: 1 GB no basta para compilar la imagen; se añade swap de 2 GB (paso 6).
+6. Por SSH en la VM:
    ```bash
    sudo apt update && sudo apt -y upgrade && sudo apt -y install unattended-upgrades git curl
+   sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+   echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
    curl -fsSL https://get.docker.com | sudo sh
    sudo adduser --disabled-password --gecos "" finanzas && sudo usermod -aG docker finanzas
    sudo -iu finanzas
@@ -70,8 +74,8 @@ Todo lo hace el dueño con su cuenta; nada de esto lo puede hacer el asistente.
    ```
    Rellena `.env` (cada variable está explicada en `.env.example`): `API_DOMAIN` = la IP con guiones + `.sslip.io`,
    `DIRECT_URL` con la contraseña nueva, `AUTH_SECRET` **nuevo** (`openssl rand -base64 48`), `REGISTER_CODE`.
-6. Primer arranque: `docker compose up -d --build` y prueba `curl https://<API_DOMAIN>/api/auth/register`.
-7. Contraseñas de tus usuarios en el servidor no hace falta: están en la base (las mismas que en el ordenador).
+7. Primer arranque: `docker compose up -d --build` y prueba `curl https://<API_DOMAIN>/api/auth/register`.
+8. Contraseñas de tus usuarios en el servidor no hace falta: están en la base (las mismas que en el ordenador).
 
 ### 3. Despliegue automático (GitHub Actions)
 

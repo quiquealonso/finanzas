@@ -12,7 +12,15 @@
   background: var(--surface);
 }
 .brand { font-weight: 600; font-size: 15px; padding: 0 10px 16px; letter-spacing: -0.01em; }
-nav { display: flex; flex-direction: column; gap: 2px; }
+/* The page list scrolls on its own; brand, "Nuevo movimiento" and the total stay in place. */
+nav {
+  display: flex; flex-direction: column; gap: 2px;
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  margin: 0 -6px; padding: 0 6px; scrollbar-width: thin;
+}
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+.nav-group + .nav-group { margin-top: 10px; }
+.nav-label { padding: 4px 10px 2px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); }
 .nav-item {
   display: flex;
   align-items: center;
@@ -32,9 +40,9 @@ nav { display: flex; flex-direction: column; gap: 2px; }
 .nav-item.eye { margin-top: 8px; border-top: 1px solid var(--border); border-radius: 0 0 var(--radius-sm) var(--radius-sm); padding-top: 10px; }
 .nav-item.eye.on { color: var(--accent-text); background: var(--accent-soft); }
 .nav-item svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
-.new { margin-top: 14px; }
+.new { margin-top: 10px; flex: none; }
 .demo-badge { margin-left: 6px; padding: 1px 6px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; color: #fff; background: linear-gradient(90deg, #6366f1, #a855f7); vertical-align: middle; }
-.side-foot { margin-top: auto; padding: 0 10px; }
+.side-foot { margin-top: 8px; padding: 0 10px; flex: none; }
 .side-total { font-weight: 600; font-size: 16px; }
 
 .main { padding: 24px 28px 48px; width: 100%; min-width: 0; }
@@ -65,7 +73,10 @@ nav { display: flex; flex-direction: column; gap: 2px; }
     overflow-x: auto;
   }
   .brand, .side-foot { display: none; }
-  nav { flex-direction: row; }
+  nav { flex-direction: row; overflow: visible; }
+  .nav-group { flex-direction: row; }
+  .nav-group + .nav-group { margin-top: 0; }
+  .nav-label { display: none; }
   .nav-item span { display: none; }
   .nav-item.on span { display: inline; }
   .new { margin: 0 0 0 auto; }

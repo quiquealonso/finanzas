@@ -57,6 +57,18 @@ export const PAGES: PageDef[] = [
 ];
 
 /**
+ * Sidebar groups, in order. Each page goes in one group; a page left out goes to "Otros" at the end, so a new page
+ * always shows up. Groups with no visible page for this user are not shown.
+ */
+export const NAV_GROUPS: Array<{ label: string; paths: string[] }> = [
+  { label: 'Cartera', paths: ['resumen', 'activos', 'distribucion', 'composicion', 'inmobiliario'] },
+  { label: 'Rendimiento', paths: ['calendario', 'mensual', 'cierres', 'comparar'] },
+  { label: 'Dinero', paths: ['movimientos', 'ventas', 'gastos', 'apuestas'] },
+  { label: 'Planificar', paths: ['objetivos', 'simulador', 'perfil-riesgo'] },
+  { label: 'Mercado', paths: ['noticias', 'sentimiento', 'valoraciones', 'formula-magica'] },
+];
+
+/**
  * Pages each user does not see (not in the sidebar and the URL does not open them). Only the owner (user1) sees
  * every page; the demo hides Apuestas; everybody else (user2, used in class, and people who register) also misses
  * Fórmula mágica.

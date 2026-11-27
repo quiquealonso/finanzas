@@ -5,11 +5,16 @@
   <aside class="side">
     <div class="brand">Finanzas @if (demo) { <span class="demo-badge" title="Cartera de ejemplo: nada se guarda">DEMO</span> }</div>
     <nav data-tour="sidebar">
-      @for (item of nav; track item.path) {
-        <a class="nav-item" [routerLink]="'/' + item.path" routerLinkActive="on" ariaCurrentWhenActive="page">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="item.icon" /></svg>
-          <span>{{ item.label }}</span>
-        </a>
+      @for (group of navGroups; track group.label) {
+        <div class="nav-group" role="group" [attr.aria-label]="group.label">
+          <div class="nav-label">{{ group.label }}</div>
+          @for (item of group.items; track item.path) {
+            <a class="nav-item" [routerLink]="'/' + item.path" routerLinkActive="on" ariaCurrentWhenActive="page">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="item.icon" /></svg>
+              <span>{{ item.label }}</span>
+            </a>
+          }
+        </div>
       }
       <!-- Privacy mode: hides every nominal value of the app, keeps percentages (shared/format.utils.ts). -->
       <button data-tour="privacy" type="button" class="nav-item eye" [class.on]="privacy()" (click)="togglePrivacy()"

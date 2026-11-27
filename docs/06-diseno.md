@@ -52,9 +52,11 @@ segmentados), `.tiles`/`.tile` (tarjetas), `.table-wrap`, `.notice`, `.dialog-ba
 - **Tablas largas**: cebra marcada y hover que solo oscurece un poco (sin colores llamativos).
 - **No mostrar controles que no hacen nada** (se quitó "Color por" del calendario).
 - Los % de un periodo deben llevar el **mismo signo que los euros** cuando se muestran juntos (o explicar por qué no).
-- Barra lateral: Resumen, Gastos, Activos, Calendario, Mensual, Distribución, Composición, Comparar, Movimientos, Ventas, Inmobiliario,
-  Cierres, Objetivos, Simulador, Perfil de riesgo, Noticias, Sentimiento, Valoraciones, Fórmula mágica, Apuestas; al final el ojo
-  ("Ocultar importes").
+- Barra lateral por grupos (`NAV_GROUPS` en `app.routes.ts`, 2026-11-27): **Cartera** (Resumen, Activos, Distribución,
+  Composición, Inmobiliario), **Rendimiento** (Calendario, Mensual, Cierres, Comparar), **Dinero** (Movimientos, Ventas,
+  Gastos, Apuestas), **Planificar** (Objetivos, Simulador, Perfil de riesgo) y **Mercado** (Noticias, Sentimiento,
+  Valoraciones, Fórmula mágica); al final el ojo ("Ocultar importes"). Una página nueva que no esté en un grupo sale en
+  "Otros". La lista de páginas se desplaza por dentro; marca, "Nuevo movimiento" y el patrimonio se quedan fijos.
 - **Ojo de privacidad** (barra lateral, "Ocultar importes", tecla **H**): tapa con `•••••` todo valor nominal (euros,
   dólares, títulos/unidades, ejes de las gráficas) y deja a la vista porcentajes y precios de mercado. Se recuerda en el
   navegador (`finanzas.privacy`). **Regla para código nuevo**: todo importe o cantidad de la cartera se pinta con

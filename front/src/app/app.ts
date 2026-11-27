@@ -3,7 +3,7 @@ import { LoginPageComponent } from './features/login/login-page.component';
 import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
-import { isVisible, LAST_PAGE_KEY, PAGES } from './app.routes';
+import { isVisible, LAST_PAGE_KEY, NAV_GROUPS, PageDef, PAGES } from './app.routes';
 import { isDemo, STATIC_SITE } from './demo/demo-mode';
 import { TourComponent } from './demo/tour.component';
 import { TourService } from './demo/tour.service';
@@ -31,7 +31,16 @@ export class App implements OnInit {
   protected readonly staticSite = STATIC_SITE;
 
   /** Sidebar: every page this user can see (pages and URLs live in app.routes.ts). */
-  protected readonly nav = PAGES.filter((p) => isVisible(p.path));
+  /** Sidebar: the visible pages, by group (NAV_GROUPS). */
+  protected readonly navGroups = (() => {
+    const visible = PAGES.filter((p) => isVisible(p.path));
+    const grouped = NAV_GROUPS.map((g) => ({
+      label: g.label,
+      items: g.paths.map((path) => visible.find((p) => p.path === path)).filter((p): p is PageDef => !!p),
+    }));
+    const rest = visible.filter((p) => !NAV_GROUPS.some((g) => g.paths.includes(p.path)));
+    return [...grouped, { label: 'Otros', items: rest }].filter((g) => g.items.length);
+  })();
 
   /** User of this session (null = entry screen). */
   protected readonly user = sessionUser();
