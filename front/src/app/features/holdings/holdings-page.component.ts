@@ -35,7 +35,8 @@ type AssetDraft = {
 
 type SortKey = 'name' | 'bank' | 'quantity' | 'price' | 'value' | 'cost' | 'pnl' | 'pnlPct' | 'day' | 'weight';
 
-const KIND_LABELS: Record<string, string> = {
+// Partial: an unknown kind gives undefined, and the template falls back to the raw kind.
+const KIND_LABELS: Partial<Record<string, string>> = {
   buy: 'Compra', sell: 'Venta', deposit: 'Ingreso', withdraw: 'Retirada', transfer_out: 'Traspaso (sale)',
   transfer_in: 'Traspaso (entra)', adjust: 'Ajuste', opening: 'Saldo inicial', recurring: 'Aportación'
 };
